@@ -4,7 +4,7 @@
 Create frontend components for previewing and downloading print-ready flyer PDFs. Users should see their branded flyer before generating, download individual or batch PDFs, and have confidence that what they see is what prints.
 
 ## Dependencies
-- ✅ Backend PDF generation service (from backend build)
+- ✅ 15_pdf_generation.md (from backend build)
 - ✅ `04_build_campaign_wizard.md` (integrates into final step)
 - ✅ Supabase Storage for PDF hosting
 
