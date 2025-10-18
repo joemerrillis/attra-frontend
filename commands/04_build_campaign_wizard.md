@@ -10,7 +10,7 @@ Create a campaign wizard that guides users through creating a flyer campaign: ch
 
 - ✅ `02_build_auth_and_tenant_setup.md` completed (auth working)
 - ✅ `03_build_onboarding_wizard.md` completed (locations exist)
-- ✅ Backend `06.5_ai_copy_refinement.md` completed (AI endpoint available)
+- ✅ Backend `14_ai_copy_generation.md` completed (AI endpoint available)
 - ✅ Backend `09_core_entity_routes.md` completed (campaigns API working)
 
 ---
