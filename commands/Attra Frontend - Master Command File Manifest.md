@@ -1,586 +1,702 @@
 # Attra Frontend - Master Command File Manifest
 
-## Project Overview
-
-**Goal:** Build complete MVP frontend for Attra attribution platform
-**Timeline:** ~2 weeks with Claude Code autonomous execution
-**Tech Stack:** Vite + React Router + Shadcn/ui + Tailwind + TypeScript
+**Version:** 2.0  
+**Last Updated:** October 18, 2025  
+**Architecture:** Domain-Driven, Consolidated Features  
+**Status:** Production-Ready
 
 ---
 
-## Command File Directory
+## 🎯 Project Overview
+
+**Goal:** Build complete MVP frontend for Attra attribution platform  
+**Timeline:** ~1 week (54 hours) with Claude Code execution  
+**Tech Stack:** Vite + React Router + Shadcn/ui + Tailwind + TypeScript  
+**Backend:** Fastify API at `api.attra.io` (must be running)
+
+---
+
+## 📁 Command File Structure
 
 ```
 /claude/commands/frontend/
-├── Phase 1: Foundation (Week 1)
-│   ├── 01_build_marketing_site_layout.md
-│   ├── 02_build_auth_and_tenant_setup.md
-│   └── 03_build_onboarding_wizard.md
-│
-├── Phase 2: Physical → Digital (●>) (Week 1-2)
-│   ├── 04_build_campaign_wizard.md
-│   ├── 05_build_ai_copy_generation_service.md
-│   ├── 06_build_pdf_generation_service.md
-│   ├── 07_build_qr_link_and_utm_service.md
-│   ├── 08_build_scan_landing_page_system.md
-│   └── 09_build_qr_scan_tracking.md
-│
-├── Phase 3: Digital → Physical (>●) (Week 2)
-│   ├── 10_build_contacts_module.md
-│   ├── 11_build_interactions_module.md
-│   ├── 12_build_email_template_system.md
-│   └── 13_build_gmail_sync.md
-│
-├── Phase 4: The Dashboard (Week 2-3)
-│   ├── 14_build_realtime_map_dashboard.md
-│   ├── 15_build_campaigns_list_view.md
-│   └── 16_build_analytics_dashboard.md
-│
-├── Phase 5: Growth Mechanics (Week 3)
-│   ├── 17_build_usage_tracking_and_limits.md
-│   ├── 18_build_stripe_billing_integration.md
-│   ├── 19_build_settings_pages.md
-│   ├── 23_build_feature_gating_backend.md ← NEW
-│   └── 24_build_feature_gating_frontend.md ← NEW
-│
-└── Phase 6: Polish (Week 3-4)
-    ├── 20_build_pwa_setup.md
-    ├── 21_build_mobile_dashboard.md
-    └── 22_finalize_launch_and_seed_data.md
+├── 00_build_new_frontend_init.md              (Init: 2 hrs)
+├── 01_build_marketing_site_layout.md          (Foundation: 3 hrs)
+├── 02_build_auth_and_tenant_setup.md          (Foundation: 4 hrs)
+├── 03_build_onboarding_wizard.md              (Foundation: 5 hrs)
+├── 04_build_new_campaign_creation_system.md   (Core: 8 hrs)
+├── 05_build_new_analytics_dashboard.md        (Core: 8 hrs)
+├── 06_build_new_contacts_crm_system.md        (Core: 8 hrs)
+├── 08_build_new_feature_gating_system.md      (Growth: 6 hrs)
+├── 09_build_new_settings_pages.md             (Growth: 6 hrs)
+└── 10_build_new_pwa_mobile.md                 (Polish: 4 hrs)
+
+Total: 10 files, ~54 hours
 ```
 
 ---
 
-## Complete Command File List with Dependencies
+## 🗺️ Build Phases
 
-### Phase 1: Foundation (12 hours)
+### **Phase 0: Initialization (2 hours)**
 
-#### 01_build_marketing_site_layout.md (3 hrs)
-**Purpose:** Landing page at `attra.io`
+#### 00_build_new_frontend_init.md
+**Purpose:** Initialize Vite project, install dependencies, pull backend contracts  
+**Dependencies:** Backend API must be running at `api.attra.io` (or `localhost:8080`)  
+**Builds:**
+- Vite + React + TypeScript project
+- Tailwind CSS + PostCSS configuration
+- Shadcn/ui component library setup
+- React Query provider
+- Supabase client initialization
+- Pull backend contracts from `/schema/*`
+- Generate typed API client from OpenAPI spec
+
+**Key Deliverables:**
+- `src/types/api.d.ts` - Generated API types
+- `src/types/backend.d.ts` - Supabase database types
+- `src/lib/api-client.ts` - Typed fetch wrapper
+- `src/lib/supabase.ts` - Supabase client
+- `src/lib/react-query.ts` - React Query config
+- Complete folder structure matching files 01-10
+
+**Acceptance Criteria:**
+- [ ] `pnpm dev` starts dev server on port 5173
+- [ ] Backend contracts pulled successfully
+- [ ] TypeScript compiles without errors
+- [ ] Shadcn/ui components accessible
+- [ ] React Query provider configured
+
+**Estimated Time:** 2 hours
+
+---
+
+### **Phase 1: Foundation (12 hours)**
+
+#### 01_build_marketing_site_layout.md
+**Purpose:** Landing page at `attra.io`  
+**Dependencies:** 00_build_new_frontend_init.md  
 **Builds:**
 - Hero section with ●>attra>● logo
-- "Measure the real world" headline
-- Animated map background
-- Sign up CTA → `app.attra.io/signup`
-- Footer (docs, pricing, login)
-**Dependencies:** None
-**Tech:** Next.js or Astro (static export)
-**Deliverables:**
+- "Measure the Real World" headline
+- Animated map background (placeholder or real Mapbox)
+- How It Works section (●> Create → Distribute → Track >●)
+- Industry grid (Real Estate, Pet Services, etc.)
+- Testimonials section
+- Final CTA section
+- Footer with links
+
+**Key Deliverables:**
 - `marketing/pages/index.tsx`
 - `marketing/components/Hero.tsx`
 - `marketing/components/AnimatedMap.tsx`
+- `marketing/components/HowItWorks.tsx`
+- `marketing/components/Footer.tsx`
+
+**Acceptance Criteria:**
+- [ ] Landing page loads at `attra.io`
+- [ ] "Start Free" button links to `app.attra.io/signup`
+- [ ] Mobile responsive
+- [ ] Lighthouse score 95+
+- [ ] All sections render correctly
+
+**Estimated Time:** 3 hours  
+**Can Run in Parallel:** Yes (independent of other frontend features)
 
 ---
 
-#### 02_build_auth_and_tenant_setup.md (4 hrs)
-**Purpose:** Supabase Auth + tenant creation
+#### 02_build_auth_and_tenant_setup.md
+**Purpose:** Supabase Auth with Google OAuth + tenant creation  
+**Dependencies:** 00_build_new_frontend_init.md  
 **Builds:**
-- Google OAuth login
-- Sign up page at `app.attra.io/signup`
-- Create `users` + `tenants` records
-- Redirect to onboarding
-**Dependencies:** Supabase configured
-**Tech:** Supabase Auth, React Router
-**Deliverables:**
+- Google OAuth sign-in flow
+- Signup page at `/signup`
+- Login page at `/login`
+- Auth callback handler at `/auth/callback`
+- Auth context provider
+- Protected route wrapper
+- Automatic user profile creation
+- Redirect to onboarding if no tenant
+
+**Key Deliverables:**
 - `src/pages/Signup.tsx`
 - `src/pages/Login.tsx`
+- `src/pages/auth/Callback.tsx`
+- `src/contexts/AuthContext.tsx`
 - `src/hooks/useAuth.ts`
-- `src/lib/supabase.ts`
+- `src/components/auth/GoogleButton.tsx`
+- `src/components/auth/ProtectedRoute.tsx`
+
+**Acceptance Criteria:**
+- [ ] "Continue with Google" button works
+- [ ] OAuth flow completes successfully
+- [ ] User profile created in `users` table
+- [ ] New users redirected to `/onboarding`
+- [ ] Existing users redirected to `/dashboard`
+- [ ] Auth state persists across page refresh
+- [ ] Sign out functionality works
+
+**Estimated Time:** 4 hours
 
 ---
 
-#### 03_build_onboarding_wizard.md (5 hrs)
-**Purpose:** Outcome-based onboarding flow
+#### 03_build_onboarding_wizard.md
+**Purpose:** 4-step onboarding wizard for new tenants  
+**Dependencies:** 02_build_auth_and_tenant_setup.md  
 **Builds:**
-- Step 1: Choose vertical (dropdown)
-- Step 2: Upload logo + brand colors
-- Step 3: First location (address autocomplete)
-- Step 4: Choose campaign goal
-- Creates first tenant + location + campaign
-**Dependencies:** 02_build_auth_and_tenant_setup.md
-**Tech:** React Hook Form + Zod, Google Maps API
-**Deliverables:**
+- **Step 1:** Choose vertical (dropdown with icons)
+- **Step 2:** Business name + logo upload + primary color picker
+- **Step 3:** First location (Google Places autocomplete)
+- **Step 4:** Choose campaign goal
+- Progress indicator (1/4, 2/4, etc.)
+- Back/Next navigation
+- Creates tenant + location + vertical on completion
+- Stores campaign goal in localStorage for file 04
+
+**Key Deliverables:**
 - `src/pages/Onboarding.tsx`
+- `src/components/onboarding/WizardLayout.tsx`
+- `src/components/onboarding/StepIndicator.tsx`
 - `src/components/onboarding/VerticalSelector.tsx`
 - `src/components/onboarding/BrandingForm.tsx`
 - `src/components/onboarding/LocationForm.tsx`
+- `src/components/onboarding/CampaignGoalSelector.tsx`
+- `src/hooks/useOnboarding.ts`
+- `src/lib/google-places.ts`
+
+**Acceptance Criteria:**
+- [ ] All 4 steps render correctly
+- [ ] Progress bar updates with each step
+- [ ] Google Places autocomplete works
+- [ ] Logo uploads to Supabase Storage
+- [ ] Color picker functional
+- [ ] Tenant + location + vertical created on completion
+- [ ] Redirects to `/campaigns/new`
+- [ ] Campaign goal stored in localStorage
+
+**Estimated Time:** 5 hours
 
 ---
 
-### Phase 2: Physical → Digital (●>) (28 hours)
+### **Phase 2: Core Features (24 hours)**
 
-#### 04_build_campaign_wizard.md (6 hrs)
-**Purpose:** Create campaigns with AI-generated flyers
+#### 04_build_new_campaign_creation_system.md
+**Purpose:** Complete campaign creation workflow (end-to-end)  
+**Dependencies:** 03_build_onboarding_wizard.md  
 **Builds:**
+- Campaign wizard (multi-step form)
 - Campaign goal selection
-- AI headline/subheadline generation
-- Location selection
-- Layout choice (Classic/Modern/Minimal)
-- PDF preview
-**Dependencies:** 03_build_onboarding_wizard.md, 05_build_ai_copy_generation_service.md
-**Tech:** React Hook Form, React Query
-**Deliverables:**
+- AI headline/subheadline generation (OpenAI/Anthropic)
+- Location selection (multi-select)
+- Flyer layout choice (Classic/Modern/Minimal)
+- QR code generation + short link creation
+- PDF flyer generation (backend worker)
+- PDF preview component
+- Scan landing page system (`/s/:code`)
+- Scan tracking (anonymous + authenticated)
+- Campaign status tracking (draft/active/completed)
+
+**Key Deliverables:**
 - `src/pages/campaigns/New.tsx`
+- `src/pages/campaigns/[id].tsx`
+- `src/pages/ScanLanding.tsx`
 - `src/components/campaigns/CampaignWizard.tsx`
+- `src/components/campaigns/GoalSelector.tsx`
+- `src/components/campaigns/AICopyGenerator.tsx`
+- `src/components/campaigns/LocationSelector.tsx`
 - `src/components/campaigns/LayoutSelector.tsx`
 - `src/components/campaigns/PDFPreview.tsx`
-
----
-
-#### 05_build_ai_copy_generation_service.md (4 hrs)
-**Purpose:** OpenAI/Anthropic integration for copy
-**Builds:**
-- Backend API endpoint `/api/ai/generate-copy`
-- Prompt templates per vertical + goal
-- Copy versioning (regenerate button)
-**Dependencies:** None (backend only)
-**Tech:** OpenAI API or Anthropic API
-**Deliverables:**
-- `api/services/ai-copy-generator.js`
-- `api/routes/ai.js`
-
----
-
-#### 06_build_pdf_generation_service.md (5 hrs)
-**Purpose:** Generate branded flyer PDFs
-**Builds:**
-- Puppeteer/PDFKit worker
-- HTML templates (Classic/Modern/Minimal)
-- Brand injection (logo, colors, fonts)
-- QR code embedding
-- Supabase Storage upload
-**Dependencies:** 07_build_qr_link_and_utm_service.md
-**Tech:** Puppeteer or PDFKit, Supabase Storage
-**Deliverables:**
-- `api/workers/pdf-generator.js`
-- `api/templates/flyers/classic.html`
-- `api/templates/flyers/modern.html`
-- `api/templates/flyers/minimal.html`
-
----
-
-#### 07_build_qr_link_and_utm_service.md (4 hrs)
-**Purpose:** Generate QR codes and short links
-**Builds:**
-- Short code generation (6-char alphanumeric)
-- QR image generation
-- UTM parameter builder
-- Store in `ops.qr_links`
-**Dependencies:** None (backend only)
-**Tech:** `qrcode` npm package
-**Deliverables:**
-- `api/services/qr-generator.js`
-- `api/services/utm-builder.js`
-
----
-
-#### 08_build_scan_landing_page_system.md (6 hrs)
-**Purpose:** Attra-hosted lead capture pages
-**Builds:**
-- Public route `/s/:code`
-- Fetch campaign config
-- Render branded form (name + email)
-- Submit → create contact
-- Redirect to tenant's URL with params
-**Dependencies:** 09_build_qr_scan_tracking.md, 10_build_contacts_module.md
-**Tech:** React, Tailwind, Supabase
-**Deliverables:**
-- `src/pages/ScanLanding.tsx`
 - `src/components/scan/BrandedForm.tsx`
-- `api/routes/public/scan.js`
+- `src/lib/campaign-api.ts`
+- `src/lib/ai-api.ts`
+- `src/lib/pdf-api.ts`
+
+**Acceptance Criteria:**
+- [ ] Campaign wizard completes all steps
+- [ ] AI generates headline/subheadline
+- [ ] QR code + short link created
+- [ ] PDF generation job enqueued
+- [ ] PDF downloads successfully
+- [ ] Scan landing page renders with branding
+- [ ] Form submission creates contact
+- [ ] Scan tracking records location/device
+- [ ] Campaign status updates correctly
+
+**Estimated Time:** 8 hours
 
 ---
 
-#### 09_build_qr_scan_tracking.md (3 hrs)
-**Purpose:** Log scan events
+#### 05_build_new_analytics_dashboard.md
+**Purpose:** Analytics + realtime map + campaign list view  
+**Dependencies:** 04_build_new_campaign_creation_system.md  
 **Builds:**
-- Log scan (timestamp, location, device)
-- Store in `ops.qr_scans`
-- Link to contact if form submitted
-**Dependencies:** None (backend only)
-**Tech:** Fastify, Supabase
-**Deliverables:**
-- `api/services/scan-tracker.js`
-- `api/routes/scan.js`
-
----
-
-### Phase 3: Digital → Physical (>●) (20 hours)
-
-#### 10_build_contacts_module.md (5 hrs)
-**Purpose:** Contact management (CRM basics)
-**Builds:**
-- Contacts table view
-- Add/edit/delete contacts
-- Source tracking (QR scan vs manual)
-- Filter by campaign/location
-- Data masking for free tier
-**Dependencies:** 24_build_feature_gating_frontend.md
-**Tech:** React Query, Shadcn Table
-**Deliverables:**
-- `src/pages/Contacts.tsx`
-- `src/components/contacts/ContactTable.tsx`
-- `src/components/contacts/ContactForm.tsx`
-- `api/routes/contacts.js`
-
----
-
-#### 11_build_interactions_module.md (4 hrs)
-**Purpose:** Track calls, emails, meetings
-**Builds:**
-- Log interaction form
-- Timeline view per contact
-- Quick actions (send email, set reminder)
-**Dependencies:** 10_build_contacts_module.md
-**Tech:** React Hook Form
-**Deliverables:**
-- `src/components/contacts/InteractionTimeline.tsx`
-- `src/components/contacts/LogInteractionForm.tsx`
-- `api/routes/interactions.js`
-
----
-
-#### 12_build_email_template_system.md (5 hrs)
-**Purpose:** Email templates with variables
-**Builds:**
-- Template CRUD
-- Variable insertion ({name}, {location})
-- Preview + test send
-- Store in `ops.email_templates`
-**Dependencies:** 13_build_gmail_sync.md
-**Tech:** React Hook Form, Rich text editor
-**Deliverables:**
-- `src/pages/EmailTemplates.tsx`
-- `src/components/emails/TemplateEditor.tsx`
-- `src/components/emails/VariableInserter.tsx`
-- `api/routes/email-templates.js`
-
----
-
-#### 13_build_gmail_sync.md (6 hrs)
-**Purpose:** Gmail OAuth + sending
-**Builds:**
-- Gmail API OAuth flow
-- Send email via Gmail
-- Sync sent emails to `ops.sent_emails`
-**Dependencies:** None (backend only)
-**Tech:** Gmail API, Supabase
-**Deliverables:**
-- `api/integrations/gmail.js`
-- `api/routes/gmail-auth.js`
-- `src/pages/settings/Integrations.tsx`
-
----
-
-### Phase 4: The Dashboard (15 hours)
-
-#### 14_build_realtime_map_dashboard.md (7 hrs)
-**Purpose:** Real-time scan visualization
-**Builds:**
-- Mapbox/Leaflet integration
-- Pin per location (with scan count)
-- Real-time pulse on new scan (Supabase Realtime)
+- Realtime map dashboard (Mapbox/Leaflet)
+- Pin per location with scan count
+- Pulse animation on new scan (Supabase Realtime)
 - Filter by campaign/date
 - Recent scans feed
-**Dependencies:** 09_build_qr_scan_tracking.md, 24_build_feature_gating_frontend.md
-**Tech:** Mapbox GL JS or Leaflet, Supabase Realtime
-**Deliverables:**
-- `src/pages/Dashboard.tsx`
-- `src/components/dashboard/MapView.tsx`
-- `src/components/dashboard/RecentScans.tsx`
-- `src/hooks/useRealtimeScans.ts`
-
----
-
-#### 15_build_campaigns_list_view.md (3 hrs)
-**Purpose:** Campaign management table
-**Builds:**
-- Table: Name | Goal | Scans | Contacts | Status
-- Click → campaign detail
-- "New Campaign" button
-**Dependencies:** 04_build_campaign_wizard.md
-**Tech:** Shadcn Table
-**Deliverables:**
-- `src/pages/Campaigns.tsx`
-- `src/components/campaigns/CampaignTable.tsx`
-
----
-
-#### 16_build_analytics_dashboard.md (5 hrs)
-**Purpose:** Charts and reports
-**Builds:**
 - Scans over time (line chart)
 - Top locations (bar chart)
 - Conversion funnel (scans → contacts)
-- Export CSV
-**Dependencies:** 24_build_feature_gating_frontend.md
-**Tech:** Recharts, Shadcn Charts
-**Deliverables:**
+- Campaign list view (table)
+- Export to CSV
+
+**Key Deliverables:**
+- `src/pages/Dashboard.tsx`
 - `src/pages/Analytics.tsx`
+- `src/pages/Campaigns.tsx`
+- `src/components/dashboard/MapView.tsx`
+- `src/components/dashboard/RecentScans.tsx`
 - `src/components/analytics/LineChart.tsx`
 - `src/components/analytics/BarChart.tsx`
 - `src/components/analytics/ConversionFunnel.tsx`
+- `src/components/campaigns/CampaignTable.tsx`
+- `src/hooks/useRealtimeScans.ts`
+- `src/lib/analytics-api.ts`
+
+**Acceptance Criteria:**
+- [ ] Map loads with location pins
+- [ ] Pins show scan count
+- [ ] New scans pulse on map in realtime
+- [ ] Charts render with correct data
+- [ ] Campaign table shows all campaigns
+- [ ] Filters work (campaign/date)
+- [ ] Export CSV downloads successfully
+- [ ] Realtime subscriptions work
+- [ ] Responsive on mobile
+
+**Estimated Time:** 8 hours  
+**Can Run in Parallel:** Yes (with file 06, after file 04 complete)
 
 ---
 
-### Phase 5: Growth Mechanics (21 hours)
-
-#### 17_build_usage_tracking_and_limits.md (5 hrs)
-**Purpose:** Track usage against plan limits
+#### 06_build_new_contacts_crm_system.md
+**Purpose:** Contact management + interaction tracking  
+**Dependencies:** 04_build_new_campaign_creation_system.md  
 **Builds:**
-- Track scans/contacts per tenant per month
-- Plan limits enforcement
-- Soft block + upgrade prompt UI
-- Store in `billing.usage_tracking`
-**Dependencies:** 23_build_feature_gating_backend.md
-**Tech:** Supabase functions, React
-**Deliverables:**
-- `api/services/usage-tracker.js`
-- `src/components/PlanUsageWidget.tsx`
-- Database table: `billing.usage_tracking`
+- Contact table view (paginated)
+- Contact detail page
+- Add/edit/delete contacts
+- Source tracking (QR scan vs manual)
+- Filter by campaign/location/date
+- Data masking for free tier (email/phone hidden)
+- Interaction timeline per contact
+- Log interaction form (call/email/meeting/note)
+- Quick actions (send email, set reminder)
+- Contact tags/labels
+
+**Key Deliverables:**
+- `src/pages/Contacts.tsx`
+- `src/pages/contacts/[id].tsx`
+- `src/components/contacts/ContactTable.tsx`
+- `src/components/contacts/ContactForm.tsx`
+- `src/components/contacts/ContactDetail.tsx`
+- `src/components/contacts/InteractionTimeline.tsx`
+- `src/components/contacts/LogInteractionForm.tsx`
+- `src/components/contacts/ContactFilters.tsx`
+- `src/lib/contacts-api.ts`
+
+**Acceptance Criteria:**
+- [ ] Contact table loads with pagination
+- [ ] Add/edit/delete contacts works
+- [ ] Contact detail page shows full history
+- [ ] Interaction timeline renders chronologically
+- [ ] Log interaction form submits successfully
+- [ ] Filters work (campaign/location/date)
+- [ ] Data masking works in free tier
+- [ ] Quick actions functional
+- [ ] Tags can be added/removed
+
+**Estimated Time:** 8 hours  
+**Can Run in Parallel:** Yes (with file 05, after file 04 complete)
 
 ---
 
-#### 18_build_stripe_billing_integration.md (6 hrs)
-**Purpose:** Stripe subscriptions
+### **Phase 3: Growth & Polish (16 hours)**
+
+#### 08_build_new_feature_gating_system.md
+**Purpose:** Plan-based feature access + upgrade prompts  
+**Dependencies:** 05_build_new_analytics_dashboard.md, 06_build_new_contacts_crm_system.md  
 **Builds:**
-- Stripe Customer Portal
-- Subscription creation (Starter/Pro/Enterprise)
-- Webhook handling (subscription.created, etc.)
-- Plan features unlock
-**Dependencies:** 23_build_feature_gating_backend.md
-**Tech:** Stripe API, Stripe Checkout
-**Deliverables:**
-- `api/integrations/stripe.js`
-- `api/routes/billing.js`
-- `src/pages/Upgrade.tsx`
-- `src/pages/Billing.tsx`
+- `useFeatureGate()` hook (checks plan access)
+- `usePlanLimit()` hook (checks usage limits)
+- `<LockedFeature>` component (blur + lock icon)
+- `<UpgradePrompt>` component (call-to-action)
+- `<PlanUsageWidget>` component (progress bar)
+- Data masking utilities (email/phone redaction)
+- Plan definitions (Free/Starter/Pro/Enterprise)
+- Feature gates per plan
+- Usage tracking (scans/contacts/campaigns)
+- Soft block (show upgrade prompt, don't prevent action)
+
+**Key Deliverables:**
+- `src/hooks/useFeatureGate.ts`
+- `src/hooks/usePlanLimit.ts`
+- `src/components/feature-gating/LockedFeature.tsx`
+- `src/components/feature-gating/UpgradePrompt.tsx`
+- `src/components/feature-gating/PlanUsageWidget.tsx`
+- `src/lib/data-masking.ts`
+- `src/lib/plan-utils.ts`
+- `src/lib/plans-api.ts`
+- `src/types/billing.ts`
+
+**Acceptance Criteria:**
+- [ ] Free users see locked features with blur
+- [ ] Upgrade prompts appear correctly
+- [ ] Plan limits enforced (but soft blocks)
+- [ ] Usage widget shows progress
+- [ ] Data masking works (email/phone hidden)
+- [ ] Feature gates check plan correctly
+- [ ] Plan upgrade flow initiated
+
+**Estimated Time:** 6 hours
 
 ---
 
-#### 19_build_settings_pages.md (5 hrs)
-**Purpose:** Tenant settings
+#### 09_build_new_settings_pages.md
+**Purpose:** Tenant settings + integrations + billing  
+**Dependencies:** 08_build_new_feature_gating_system.md  
 **Builds:**
-- Profile tab (name, email, photo)
-- Branding tab (logo, colors, font)
-- Integrations tab (Gmail, API keys)
-- Billing tab (Stripe portal iframe)
-**Dependencies:** 13_build_gmail_sync.md, 18_build_stripe_billing_integration.md
-**Tech:** React Hook Form, Tabs component
-**Deliverables:**
+- **Profile Tab:** Name, email, avatar upload
+- **Branding Tab:** Logo, primary color, font
+- **Integrations Tab:** Gmail OAuth, API keys
+- **Billing Tab:** Stripe portal iframe, plan display
+- **Team Tab:** Invite members, manage roles (future)
+- Settings layout with tab navigation
+- Gmail connection flow
+- API key generation
+- Stripe Customer Portal link
+
+**Key Deliverables:**
 - `src/pages/Settings.tsx`
+- `src/components/settings/SettingsLayout.tsx`
 - `src/components/settings/ProfileTab.tsx`
 - `src/components/settings/BrandingTab.tsx`
 - `src/components/settings/IntegrationsTab.tsx`
 - `src/components/settings/BillingTab.tsx`
+- `src/components/settings/TeamTab.tsx` (future)
+- `src/lib/gmail-api.ts`
+- `src/lib/billing-api.ts`
+
+**Acceptance Criteria:**
+- [ ] Settings page loads with tabs
+- [ ] Profile updates save successfully
+- [ ] Logo uploads to storage
+- [ ] Color picker updates branding
+- [ ] Gmail OAuth flow completes
+- [ ] API keys can be generated/revoked
+- [ ] Stripe portal loads in iframe
+- [ ] Current plan displayed correctly
+
+**Estimated Time:** 6 hours
 
 ---
 
-#### 23_build_feature_gating_backend.md (5 hrs) ⭐ NEW
-**Purpose:** Database + API for feature gating
+#### 10_build_new_pwa_mobile.md
+**Purpose:** PWA setup + mobile optimization + Capacitor wrapper  
+**Dependencies:** 09_build_new_settings_pages.md  
 **Builds:**
-- `billing.plans` table (pricing config)
-- `billing.plan_limits` table (usage limits)
-- `billing.feature_gates` table (feature → plan mapping)
-- API routes for checking access
-- Admin routes for updating pricing
-**Dependencies:** None (backend only)
-**Tech:** Supabase, Fastify
-**Deliverables:**
-- Database schema (3 tables)
-- `api/routes/plans.js`
-- `api/routes/features.js`
-- `api/middleware/checkFeatureAccess.js`
+- Vite PWA plugin configuration
+- Service worker with caching strategies
+- PWA manifest.json (icons, colors, shortcuts)
+- Capacitor configuration (iOS + Android)
+- Mobile bottom navigation (6 icons)
+- Mobile header with profile menu
+- Install prompt (browser only, not in PWA/Capacitor)
+- Offline indicator banner
+- Dark mode toggle + system preference
+- Touch-optimized components
+- Offline data sync (IndexedDB queue)
+- Mobile-specific styles
 
----
-
-#### 24_build_feature_gating_frontend.md (6 hrs) ⭐ NEW
-**Purpose:** React components for feature gating
-**Builds:**
-- `useFeatureGate()` hook
-- `usePlanLimits()` hook
-- `<LockedFeature>` component
-- `<UpgradePrompt>` component
-- `<PlanUsageWidget>` component
-- Data masking utilities
-**Dependencies:** 23_build_feature_gating_backend.md
-**Tech:** React Query, Shadcn UI
-**Deliverables:**
-- `src/hooks/useFeatureGate.ts`
-- `src/components/feature-gating/LockedFeature.tsx`
-- `src/components/feature-gating/UpgradePrompt.tsx`
-- `src/lib/data-masking.ts`
-
----
-
-### Phase 6: Polish (9 hours)
-
-#### 20_build_pwa_setup.md (4 hrs)
-**Purpose:** Progressive Web App config
-**Builds:**
-- Service worker
-- Manifest.json
-- Offline caching strategy
-- "Add to Home Screen" prompt
-**Dependencies:** None
-**Tech:** Vite PWA plugin
-**Deliverables:**
+**Key Deliverables:**
 - `vite.config.ts` (PWA plugin)
+- `capacitor.config.ts`
 - `public/manifest.json`
-- `src/service-worker.ts`
+- `public/icons/` (192x192, 512x512, maskable)
+- `src/components/layout/MobileBottomNav.tsx`
+- `src/components/layout/MobileHeader.tsx`
+- `src/components/layout/InstallPrompt.tsx`
+- `src/components/layout/OfflineIndicator.tsx`
+- `src/components/theme/ThemeToggle.tsx`
+- `src/hooks/usePWA.ts`
+- `src/hooks/useOffline.ts`
+- `src/hooks/useDarkMode.ts`
+- `src/hooks/useMobileDetection.ts`
+- `src/lib/offline-sync.ts`
+- `src/styles/mobile.css`
+
+**Acceptance Criteria:**
+- [ ] PWA installs from browser
+- [ ] Service worker caches assets
+- [ ] Offline mode works (cached data visible)
+- [ ] Install prompt appears in browser only
+- [ ] Dark mode toggles correctly
+- [ ] Bottom nav shows on mobile
+- [ ] Capacitor builds for iOS/Android
+- [ ] Touch targets 44x44px minimum
+- [ ] Offline sync queues actions
+- [ ] Lighthouse score 90+
+
+**Estimated Time:** 4 hours
 
 ---
 
-#### 21_build_mobile_dashboard.md (5 hrs)
-**Purpose:** Mobile-optimized UI
-**Builds:**
-- Responsive layouts
-- Mobile-friendly map
-- Touch-optimized forms
-- Quick action cards
-**Dependencies:** 14_build_realtime_map_dashboard.md
-**Tech:** Tailwind responsive classes
-**Deliverables:**
-- Mobile CSS adjustments
-- Touch event handlers
-- Hamburger menu
+## 📊 Build Timeline Summary
+
+| Phase | Files | Est. Hours | Dependencies | Parallelizable? |
+|-------|-------|------------|--------------|-----------------|
+| **0: Init** | 1 | 2 hrs | Backend running | No |
+| **1: Foundation** | 3 | 12 hrs | Phase 0 | Partial (file 01) |
+| **2: Core Features** | 3 | 24 hrs | Phase 1 | Yes (files 05+06 after 04) |
+| **3: Growth & Polish** | 3 | 16 hrs | Phase 2 | Partial (files 08+09) |
+| **TOTAL** | **10 files** | **54 hrs** | Sequential + Parallel | **~1 week** |
 
 ---
 
-#### 22_finalize_launch_and_seed_data.md (3 hrs)
-**Purpose:** Production readiness
-**Builds:**
-- Seed demo campaigns
-- Test data cleanup scripts
-- Environment variable audit
-- Launch checklist document
-**Dependencies:** All previous files
-**Tech:** Supabase seed scripts
-**Deliverables:**
-- `scripts/seed-demo-data.sql`
-- `scripts/cleanup-test-data.sql`
-- `.env.example`
-- `LAUNCH_CHECKLIST.md`
+## 🗺️ Dependency Graph
+
+```
+00 (Init) ────────────────────────────────────┐
+ ↓                                             │
+01 (Marketing) ← Can run in parallel           │
+ ↓                                             ↓
+02 (Auth) ────────────────────────────────────┤
+ ↓                                             │
+03 (Onboarding) ──────────────────────────────┤
+ ↓                                             │
+04 (Campaigns) ───────────┬───────────────────┤
+                          │                   │
+                          ├──→ 05 (Analytics) │
+                          │                   ↓
+                          └──→ 06 (Contacts)  │
+                                ↓             │
+                          ┌─────┴─────┐       │
+                          ↓           ↓       │
+                    08 (Gating)  09 (Settings)│
+                          └─────┬─────┘       │
+                                ↓             │
+                          10 (PWA/Mobile) ────┘
+```
+
+**Critical Path:** 00 → 02 → 03 → 04 → (05 or 06) → 08 or 09 → 10  
+**Parallelizable:** Files 05 and 06 can run simultaneously after 04  
+**Independent:** File 01 can run anytime after 00
 
 ---
 
-## Build Timeline Summary
+## ✅ Pre-Build Checklist
 
-| Phase | Files | Est. Hours | Parallelizable? |
-|-------|-------|------------|-----------------|
-| 1: Foundation | 3 | 12 hrs | ✅ Yes |
-| 2: ●> Flow | 6 | 28 hrs | ✅ Yes (after Phase 1) |
-| 3: >● Flow | 4 | 20 hrs | ✅ Yes (after Phase 2) |
-| 4: Dashboard | 3 | 15 hrs | ✅ Yes (after Phase 2) |
-| 5: Growth | 5 | 21 hrs | ⚠️ Some sequential |
-| 6: Polish | 3 | 9 hrs | ✅ Yes (after Phase 4) |
-| **TOTAL** | **24 files** | **~105 hrs** | **~2 weeks with parallel execution** |
+### **Required Before Starting:**
 
----
+- [ ] Backend API running at `api.attra.io` or `localhost:8080`
+- [ ] Backend contracts accessible at `/schema/openapi.json`
+- [ ] Supabase project created with credentials
+- [ ] Google OAuth credentials configured
+- [ ] Google Maps API key obtained
+- [ ] Stripe account created (test mode)
+- [ ] Domain `attra.io` purchased and configured
+- [ ] Git repository initialized
 
-## Your To-Do List (Human Checkpoints)
+### **Environment Variables Needed:**
 
-### 🪪 Setup & Access (Before Build Starts)
+```bash
+# Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 
-- [ ] Buy domain: `attra.io` via Cloudflare
-- [ ] Create Supabase project (`attra-prod`)
-- [ ] Add Claude Code service key to Supabase
-- [ ] Create GitHub repos (`attra-frontend`, `attra-backend`)
-- [ ] Create Render/Railway apps for `api.attra.io` and `app.attra.io`
-- [ ] Configure Cloudflare DNS:
-  - `attra.io` → marketing site
-  - `app.attra.io` → frontend app
-  - `api.attra.io` → backend API
-- [ ] Get OpenAI or Anthropic API key (for copy generation)
-- [ ] Get Stripe account + API keys (test mode first)
-- [ ] Get Google Maps API key (address autocomplete)
-- [ ] Get Gmail API credentials (OAuth)
+# Backend API
+VITE_API_URL=https://api.attra.io
 
-### 🧭 Command Approval Workflow
+# Google Maps
+VITE_GOOGLE_MAPS_API_KEY=your-maps-key
 
-**Week 1:**
-- [ ] Review + approve Phase 1 files (01-03)
-- [ ] Review + approve Phase 2 files (04-09)
+# Stripe (optional for Phase 3)
+VITE_STRIPE_PUBLIC_KEY=pk_test_...
 
-**Week 2:**
-- [ ] Review + approve Phase 3 files (10-13)
-- [ ] Review + approve Phase 4 files (14-16)
-
-**Week 3:**
-- [ ] Review + approve Phase 5 files (17-19, 23-24)
-- [ ] Review + approve Phase 6 files (20-22)
-
-### 🧪 Testing Sequence
-
-- [ ] **Auth test:** Sign up with Google OAuth → tenant created
-- [ ] **Onboarding test:** Complete wizard → location + campaign created
-- [ ] **Flyer test:** Create campaign → PDF downloads → QR works
-- [ ] **Scan test:** Scan QR on phone → form appears → contact captured
-- [ ] **Map test:** Check dashboard → pin appears → pulse on new scan
-- [ ] **Contact test:** View contacts → data masking works in free tier
-- [ ] **Upgrade test:** Click upgrade → Stripe Checkout works
-- [ ] **Gmail test:** Connect Gmail → send test email
-- [ ] **PWA test:** Install on mobile → offline mode works
-- [ ] **Feature gate test:** Free user sees locked features with prompts
-
-### 🧱 Deployment & Launch
-
-- [ ] Verify environment variables in production
-- [ ] Enable Supabase RLS (row-level security)
-- [ ] Run seed script: `22_finalize_launch_and_seed_data.md`
-- [ ] Deploy marketing site (`attra.io`)
-- [ ] Deploy app (`app.attra.io`)
-- [ ] Test live QR from printed flyer
-- [ ] Monitor error logs for 24 hours
-- [ ] Announce beta launch 🎉
+# Environment
+VITE_ENV=development
+```
 
 ---
 
-## Critical Reminders
+## 🧪 Testing Checklist (Execute After Each Phase)
 
-### For Claude Code Execution:
+### **After Phase 0:**
+- [ ] `pnpm dev` starts without errors
+- [ ] Backend contracts pulled successfully
+- [ ] TypeScript compiles
 
-1. **Always read dependencies first** - Don't build 04 before 03
-2. **Test each file after build** - Run acceptance criteria
+### **After Phase 1:**
+- [ ] Marketing site loads
+- [ ] Google OAuth sign-in works
+- [ ] Onboarding wizard completes
+- [ ] Tenant created in database
+
+### **After Phase 2:**
+- [ ] Campaign creation end-to-end works
+- [ ] PDF downloads successfully
+- [ ] QR scan landing page loads
+- [ ] Map shows scan pins
+- [ ] Contact added via scan form
+
+### **After Phase 3:**
+- [ ] Feature gates show upgrade prompts
+- [ ] Settings tabs all functional
+- [ ] PWA installs on device
+- [ ] Offline mode works
+
+---
+
+## 🚀 Deployment Steps
+
+### **1. Marketing Site (attra.io)**
+```bash
+cd marketing
+pnpm build
+# Deploy to Vercel/Cloudflare Pages
+```
+
+### **2. App (app.attra.io)**
+```bash
+pnpm build
+# Deploy to Vercel/Render/Cloudflare Pages
+```
+
+### **3. Mobile Apps (Optional)**
+```bash
+# iOS
+pnpm build:ios
+pnpm cap:open:ios
+# Archive and upload to App Store Connect
+
+# Android
+pnpm build:android
+pnpm cap:open:android
+# Generate signed bundle and upload to Play Console
+```
+
+---
+
+## 📚 Command Scripts
+
+Add these to `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "pull-contracts": "./scripts/pull-contracts.sh",
+    
+    "cap:sync": "cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android",
+    
+    "build:pwa": "pnpm build",
+    "build:ios": "pnpm build && cap sync ios && cap build ios",
+    "build:android": "pnpm build && cap sync android && cap build android",
+    
+    "generate:icons": "node scripts/generate-icons.js"
+  }
+}
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+### **Backend contracts fail to pull**
+```bash
+# Check if backend is running
+curl http://localhost:8080/health
+
+# Manually fetch contracts
+curl http://localhost:8080/schema/openapi.json | jq
+```
+
+### **TypeScript errors after pulling contracts**
+```bash
+# Restart TypeScript server in VS Code
+# Cmd+Shift+P → "TypeScript: Restart TS Server"
+```
+
+### **Supabase connection fails**
+```bash
+# Verify environment variables
+echo $VITE_SUPABASE_URL
+echo $VITE_SUPABASE_ANON_KEY
+
+# Check .env file
+cat .env
+```
+
+### **PWA not installing**
+- Check `manifest.json` is accessible
+- Verify HTTPS (required for PWA)
+- Check service worker registration in DevTools
+
+---
+
+## 📝 Notes for Claude Code
+
+### **Execution Guidelines:**
+
+1. **Read dependencies first** - Never start a file before its dependencies
+2. **Test after each file** - Run acceptance criteria before moving on
 3. **Commit after each file** - Git commit with descriptive message
-4. **Report blockers immediately** - If stuck, ask human for help
-5. **Use TypeScript strict mode** - No `any` types allowed
-6. **Follow Shadcn patterns** - Use existing UI components
-7. **Mobile-first CSS** - Test responsive on small screens
-8. **Accessibility matters** - ARIA labels, keyboard navigation
+4. **Pull contracts first** - Always run `pnpm pull-contracts` before building
+5. **Report blockers** - If stuck, document the issue and stop
 
-### For You (Joseph):
+### **Code Standards:**
 
-1. **Approve in batches** - Don't approve all 24 at once
-2. **Test incrementally** - Verify each phase before next
-3. **Budget ~2 weeks** - Even with parallel execution
-4. **Keep Supabase open** - Monitor queries and errors
-5. **Check costs daily** - OpenAI API, Supabase, Stripe test charges
-6. **Document decisions** - If you change something, update command file
-7. **Trust the process** - Claude Code is autonomous, but check output
+- TypeScript strict mode (no `any` types)
+- Use Shadcn/ui components (no custom UI from scratch)
+- Mobile-first CSS (test on small screens)
+- Accessibility (ARIA labels, keyboard navigation)
+- Error boundaries on all page components
+- Loading states on all async operations
 
 ---
 
-## Emergency Contacts
+## 🎉 Definition of Done
 
-If you lose this conversation:
-1. This manifest is saved in artifact `attra_master_manifest`
-2. Backend command file is in artifact `feature_gating_backend`
-3. Frontend command file is in artifact `feature_gating_frontend`
-4. All files should be committed to `/claude/commands/frontend/` in your repo
+The frontend is **production-ready** when:
+
+- ✅ All 10 files executed successfully
+- ✅ All acceptance criteria met
+- ✅ TypeScript compiles with zero errors
+- ✅ `pnpm build` succeeds
+- ✅ Lighthouse score 90+ on mobile
+- ✅ PWA installs successfully
+- ✅ All pages responsive on mobile
+- ✅ Auth flow works end-to-end
+- ✅ Campaign creation works end-to-end
+- ✅ Realtime map shows scans
+- ✅ Feature gates enforce plan limits
+- ✅ Settings save correctly
+- ✅ Offline mode functions
 
 ---
 
-## Next Steps
+## 🆘 Support & Escalation
 
-1. **Copy this manifest** to `/claude/commands/MASTER_MANIFEST.md` in your repo
-2. **Create `/claude/commands/frontend/` directory**
-3. **Tell Claude Code:** "Start with Phase 1, execute files 01-03 in order"
-4. **Monitor progress** via GitHub commits
-5. **Approve Phase 2** after Phase 1 tests pass
+If Claude Code encounters blockers:
+
+1. Check the troubleshooting section in the relevant file
+2. Review error logs and stack traces
+3. Verify prerequisites are met
+4. Test components in isolation
+5. Document the issue and escalate to Joseph
+
+**Include in escalation:**
+- Command file being executed
+- Step where failure occurred
+- Complete error message
+- Environment (local/staging/production)
+- Steps already attempted
 
 ---
 
-**Last Updated:** October 15, 2025
-**Status:** Ready for execution
-**Estimated Completion:** ~2 weeks from start
+**End of Master Manifest - Ready for Execution** �
