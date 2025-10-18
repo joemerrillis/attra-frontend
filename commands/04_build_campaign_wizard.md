@@ -1,871 +1,768 @@
-# Build Campaign Wizard
+# 04_build_campaign_wizard.md
 
-## Objective
-Create an outcome-based campaign wizard that guides tenants through creating their first (and subsequent) marketing campaigns. The wizard should generate AI-powered copy, allow location selection, let users choose layout styles, and generate print-ready flyers with embedded QR codes. Emphasizes "what are you trying to accomplish?" over "design your own flyer."
+## 🎯 Goal
 
-## Dependencies
-- ✅ `03_build_onboarding_wizard.md` (tenant + location exist)
-- ✅ Backend file 07 (QR/UTM generation)
-- ✅ `05_build_ai_copy_generation_service.md` (AI copy API)
-- ✅ `06_build_pdf_generation_service.md` (PDF rendering)
-
-## Philosophy
-**"Tell us what you're promoting. We'll design the rest."**
-- User chooses goal → System generates copy
-- User picks locations → System creates location-specific QRs
-- User selects layout → System renders branded flyer
-- No pixel-pushing, no freeform design tools
+Create a campaign wizard that guides users through creating a flyer campaign: choose goal, write copy (with optional AI refinement), select layout, preview PDF, and generate the final flyer.
 
 ---
 
-## Tech Stack
-- **Frontend:** React + TypeScript, React Hook Form + Zod, Shadcn/ui
-- **State:** React Query for API calls, useState for wizard steps
-- **Preview:** PDF.js or iframe for PDF preview
-- **File Download:** Browser download API
+## 📋 Prerequisites
+
+- ✅ `02_build_auth_and_tenant_setup.md` completed (auth working)
+- ✅ `03_build_onboarding_wizard.md` completed (locations exist)
+- ✅ Backend `06.5_ai_copy_refinement.md` completed (AI endpoint available)
+- ✅ Backend `09_core_entity_routes.md` completed (campaigns API working)
 
 ---
 
-## File Structure
+## 🗂️ Files Created
 
 ```
-src/
-├── pages/
-│   └── campaigns/
-│       ├── New.tsx
-│       ├── Edit.tsx
-│       └── Detail.tsx
-├── components/
-│   └── campaigns/
-│       ├── CampaignWizard.tsx
-│       ├── GoalSelector.tsx
-│       ├── CopyEditor.tsx
-│       ├── LocationSelector.tsx
-│       ├── LayoutSelector.tsx
-│       ├── PDFPreview.tsx
-│       └── CampaignSummary.tsx
-├── hooks/
-│   ├── useCampaign.ts
-│   ├── useAICopy.ts
-│   └── usePDFGeneration.ts
-└── lib/
-    └── campaign-utils.ts
+src/pages/campaigns/
+ └─ New.tsx
+
+src/components/campaigns/
+ ├─ CampaignWizard.tsx
+ ├─ GoalSelector.tsx
+ ├─ CopyEditor.tsx           ← Main copy input with optional AI refine
+ ├─ LayoutSelector.tsx
+ └─ PDFPreview.tsx
+
+src/hooks/
+ ├─ useCampaign.ts
+ └─ useAIRefine.ts           ← New hook for AI refinement
+
+src/lib/
+ └─ ai.ts                    ← AI API calls
 ```
 
 ---
 
-## Database Schema (Reference)
+## ⚙️ Step 1: Create Campaign Goal Selector
 
-These tables should already exist from backend:
+Create `src/components/campaigns/GoalSelector.tsx`:
 
-```sql
--- Campaigns
-CREATE TABLE ops.campaigns (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  name text NOT NULL,
-  goal text, -- e.g., 'open_house', 'new_clients', 'referrals'
-  status text DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'paused', 'completed')),
-  headline text,
-  subheadline text,
-  layout_key text DEFAULT 'classic', -- 'classic', 'modern', 'minimal'
-  copy_config jsonb, -- Stores AI-generated variations
-  created_at timestamptz DEFAULT NOW(),
-  updated_at timestamptz DEFAULT NOW()
-);
+```tsx
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Target, Users, Calendar, TrendingUp } from 'lucide-react';
 
--- Campaign Locations (many-to-many)
-CREATE TABLE ops.campaign_locations (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id uuid NOT NULL REFERENCES ops.campaigns(id) ON DELETE CASCADE,
-  location_id uuid NOT NULL REFERENCES ops.locations(id) ON DELETE CASCADE,
-  created_at timestamptz DEFAULT NOW(),
-  UNIQUE(campaign_id, location_id)
-);
-
--- Assets (generated flyers)
-CREATE TABLE ops.assets (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id uuid NOT NULL REFERENCES ops.campaigns(id) ON DELETE CASCADE,
-  location_id uuid REFERENCES ops.locations(id) ON DELETE SET NULL,
-  asset_type text DEFAULT 'flyer',
-  file_url text NOT NULL, -- Supabase Storage URL
-  qr_link_id uuid REFERENCES ops.qr_links(id),
-  created_at timestamptz DEFAULT NOW()
-);
-```
-
----
-
-## Campaign Wizard Flow
-
-### Step 1: Campaign Goal
-**Question:** "What are you promoting?"
-**UI:** Cards with goal options (varies by vertical)
-
-**Example for Real Estate:**
-- Open House
-- New Listing
-- Referral Program
-- Neighborhood Update
-
-**Example for Dog Walking:**
-- New Clients
-- Referral Bonus
-- Seasonal Promotion
-- Service Expansion
-
-### Step 2: Generate Copy (AI)
-**Question:** "Let AI write your headline"
-**UI:** 
-- Loading state while AI generates
-- Shows 3 variations
-- User can regenerate or edit manually
-- Preview shows copy on flyer template
-
-### Step 3: Select Locations
-**Question:** "Where will you distribute these flyers?"
-**UI:**
-- List of tenant's locations
-- Multi-select checkboxes
-- Each location gets unique QR code
-- "Add new location" button
-
-### Step 4: Choose Layout
-**Question:** "Pick your style"
-**UI:**
-- 3 visual previews (Classic, Modern, Minimal)
-- Radio selection
-- Preview updates in real-time
-
-### Step 5: Review & Generate
-**Question:** "Ready to print?"
-**UI:**
-- Summary of campaign
-- Flyer preview
-- Generate button
-- Download all PDFs (zip if multiple locations)
-
----
-
-## Implementation
-
-### 1. Campaign Hook
-
-**File:** `src/hooks/useCampaign.ts`
-
-```typescript
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-
-interface CampaignData {
-  name: string;
-  goal: string;
-  headline: string;
-  subheadline: string;
-  layout_key: string;
-  location_ids: string[];
-}
-
-export const useCampaign = () => {
-  const { tenant } = useAuth();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-
-  const createCampaign = useMutation({
-    mutationFn: async (data: CampaignData) => {
-      const response = await api.post('/api/campaigns', {
-        tenant_id: tenant?.id,
-        ...data,
-        status: 'draft'
-      });
-      return response.data;
-    },
-    onSuccess: (campaign) => {
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      navigate(`/campaigns/${campaign.id}`);
-    }
-  });
-
-  const generateAssets = useMutation({
-    mutationFn: async (campaignId: string) => {
-      const response = await api.post(`/api/campaigns/${campaignId}/generate-assets`);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      queryClient.invalidateQueries({ queryKey: ['assets'] });
-    }
-  });
-
-  return {
-    createCampaign,
-    generateAssets
-  };
-};
-```
-
----
-
-### 2. AI Copy Hook
-
-**File:** `src/hooks/useAICopy.ts`
-
-```typescript
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { useAuth } from '@/hooks/useAuth';
-
-interface GenerateCopyParams {
-  goal: string;
-  vertical: string;
-  location_name?: string;
-  additional_context?: string;
-}
-
-export const useAICopy = () => {
-  const { tenant } = useAuth();
-  
-  const generateCopy = useMutation({
-    mutationFn: async (params: GenerateCopyParams) => {
-      const response = await api.post('/api/ai/generate-copy', {
-        tenant_id: tenant?.id,
-        ...params
-      });
-      return response.data;
-    }
-  });
-
-  return {
-    generateCopy: generateCopy.mutate,
-    isGenerating: generateCopy.isPending,
-    variations: generateCopy.data?.variations || [],
-    error: generateCopy.error
-  };
-};
-```
-
----
-
-### 3. Goal Selector Component
-
-**File:** `src/components/campaigns/GoalSelector.tsx`
-
-```typescript
-import React from 'react';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Target, Users, Gift, Home, Megaphone } from 'lucide-react';
-
-const goalIcons: Record<string, any> = {
-  open_house: Home,
-  new_listing: Target,
-  referrals: Users,
-  promotion: Gift,
-  awareness: Megaphone
-};
+const CAMPAIGN_GOALS = [
+  {
+    id: 'new_clients',
+    name: 'Get New Clients',
+    description: 'Attract new customers to your business',
+    icon: Users,
+    color: 'text-blue-600'
+  },
+  {
+    id: 'retention',
+    name: 'Retain Existing Clients',
+    description: 'Keep current customers engaged',
+    icon: Target,
+    color: 'text-green-600'
+  },
+  {
+    id: 'event',
+    name: 'Promote an Event',
+    description: 'Drive attendance to a specific event',
+    icon: Calendar,
+    color: 'text-purple-600'
+  },
+  {
+    id: 'awareness',
+    name: 'Build Awareness',
+    description: 'Increase brand visibility in your area',
+    icon: TrendingUp,
+    color: 'text-orange-600'
+  }
+];
 
 interface GoalSelectorProps {
-  vertical: string;
-  value: string;
-  onChange: (value: string) => void;
+  selected: string | null;
+  onSelect: (goalId: string) => void;
 }
 
-const goalsByVertical: Record<string, Array<{ key: string; label: string; description: string }>> = {
-  real_estate: [
-    { key: 'open_house', label: 'Promote an Open House', description: 'Drive attendance to property showing' },
-    { key: 'new_listing', label: 'Announce New Listing', description: 'Generate leads for new property' },
-    { key: 'referrals', label: 'Generate Referrals', description: 'Encourage word-of-mouth marketing' }
-  ],
-  pet_services: [
-    { key: 'new_clients', label: 'Get More Clients', description: 'Attract new pet owners' },
-    { key: 'referrals', label: 'Referral Program', description: 'Reward existing clients for referrals' },
-    { key: 'promotion', label: 'Special Offer', description: 'Promote discount or seasonal deal' }
-  ],
-  home_services: [
-    { key: 'new_area', label: 'Service Area Expansion', description: 'Announce availability in new neighborhood' },
-    { key: 'promotion', label: 'Special Offer', description: 'Limited-time discount or package deal' },
-    { key: 'referrals', label: 'Referral Program', description: 'Grow through customer recommendations' }
-  ]
-};
-
-export const GoalSelector: React.FC<GoalSelectorProps> = ({ vertical, value, onChange }) => {
-  const goals = goalsByVertical[vertical] || goalsByVertical.pet_services;
-
+export function GoalSelector({ selected, onSelect }: GoalSelectorProps) {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">What are you promoting?</h2>
-      <p className="text-gray-600 mb-6">
-        We'll customize your flyer based on your goal
-      </p>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold">What's your goal?</h2>
+        <p className="text-muted-foreground">
+          Choose what you want this campaign to achieve
+        </p>
+      </div>
 
-      <RadioGroup value={value} onValueChange={onChange}>
-        <div className="space-y-3">
-          {goals.map((goal) => {
-            const Icon = goalIcons[goal.key] || Target;
-            return (
-              <Label
-                key={goal.key}
-                htmlFor={goal.key}
-                className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:border-blue-300 transition-colors"
-              >
-                <RadioGroupItem
-                  value={goal.key}
-                  id={goal.key}
-                  className="mt-1 flex-shrink-0"
-                />
-                <Icon className="w-6 h-6 text-blue-600 mx-3 flex-shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-semibold">{goal.label}</div>
-                  <div className="text-sm text-gray-600">{goal.description}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {CAMPAIGN_GOALS.map((goal) => {
+          const Icon = goal.icon;
+          const isSelected = selected === goal.id;
+
+          return (
+            <Card
+              key={goal.id}
+              className={`cursor-pointer transition-all hover:border-primary ${
+                isSelected ? 'border-primary ring-2 ring-primary' : ''
+              }`}
+              onClick={() => onSelect(goal.id)}
+            >
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Icon className={`w-6 h-6 ${goal.color}`} />
+                  <CardTitle className="text-lg">{goal.name}</CardTitle>
                 </div>
-              </Label>
-            );
-          })}
-        </div>
-      </RadioGroup>
+                <CardDescription>{goal.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
-};
+}
 ```
 
 ---
 
-### 4. Copy Editor Component
+## ⚙️ Step 2: Create Copy Editor with Optional AI Refine
 
-**File:** `src/components/campaigns/CopyEditor.tsx`
+Create `src/components/campaigns/CopyEditor.tsx`:
 
-```typescript
-import React, { useState, useEffect } from 'react';
+```tsx
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, RefreshCw, Sparkles } from 'lucide-react';
-import { useAICopy } from '@/hooks/useAICopy';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sparkles, Check, X, Loader2 } from 'lucide-react';
+import { useAIRefine } from '@/hooks/useAIRefine';
 
 interface CopyEditorProps {
-  goal: string;
-  vertical: string;
-  headline: string;
-  subheadline: string;
-  onHeadlineChange: (value: string) => void;
-  onSubheadlineChange: (value: string) => void;
+  copy: {
+    headline: string;
+    subheadline: string;
+    cta: string;
+  };
+  onChange: (copy: any) => void;
+  context: {
+    vertical: string;
+    location: string;
+    goal: string;
+  };
 }
 
-export const CopyEditor: React.FC<CopyEditorProps> = ({
-  goal,
-  vertical,
-  headline,
-  subheadline,
-  onHeadlineChange,
-  onSubheadlineChange
-}) => {
-  const { generateCopy, isGenerating, variations } = useAICopy();
-  const [showVariations, setShowVariations] = useState(false);
+export function CopyEditor({ copy, onChange, context }: CopyEditorProps) {
+  const [localCopy, setLocalCopy] = useState(copy);
+  const { refine, isRefining, refinedCopy, clearRefinement } = useAIRefine();
 
-  useEffect(() => {
-    // Auto-generate on mount if headline is empty
-    if (!headline && goal) {
-      handleGenerate();
+  const handleChange = (field: string, value: string) => {
+    const updated = { ...localCopy, [field]: value };
+    setLocalCopy(updated);
+    onChange(updated);
+  };
+
+  const handleRefine = async () => {
+    await refine({
+      current_copy: localCopy,
+      context
+    });
+  };
+
+  const handleAcceptRefinement = () => {
+    if (refinedCopy) {
+      setLocalCopy(refinedCopy.refined_copy);
+      onChange(refinedCopy.refined_copy);
+      clearRefinement();
     }
-  }, []);
+  };
 
-  const handleGenerate = () => {
-    generateCopy(
-      { goal, vertical },
-      {
-        onSuccess: (data) => {
-          if (data.variations && data.variations.length > 0) {
-            onHeadlineChange(data.variations[0].headline);
-            onSubheadlineChange(data.variations[0].subheadline);
-            setShowVariations(true);
-          }
-        }
-      }
-    );
+  const handleRejectRefinement = () => {
+    clearRefinement();
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">Your Marketing Copy</h2>
-      <p className="text-gray-600 mb-6">
-        AI-generated copy based on your goal. Edit as needed.
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Write your flyer copy</h2>
+        <p className="text-muted-foreground">
+          Create compelling copy that speaks to your audience
+        </p>
+      </div>
 
-      {isGenerating ? (
-        <div className="flex items-center justify-center py-12 border-2 border-dashed rounded-lg">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
-            <p className="text-gray-600">Generating perfect copy...</p>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Headline */}
-          <div>
-            <Label htmlFor="headline">Headline</Label>
-            <Input
-              id="headline"
-              value={headline}
-              onChange={(e) => onHeadlineChange(e.target.value)}
-              placeholder="Your attention-grabbing headline"
-              maxLength={60}
-              className="mt-1"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {headline.length}/60 characters
-            </p>
-          </div>
+      {/* Headline */}
+      <div className="space-y-2">
+        <Label htmlFor="headline">Headline</Label>
+        <Input
+          id="headline"
+          value={localCopy.headline}
+          onChange={(e) => handleChange('headline', e.target.value)}
+          placeholder="Your dog deserves better walks"
+          maxLength={60}
+        />
+        <p className="text-xs text-muted-foreground">
+          {localCopy.headline.length}/60 characters
+        </p>
+      </div>
 
-          {/* Subheadline */}
-          <div>
-            <Label htmlFor="subheadline">Subheadline</Label>
-            <Textarea
-              id="subheadline"
-              value={subheadline}
-              onChange={(e) => onSubheadlineChange(e.target.value)}
-              placeholder="Supporting details"
-              maxLength={140}
-              rows={3}
-              className="mt-1"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {subheadline.length}/140 characters
-            </p>
-          </div>
+      {/* Subheadline */}
+      <div className="space-y-2">
+        <Label htmlFor="subheadline">Subheadline</Label>
+        <Textarea
+          id="subheadline"
+          value={localCopy.subheadline}
+          onChange={(e) => handleChange('subheadline', e.target.value)}
+          placeholder="Professional dog walkers trusted by 200+ families in your building"
+          maxLength={120}
+          rows={3}
+        />
+        <p className="text-xs text-muted-foreground">
+          {localCopy.subheadline.length}/120 characters
+        </p>
+      </div>
 
-          {/* Regenerate button */}
-          <Button
-            variant="outline"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="w-full"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Regenerate with AI
-          </Button>
+      {/* CTA */}
+      <div className="space-y-2">
+        <Label htmlFor="cta">Call to Action</Label>
+        <Input
+          id="cta"
+          value={localCopy.cta}
+          onChange={(e) => handleChange('cta', e.target.value)}
+          placeholder="Book your first walk free"
+          maxLength={40}
+        />
+        <p className="text-xs text-muted-foreground">
+          {localCopy.cta.length}/40 characters
+        </p>
+      </div>
 
-          {/* Variations */}
-          {showVariations && variations.length > 1 && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-semibold mb-3 flex items-center">
-                <Sparkles className="w-4 h-4 mr-2 text-blue-600" />
-                Other AI Variations
-              </h3>
-              <div className="space-y-2">
-                {variations.slice(1).map((variation: any, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      onHeadlineChange(variation.headline);
-                      onSubheadlineChange(variation.subheadline);
-                    }}
-                    className="w-full text-left p-3 bg-white rounded border hover:border-blue-300 transition-colors"
-                  >
-                    <p className="font-medium text-sm">{variation.headline}</p>
-                    <p className="text-xs text-gray-600">{variation.subheadline}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* AI Refine Button */}
+      {!refinedCopy && (
+        <Button
+          variant="outline"
+          onClick={handleRefine}
+          disabled={isRefining || !localCopy.headline}
+          className="w-full"
+        >
+          {isRefining ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Refining...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Refine (Optional)
+            </>
           )}
-        </div>
+        </Button>
+      )}
+
+      {/* Refinement Preview */}
+      {refinedCopy && (
+        <Card className="border-primary">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              AI Suggestions
+            </CardTitle>
+            <CardDescription>
+              Review these improvements and decide whether to use them
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Refined Headline */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Refined Headline</p>
+              <p className="font-semibold">{refinedCopy.refined_copy.headline}</p>
+            </div>
+
+            {/* Refined Subheadline */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Refined Subheadline</p>
+              <p className="text-sm">{refinedCopy.refined_copy.subheadline}</p>
+            </div>
+
+            {/* Refined CTA */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Refined CTA</p>
+              <p className="text-sm font-medium">{refinedCopy.refined_copy.cta}</p>
+            </div>
+
+            {/* Reasoning */}
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground italic">
+                {refinedCopy.reasoning}
+              </p>
+            </div>
+
+            {/* Accept/Reject Buttons */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={handleAcceptRefinement}
+                className="flex-1"
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Use This
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleRejectRefinement}
+                className="flex-1"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Keep Mine
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
-};
+}
 ```
 
 ---
 
-### 5. Location Selector Component
+## ⚙️ Step 3: Create AI Refine Hook
 
-**File:** `src/components/campaigns/LocationSelector.tsx`
+Create `src/hooks/useAIRefine.ts`:
 
 ```typescript
-import React from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Plus, MapPin } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
+import { refineCopy } from '@/lib/ai';
+import { useToast } from '@/components/ui/use-toast';
 
-interface LocationSelectorProps {
-  selectedLocationIds: string[];
-  onSelectionChange: (locationIds: string[]) => void;
+interface RefineCopyParams {
+  current_copy: {
+    headline: string;
+    subheadline: string;
+    cta: string;
+  };
+  context: {
+    vertical: string;
+    location: string;
+    goal: string;
+  };
 }
 
-export const LocationSelector: React.FC<LocationSelectorProps> = ({
-  selectedLocationIds,
-  onSelectionChange
-}) => {
-  const { tenant } = useAuth();
+export function useAIRefine() {
+  const [isRefining, setIsRefining] = useState(false);
+  const [refinedCopy, setRefinedCopy] = useState<any>(null);
+  const { toast } = useToast();
 
-  const { data: locations, isLoading } = useQuery({
-    queryKey: ['locations', tenant?.id],
-    queryFn: async () => {
-      const response = await api.get(`/api/locations?tenant_id=${tenant?.id}`);
-      return response.data.locations;
-    },
-    enabled: !!tenant?.id
-  });
-
-  const toggleLocation = (locationId: string) => {
-    if (selectedLocationIds.includes(locationId)) {
-      onSelectionChange(selectedLocationIds.filter(id => id !== locationId));
-    } else {
-      onSelectionChange([...selectedLocationIds, locationId]);
+  const refine = async (params: RefineCopyParams) => {
+    setIsRefining(true);
+    
+    try {
+      const result = await refineCopy(params);
+      
+      if (result.error) {
+        toast({
+          title: 'Refinement failed',
+          description: result.details || 'Unable to refine copy. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      setRefinedCopy(result);
+    } catch (error) {
+      toast({
+        title: 'Refinement failed',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsRefining(false);
     }
   };
 
-  const selectAll = () => {
-    onSelectionChange(locations.map((loc: any) => loc.id));
+  const clearRefinement = () => {
+    setRefinedCopy(null);
   };
 
-  const deselectAll = () => {
-    onSelectionChange([]);
+  return {
+    refine,
+    isRefining,
+    refinedCopy,
+    clearRefinement
   };
+}
+```
 
-  if (isLoading) {
-    return <div>Loading locations...</div>;
+---
+
+## ⚙️ Step 4: Create AI API Client
+
+Create `src/lib/ai.ts`:
+
+```typescript
+import { supabase } from './supabase';
+
+interface RefineCopyParams {
+  current_copy: {
+    headline: string;
+    subheadline: string;
+    cta: string;
+  };
+  context: {
+    vertical: string;
+    location: string;
+    goal: string;
+    campaign_id?: string;
+  };
+}
+
+export async function refineCopy(params: RefineCopyParams) {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Not authenticated');
   }
 
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">Where will you distribute?</h2>
-      <p className="text-gray-600 mb-6">
-        Each location gets a unique QR code for tracking
-      </p>
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/internal/ai/refine-copy`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(params)
+  });
 
-      <div className="flex gap-2 mb-4">
-        <Button variant="outline" size="sm" onClick={selectAll}>
-          Select All
-        </Button>
-        <Button variant="outline" size="sm" onClick={deselectAll}>
-          Deselect All
-        </Button>
-      </div>
+  if (!response.ok) {
+    const error = await response.json();
+    return { error: error.error, details: error.details };
+  }
 
-      <div className="space-y-3 mb-4">
-        {locations?.map((location: any) => (
-          <Label
-            key={location.id}
-            htmlFor={location.id}
-            className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
-          >
-            <Checkbox
-              id={location.id}
-              checked={selectedLocationIds.includes(location.id)}
-              onCheckedChange={() => toggleLocation(location.id)}
-            />
-            <MapPin className="w-5 h-5 text-gray-400 mx-3" />
-            <div className="flex-1">
-              <p className="font-medium">{location.name}</p>
-              <p className="text-sm text-gray-600">{location.address}</p>
-            </div>
-          </Label>
-        ))}
-      </div>
+  return await response.json();
+}
 
-      <Button variant="outline" className="w-full">
-        <Plus className="w-4 h-4 mr-2" />
-        Add New Location
-      </Button>
+export async function getAIRateLimit() {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
 
-      {selectedLocationIds.length > 0 && (
-        <p className="text-sm text-gray-600 mt-4">
-          {selectedLocationIds.length} location{selectedLocationIds.length !== 1 ? 's' : ''} selected
-        </p>
-      )}
-    </div>
-  );
-};
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/internal/ai/rate-limit`, {
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`
+    }
+  });
+
+  return await response.json();
+}
 ```
 
 ---
 
-### 6. Layout Selector Component
+## ⚙️ Step 5: Create Layout Selector
 
-**File:** `src/components/campaigns/LayoutSelector.tsx`
+Create `src/components/campaigns/LayoutSelector.tsx`:
 
-```typescript
-import React from 'react';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+```tsx
+import { Card, CardContent } from '@/components/ui/card';
+import { Check } from 'lucide-react';
 
-interface LayoutSelectorProps {
-  value: string;
-  onChange: (value: string) => void;
-}
-
-const layouts = [
+const LAYOUTS = [
   {
-    key: 'classic',
+    id: 'classic',
     name: 'Classic',
-    description: 'Centered layout with bold headline',
-    preview: '/layouts/classic-preview.svg' // You'd create these
+    description: 'Traditional flyer with centered text',
+    preview: '/layouts/classic-preview.png'
   },
   {
-    key: 'modern',
+    id: 'modern',
     name: 'Modern',
-    description: 'Photo-focused with overlaid text',
-    preview: '/layouts/modern-preview.svg'
+    description: 'Clean design with bold typography',
+    preview: '/layouts/modern-preview.png'
   },
   {
-    key: 'minimal',
+    id: 'minimal',
     name: 'Minimal',
-    description: 'Clean text-only design',
-    preview: '/layouts/minimal-preview.svg'
+    description: 'Simple and elegant with lots of whitespace',
+    preview: '/layouts/minimal-preview.png'
   }
 ];
 
-export const LayoutSelector: React.FC<LayoutSelectorProps> = ({ value, onChange }) => {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">Choose Your Style</h2>
-      <p className="text-gray-600 mb-6">
-        All layouts are professionally designed and print-ready
-      </p>
+interface LayoutSelectorProps {
+  selected: string;
+  onSelect: (layoutId: string) => void;
+}
 
-      <RadioGroup value={value} onValueChange={onChange}>
-        <div className="grid md:grid-cols-3 gap-4">
-          {layouts.map((layout) => (
-            <Label
-              key={layout.key}
-              htmlFor={layout.key}
-              className="cursor-pointer"
+export function LayoutSelector({ selected, onSelect }: LayoutSelectorProps) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold">Choose your layout</h2>
+        <p className="text-muted-foreground">
+          Select a design that fits your brand
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {LAYOUTS.map((layout) => {
+          const isSelected = selected === layout.id;
+
+          return (
+            <Card
+              key={layout.id}
+              className={`cursor-pointer transition-all hover:border-primary ${
+                isSelected ? 'border-primary ring-2 ring-primary' : ''
+              }`}
+              onClick={() => onSelect(layout.id)}
             >
-              <div className="border-2 rounded-lg overflow-hidden hover:border-blue-300 transition-colors">
-                {/* Preview image placeholder */}
-                <div className="aspect-[8.5/11] bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">{layout.name} Preview</span>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold">{layout.name}</h3>
-                    <RadioGroupItem value={layout.key} id={layout.key} />
+              <CardContent className="p-4">
+                <div className="aspect-[8.5/11] bg-muted rounded-md mb-3 relative overflow-hidden">
+                  {/* Layout preview image would go here */}
+                  <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                    {layout.name} Layout
                   </div>
-                  <p className="text-sm text-gray-600">{layout.description}</p>
+                  
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                      <Check className="w-4 h-4" />
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Label>
-          ))}
-        </div>
-      </RadioGroup>
+                <h3 className="font-semibold mb-1">{layout.name}</h3>
+                <p className="text-sm text-muted-foreground">{layout.description}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
-};
+}
 ```
 
 ---
 
-### 7. Main Campaign Wizard
+## ⚙️ Step 6: Create PDF Preview Component
 
-**File:** `src/pages/campaigns/New.tsx`
+Create `src/components/campaigns/PDFPreview.tsx`:
 
-```typescript
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+```tsx
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent } from '@/components/ui/card';
+import { Download, Eye } from 'lucide-react';
+
+interface PDFPreviewProps {
+  pdfUrl: string | null;
+  isGenerating: boolean;
+  campaign: any;
+  onGenerate: () => void;
+}
+
+export function PDFPreview({ pdfUrl, isGenerating, campaign, onGenerate }: PDFPreviewProps) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold">Preview & Generate</h2>
+        <p className="text-muted-foreground">
+          Review your flyer before generating the final PDF
+        </p>
+      </div>
+
+      <Card>
+        <CardContent className="p-6">
+          {/* Preview Area */}
+          <div className="aspect-[8.5/11] bg-muted rounded-md mb-4 flex items-center justify-center">
+            {pdfUrl ? (
+              <iframe
+                src={pdfUrl}
+                className="w-full h-full rounded-md"
+                title="PDF Preview"
+              />
+            ) : (
+              <div className="text-center space-y-4">
+                <Eye className="w-12 h-12 mx-auto text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Ready to generate your flyer</p>
+                  <p className="text-sm text-muted-foreground">
+                    Click below to create your PDF
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            {!pdfUrl ? (
+              <Button
+                onClick={onGenerate}
+                disabled={isGenerating}
+                className="flex-1"
+              >
+                {isGenerating ? 'Generating...' : 'Generate PDF'}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={onGenerate}
+                  disabled={isGenerating}
+                  className="flex-1"
+                >
+                  Regenerate
+                </Button>
+                <Button
+                  asChild
+                  className="flex-1"
+                >
+                  <a href={pdfUrl} download>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </a>
+                </Button>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+```
+
+---
+
+## ⚙️ Step 7: Create Campaign Wizard Container
+
+Create `src/components/campaigns/CampaignWizard.tsx`:
+
+```tsx
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { GoalSelector } from './GoalSelector';
+import { CopyEditor } from './CopyEditor';
+import { LayoutSelector } from './LayoutSelector';
+import { PDFPreview } from './PDFPreview';
 import { useCampaign } from '@/hooks/useCampaign';
-import { GoalSelector } from '@/components/campaigns/GoalSelector';
-import { CopyEditor } from '@/components/campaigns/CopyEditor';
-import { LocationSelector } from '@/components/campaigns/LocationSelector';
-import { LayoutSelector } from '@/components/campaigns/LayoutSelector';
 
-export default function NewCampaign() {
-  const navigate = useNavigate();
-  const { tenant } = useAuth();
-  const { createCampaign, generateAssets } = useCampaign();
-  
-  const [step, setStep] = useState(1);
-  const [goal, setGoal] = useState('');
-  const [headline, setHeadline] = useState('');
-  const [subheadline, setSubheadline] = useState('');
-  const [locationIds, setLocationIds] = useState<string[]>([]);
-  const [layoutKey, setLayoutKey] = useState('classic');
+const STEPS = [
+  { id: 'goal', name: 'Goal' },
+  { id: 'copy', name: 'Copy' },
+  { id: 'layout', name: 'Layout' },
+  { id: 'preview', name: 'Preview' }
+];
 
-  // Get campaign goal from localStorage (set during onboarding)
-  useEffect(() => {
-    const savedGoal = localStorage.getItem('attra_campaign_goal');
-    if (savedGoal) {
-      setGoal(savedGoal);
-      localStorage.removeItem('attra_campaign_goal');
-    }
-  }, []);
+export function CampaignWizard() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const {
+    campaign,
+    updateCampaign,
+    generatePDF,
+    pdfUrl,
+    isGenerating
+  } = useCampaign();
 
   const canProceed = () => {
-    switch (step) {
-      case 1: return goal !== '';
-      case 2: return headline.trim() !== '' && subheadline.trim() !== '';
-      case 3: return locationIds.length > 0;
-      case 4: return layoutKey !== '';
-      default: return false;
+    switch (currentStep) {
+      case 0: return !!campaign.goal;
+      case 1: return !!campaign.copy?.headline;
+      case 2: return !!campaign.layout;
+      default: return true;
     }
   };
 
   const handleNext = () => {
-    if (step < 5) {
-      setStep(step + 1);
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (step > 1) {
-      setStep(step - 1);
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
-  const handleCreate = async () => {
-    try {
-      const campaign = await createCampaign.mutateAsync({
-        name: headline,
-        goal,
-        headline,
-        subheadline,
-        layout_key: layoutKey,
-        location_ids: locationIds
-      });
-
-      // Generate assets (PDFs + QR codes)
-      await generateAssets.mutateAsync(campaign.id);
-
-      // Navigate to campaign detail
-      navigate(`/campaigns/${campaign.id}`);
-    } catch (error) {
-      console.error('Failed to create campaign:', error);
-    }
-  };
+  const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        {/* Progress bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">
-              Step {step} of 5
-            </span>
-            <span className="text-sm text-gray-500">
-              {Math.round((step / 5) * 100)}% complete
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(step / 5) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          {step === 1 && (
-            <GoalSelector
-              vertical={tenant?.vertical || 'pet_services'}
-              value={goal}
-              onChange={setGoal}
-            />
-          )}
-
-          {step === 2 && (
-            <CopyEditor
-              goal={goal}
-              vertical={tenant?.vertical || 'pet_services'}
-              headline={headline}
-              subheadline={subheadline}
-              onHeadlineChange={setHeadline}
-              onSubheadlineChange={setSubheadline}
-            />
-          )}
-
-          {step === 3 && (
-            <LocationSelector
-              selectedLocationIds={locationIds}
-              onSelectionChange={setLocationIds}
-            />
-          )}
-
-          {step === 4 && (
-            <LayoutSelector
-              value={layoutKey}
-              onChange={setLayoutKey}
-            />
-          )}
-
-          {step === 5 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Review & Generate</h2>
-              <p className="text-gray-600 mb-6">
-                Everything looks good? Let's create your flyers!
-              </p>
-
-              <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-500">Goal</p>
-                  <p className="font-medium">{goal.replace('_', ' ')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Headline</p>
-                  <p className="font-medium">{headline}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Locations</p>
-                  <p className="font-medium">{locationIds.length} selected</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Layout</p>
-                  <p className="font-medium">{layoutKey}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Navigation */}
-          <div className="flex justify-between mt-8 pt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={step === 1 || createCampaign.isPending}
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Progress Bar */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          {STEPS.map((step, index) => (
+            <span
+              key={step.id}
+              className={
+                index === currentStep
+                  ? 'font-semibold text-primary'
+                  : index < currentStep
+                  ? 'text-muted-foreground'
+                  : 'text-muted-foreground/50'
+              }
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-
-            {step < 5 ? (
-              <Button onClick={handleNext} disabled={!canProceed()}>
-                Next
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleCreate}
-                disabled={!canProceed() || createCampaign.isPending}
-              >
-                {createCampaign.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    Create Campaign
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+              {step.name}
+            </span>
+          ))}
         </div>
+        <Progress value={progress} />
+      </div>
+
+      {/* Step Content */}
+      <div className="min-h-[500px]">
+        {currentStep === 0 && (
+          <GoalSelector
+            selected={campaign.goal}
+            onSelect={(goal) => updateCampaign({ goal })}
+          />
+        )}
+
+        {currentStep === 1 && (
+          <CopyEditor
+            copy={campaign.copy || { headline: '', subheadline: '', cta: '' }}
+            onChange={(copy) => updateCampaign({ copy })}
+            context={{
+              vertical: campaign.vertical || 'default',
+              location: campaign.location?.name || '',
+              goal: campaign.goal || ''
+            }}
+          />
+        )}
+
+        {currentStep === 2 && (
+          <LayoutSelector
+            selected={campaign.layout || 'classic'}
+            onSelect={(layout) => updateCampaign({ layout })}
+          />
+        )}
+
+        {currentStep === 3 && (
+          <PDFPreview
+            pdfUrl={pdfUrl}
+            isGenerating={isGenerating}
+            campaign={campaign}
+            onGenerate={generatePDF}
+          />
+        )}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button
+          variant="outline"
+          onClick={handleBack}
+          disabled={currentStep === 0}
+        >
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+
+        <Button
+          onClick={handleNext}
+          disabled={!canProceed() || currentStep === STEPS.length - 1}
+        >
+          Next
+          <ChevronRight className="w-4 h-4 ml-2" />
+        </Button>
       </div>
     </div>
   );
@@ -874,77 +771,206 @@ export default function NewCampaign() {
 
 ---
 
-## API Integration
+## ⚙️ Step 8: Create Campaign Hook
 
-### Campaign API Client
+Create `src/hooks/useCampaign.ts`:
 
 ```typescript
-// lib/api-client.ts
-export const campaignApi = {
-  async create(data: CampaignData) {
-    const response = await api.post('/api/campaigns', data);
-    return response.data;
-  },
-  
-  async generateAssets(campaignId: string) {
-    const response = await api.post(`/api/campaigns/${campaignId}/generate-assets`);
-    return response.data;
-  },
-  
-  async getById(campaignId: string) {
-    const response = await api.get(`/api/campaigns/${campaignId}`);
-    return response.data;
-  },
-  
-  async list(tenantId: string) {
-    const response = await api.get(`/api/campaigns?tenant_id=${tenantId}`);
-    return response.data;
-  }
-};
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+
+export function useCampaign() {
+  const [campaign, setCampaign] = useState<any>({});
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
+
+  const updateCampaign = (updates: any) => {
+    setCampaign((prev: any) => ({ ...prev, ...updates }));
+  };
+
+  const generatePDF = async () => {
+    setIsGenerating(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // First, create/update campaign
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/internal/campaigns`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            name: campaign.copy.headline,
+            goal: campaign.goal,
+            copy: campaign.copy,
+            layout: campaign.layout
+          })
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to create campaign');
+
+      const createdCampaign = await response.json();
+
+      // Then trigger PDF generation
+      const pdfResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/internal/campaigns/${createdCampaign.id}/generate-flyer`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        }
+      );
+
+      if (!pdfResponse.ok) throw new Error('Failed to generate PDF');
+
+      const result = await pdfResponse.json();
+
+      // Poll for PDF completion (placeholder - implement actual polling)
+      toast({
+        title: 'PDF Generating',
+        description: 'Your flyer is being created. This may take a moment.',
+      });
+
+      // Simulate PDF generation completion
+      setTimeout(() => {
+        setPdfUrl('/sample-flyer.pdf'); // Replace with actual PDF URL from job
+        toast({
+          title: 'PDF Ready',
+          description: 'Your flyer has been generated successfully!',
+        });
+      }, 3000);
+
+    } catch (error) {
+      toast({
+        title: 'Generation failed',
+        description: 'Unable to generate PDF. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return {
+    campaign,
+    updateCampaign,
+    generatePDF,
+    pdfUrl,
+    isGenerating
+  };
+}
 ```
 
 ---
 
-## Testing
+## ⚙️ Step 9: Create Campaign New Page
 
-### Manual Test Flow
+Create `src/pages/campaigns/New.tsx`:
 
-1. **Navigate to `/campaigns/new`**
-2. **Step 1:** Select goal (e.g., "Open House")
-3. **Step 2:** Wait for AI copy generation → Edit if needed
-4. **Step 3:** Select 2 locations
-5. **Step 4:** Choose "Modern" layout
-6. **Step 5:** Review → Click "Create Campaign"
-7. **Verify:** Redirects to campaign detail page
-8. **Verify:** PDFs are generated and downloadable
-9. **Verify:** Each location has unique QR code
+```tsx
+import { CampaignWizard } from '@/components/campaigns/CampaignWizard';
 
----
+export default function NewCampaign() {
+  return (
+    <div className="container py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Create New Campaign</h1>
+        <p className="text-muted-foreground">
+          Design a flyer to promote your business
+        </p>
+      </div>
 
-## Acceptance Criteria
-
-- [ ] Campaign wizard loads at `/campaigns/new`
-- [ ] Goal selector shows options based on vertical
-- [ ] AI copy generates 3 variations
-- [ ] User can edit copy manually
-- [ ] User can regenerate AI copy
-- [ ] Location selector shows all tenant locations
-- [ ] Multiple locations can be selected
-- [ ] Layout selector shows 3 visual options
-- [ ] Review step shows summary
-- [ ] "Create Campaign" button works
-- [ ] Campaign is created in database
-- [ ] Assets are generated (PDF + QR)
-- [ ] User redirected to campaign detail page
-- [ ] Loading states show during generation
-- [ ] Error handling for failed creation
+      <CampaignWizard />
+    </div>
+  );
+}
+```
 
 ---
 
-## Estimated Build Time
+## ⚙️ Step 10: Add Route
 
-**6 hours**
+Update `src/App.tsx`:
 
-## Priority
+```tsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import NewCampaign from './pages/campaigns/New';
 
-**Critical** - Core product functionality
+// ... other imports
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* ... other routes */}
+        <Route path="/campaigns/new" element={<NewCampaign />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+---
+
+## ✅ Completion Criteria
+
+- ✅ Campaign wizard with 4 steps (Goal, Copy, Layout, Preview)
+- ✅ Goal selector with 4 campaign types
+- ✅ Copy editor with manual input fields
+- ✅ Optional AI refine button integrated
+- ✅ AI refinement preview card with accept/reject
+- ✅ Layout selector with 3 templates
+- ✅ PDF preview component
+- ✅ Progress bar showing current step
+- ✅ Navigation between steps
+- ✅ Form validation before proceeding
+- ✅ Character limits enforced
+- ✅ Error handling for AI failures
+- ✅ Rate limit aware (shows errors gracefully)
+- ✅ Responsive design for mobile
+
+---
+
+## 🔜 Next Steps
+
+1. Implement actual PDF generation polling (replace setTimeout)
+2. Add PDF job status checking
+3. Create layout templates (Classic/Modern/Minimal)
+4. Add campaign save/draft functionality
+5. Proceed to `06_build_pdf_generation_service.md` for backend PDF rendering
+
+---
+
+## 🛠 Troubleshooting
+
+### AI refine button doesn't work:
+- Check that backend `06.5_ai_copy_refinement.md` is completed
+- Verify `VITE_API_URL` is set correctly
+- Check browser console for errors
+
+### Rate limit errors:
+- Check `/api/internal/ai/rate-limit` endpoint
+- Wait for rate limit window to reset
+- Adjust limits in backend if needed
+
+### PDF not generating:
+- Verify campaign is created successfully
+- Check backend job queue is running
+- Look for errors in backend logs
+
+---
+
+**Note for Claude Code:** The AI refinement is completely optional. Users can write their own copy and skip the AI button entirely. The campaign wizard should work perfectly fine without AI - it's just an enhancement feature.
