@@ -4,7 +4,7 @@
 Create frontend components to display QR codes, manage short links, and show UTM parameters. This is mostly for campaign detail pages where tenants can see their generated QR codes and tracking links.
 
 ## Dependencies
-- ✅ Backend file 07 (QR/UTM generation already done)
+- ✅ Backend 13_qr_generation.md (QR/UTM generation already done)
 - ✅ `04_build_campaign_wizard.md` (campaigns exist)
 - ✅ QR codes generated during PDF creation
 
