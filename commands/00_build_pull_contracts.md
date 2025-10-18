@@ -1,4 +1,4 @@
-## 🎨 `app.attra.io/commands/00_pull_contracts.md`
+## 🎨 `app.attra.io/commands/00_build_pull_contracts.md`
 ```markdown
 # 00_pull_contracts.md
 **Goal:** Initialize Attra frontend repository and prepare to consume backend schema contracts.
