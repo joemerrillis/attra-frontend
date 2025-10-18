@@ -4,7 +4,7 @@
 Create frontend components for AI-powered copy generation. This integrates with the backend AI service to generate marketing headlines and subheadlines based on campaign goals. Users see 3 variations, can regenerate, and can edit manually. Emphasizes "starting points, not final copy."
 
 ## Dependencies
-- ✅ Backend AI copy generation API (from backend build)
+- ✅ 14_ai_copy_generation.md (from backend build)
 - ✅ `04_build_campaign_wizard.md` (uses this within wizard)
 - ✅ OpenAI or Anthropic API configured on backend
 
