@@ -22,43 +22,22 @@ export default function AuthCallback() {
       }
 
       const userId = data.session.user.id;
-      const userEmail = data.session.user.email!;
-      const userName = data.session.user.user_metadata?.full_name || userEmail.split('@')[0];
-      const avatarUrl = data.session.user.user_metadata?.avatar_url;
 
-      // Check if user profile exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', userId)
-        .single();
-
-      if (!existingUser) {
-        // Create user profile
-        const { error: userError } = await supabase
-          .from('users')
-          .insert({
-            id: userId,
-            email: userEmail,
-            full_name: userName,
-            avatar_url: avatarUrl,
-          } as any);
-
-        if (userError) throw userError;
-      }
-
-      // Check if user has a tenant
-      const { data: userTenant } = await supabase
-        .from('user_tenants')
-        .select('tenant_id')
+      // Check if user has an active team member record (which means they have a tenant)
+      const { data: teamMember, error: teamError } = await supabase
+        .from('team_members')
+        .select('id, tenant_id')
         .eq('user_id', userId)
+        .eq('is_active', true)
         .single();
 
-      if (!userTenant) {
-        // New user - redirect to onboarding
+      if (teamError || !teamMember) {
+        // New user - no tenant yet, redirect to onboarding
+        console.log('New user, redirecting to onboarding');
         navigate('/onboarding');
       } else {
-        // Existing user - redirect to dashboard
+        // Existing user with tenant - redirect to dashboard
+        console.log('Existing user, redirecting to dashboard');
         navigate('/dashboard');
       }
     } catch (err) {

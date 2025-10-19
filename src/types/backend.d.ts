@@ -4,24 +4,6 @@
 export interface Database {
   public: {
     Tables: {
-      users: {
-        Row: {
-          id: string;
-          email: string;
-          full_name: string | null;
-          avatar_url: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          email: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
       tenants: {
         Row: {
           id: string;
@@ -58,6 +40,30 @@ export interface Database {
           tenant_id: string;
           role?: 'owner' | 'admin' | 'member' | 'viewer';
           created_at?: string;
+        };
+      };
+      team_members: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          user_id: string;
+          display_name: string | null;
+          role: 'owner' | 'admin' | 'member';
+          permissions: any;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          user_id: string;
+          display_name?: string | null;
+          role?: 'owner' | 'admin' | 'member';
+          permissions?: any;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       campaigns: {

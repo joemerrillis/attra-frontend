@@ -14,8 +14,19 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 
 // Type exports for convenience
 export type { Database };
-export type User = Database['public']['Tables']['users']['Row'];
+
+// User type derived from auth.users metadata
+export type User = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Tenant = Database['public']['Tables']['tenants']['Row'];
+export type TeamMember = Database['public']['Tables']['team_members']['Row'];
 export type UserTenant = {
   id: string;
   user_id: string;
