@@ -1,0 +1,25 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# Build
+dist
+build
+
+# Dependencies
+node_modules
+
+# Misc
+.DS_Store
+*.log
+
+# Editor
+.vscode
+.idea
+
+# OS
+Thumbs.db
+
+# Claude Code
+.claude/
