@@ -81,7 +81,56 @@ export interface Database {
           id: string;
           tenant_id: string;
           name: string;
+          address: string;
+          city: string | null;
+          state: string | null;
+          zip_code: string | null;
+          country: string;
+          latitude: number | null;
+          longitude: number | null;
+          notes: string | null;
           created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          address: string;
+          city?: string | null;
+          state?: string | null;
+          zip_code?: string | null;
+          country?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      verticals: {
+        Row: {
+          id: string;
+          key: string;
+          name: string;
+          description: string | null;
+          icon: string | null;
+          language_config: any;
+          created_at: string;
+        };
+      };
+      tenant_verticals: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          vertical_key: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          vertical_key: string;
+          created_at?: string;
         };
       };
     };
