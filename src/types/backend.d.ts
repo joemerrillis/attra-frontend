@@ -9,8 +9,14 @@ export interface Database {
           id: string;
           name: string;
           slug: string | null;
-          logo_url: string | null;
-          primary_color: string;
+          branding: {
+            logo_url?: string;
+            logo?: string;
+            primaryColor?: string;
+            primary_color?: string;
+            secondaryColor?: string;
+            secondary_color?: string;
+          } | null;
           plan_key: string;
           created_at: string;
           updated_at: string;
@@ -19,8 +25,14 @@ export interface Database {
           id?: string;
           name: string;
           slug?: string | null;
-          logo_url?: string | null;
-          primary_color?: string;
+          branding?: {
+            logo_url?: string;
+            logo?: string;
+            primaryColor?: string;
+            primary_color?: string;
+            secondaryColor?: string;
+            secondary_color?: string;
+          } | null;
           plan_key?: string;
           created_at?: string;
           updated_at?: string;
