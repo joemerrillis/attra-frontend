@@ -12,6 +12,7 @@ import Login from '@/pages/Login';
 import AuthCallback from '@/pages/auth/Callback';
 import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
+import NewCampaign from '@/pages/campaigns/New';
 
 function App() {
   return (
@@ -40,6 +41,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/campaigns/new"
+              element={
+                <ProtectedRoute>
+                  <NewCampaign />
                 </ProtectedRoute>
               }
             />

@@ -1,0 +1,3761 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Attra API",
+    "description": "Attribution Infrastructure for Service Businesses",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Attra Support",
+      "url": "https://attra.io"
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "apiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key in Bearer token format"
+      }
+    },
+    "schemas": {}
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Register a new user with email and password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "full_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "full_name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Login with email and password to get JWT token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "refresh_token": {
+                      "type": "string"
+                    },
+                    "expires_at": {
+                      "type": "number"
+                    },
+                    "expires_in": {
+                      "type": "number"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "full_name": {
+                          "type": "string"
+                        },
+                        "tenant_id": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/create-tenant": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Create a new tenant and associate with current user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "slug"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "vertical_key": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "tenant": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "vertical_key": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/q/{id}": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "description": "QR code redirect endpoint - tracks scan and redirects to destination",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/go/{id}": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "description": "Alternative QR redirect format",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/schema": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "description": "List all available schema contracts",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "contracts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "generatedAt": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/tenants": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "description": "List all tenants",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "slug": {
+                        "type": "string"
+                      },
+                      "vertical_key": {
+                        "type": "string"
+                      },
+                      "branding": {
+                        "type": "object"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "description": "Create new tenant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "slug"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "vertical_key": {
+                    "type": "string"
+                  },
+                  "branding": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{id}": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "description": "Get tenant by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tenants"
+        ],
+        "description": "Update tenant",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tenants"
+        ],
+        "description": "Delete tenant",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/schema/{table}": {
+      "get": {
+        "tags": [
+          "internal"
+        ],
+        "description": "Get schema information for a table",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "table",
+            "required": true,
+            "description": "Table name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "table": {
+                      "type": "string"
+                    },
+                    "columns": {
+                      "type": "array"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/templates": {
+      "get": {
+        "tags": [
+          "Email Templates"
+        ],
+        "description": "List all email templates",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Email Templates"
+        ],
+        "description": "Create new email template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "subject",
+                  "body_html"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Template name (e.g., \"Welcome Email\")"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "Email subject line with variables like {{companyName}}"
+                  },
+                  "body_html": {
+                    "type": "string",
+                    "description": "HTML email body with variables like {{firstName}}"
+                  },
+                  "body_text": {
+                    "type": "string",
+                    "description": "Plain text email body (optional)"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Template category (e.g., \"welcome\", \"follow_up\")"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "description": "Template variables for documentation (optional)"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/templates/{id}": {
+      "get": {
+        "tags": [
+          "Email Templates"
+        ],
+        "description": "Get email template by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Email Templates"
+        ],
+        "description": "Update email template",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Email Templates"
+        ],
+        "description": "Delete email template",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/emails/send": {
+      "post": {
+        "tags": [
+          "Email Templates"
+        ],
+        "description": "Send email using template (queues job for delivery)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "template_id",
+                  "to"
+                ],
+                "properties": {
+                  "template_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template ID"
+                  },
+                  "contact_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contact ID (optional)"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Recipient email address"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "description": "Variables to replace in template (e.g., {firstName: \"John\"})"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/emails/logs": {
+      "get": {
+        "tags": [
+          "Email Templates"
+        ],
+        "description": "Get email delivery logs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/webhooks": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "List all webhooks",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "Create new webhook (auto-generates signing secret)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "url",
+                  "events"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Webhook name"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Webhook endpoint URL"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Event types (e.g., [\"qr_scan\", \"contact_created\"])"
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "description": "Enable/disable webhook",
+                    "default": true
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/webhooks/{id}": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "Get webhook by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "Update webhook configuration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Webhook name"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Webhook endpoint URL"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Event types to subscribe to"
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "description": "Enable/disable webhook"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook ID"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "Delete webhook",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/webhooks/{id}/rotate-secret": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "Rotate webhook signing secret",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/webhooks/{id}/test": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "Send test webhook delivery",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/webhooks/{id}/deliveries": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "description": "Get webhook delivery history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/team": {
+      "get": {
+        "tags": [
+          "Team"
+        ],
+        "description": "List all team members",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/team/invite": {
+      "post": {
+        "tags": [
+          "Team"
+        ],
+        "description": "Invite new team member (placeholder - email not yet implemented)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "display_name",
+                  "role"
+                ],
+                "properties": {
+                  "display_name": {
+                    "type": "string",
+                    "description": "Member display name"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "owner",
+                      "admin",
+                      "member",
+                      "viewer"
+                    ],
+                    "description": "Member role"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/team/{id}": {
+      "put": {
+        "tags": [
+          "Team"
+        ],
+        "description": "Update team member role and permissions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "owner",
+                      "admin",
+                      "member",
+                      "viewer"
+                    ],
+                    "description": "New role"
+                  },
+                  "permissions": {
+                    "type": "object",
+                    "description": "Custom permissions object (e.g., {canManageCampaigns: true})"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Team member ID"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Team"
+        ],
+        "description": "Remove team member",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/jobs": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "List all background jobs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/jobs/stats": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "Get job queue statistics",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/jobs/{id}": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "Get job details by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/jobs/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "Cancel a pending job",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/jobs/{id}/retry": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "Retry a failed job",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/upload/logo": {
+      "post": {
+        "tags": [
+          "Uploads"
+        ],
+        "description": "Upload company logo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/upload/asset": {
+      "post": {
+        "tags": [
+          "Uploads"
+        ],
+        "description": "Upload marketing asset",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/upload/flyer": {
+      "post": {
+        "tags": [
+          "Uploads"
+        ],
+        "description": "Upload marketing flyer (PDF)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/upload/{bucket}/{filePath}": {
+      "delete": {
+        "tags": [
+          "Uploads"
+        ],
+        "description": "Delete uploaded file",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "bucket",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "filePath",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/campaigns": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "description": "List all campaigns",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Campaigns"
+        ],
+        "description": "Create new campaign",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Campaign name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Campaign description"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "active",
+                      "paused",
+                      "completed"
+                    ],
+                    "description": "Campaign status"
+                  },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Campaign start date"
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Campaign end date"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/campaigns/{id}": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "description": "Get campaign by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Campaigns"
+        ],
+        "description": "Update campaign",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Campaigns"
+        ],
+        "description": "Delete campaign",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/campaigns/{id}/stats": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "description": "Get campaign statistics",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/campaigns/{id}/generate-flyer": {
+      "post": {
+        "tags": [
+          "Campaigns"
+        ],
+        "description": "Generate PDF flyer for campaign (queues background job)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "assetId"
+                ],
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Asset ID to generate flyer from"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/locations": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "List all locations",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Create new location",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Location name"
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Street address"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "City"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "State/Province"
+                  },
+                  "zip": {
+                    "type": "string",
+                    "description": "ZIP/Postal code"
+                  },
+                  "neighborhood": {
+                    "type": "string",
+                    "description": "Neighborhood"
+                  },
+                  "geo": {
+                    "type": "object",
+                    "description": "Geographic coordinates (lat/lng)",
+                    "properties": {
+                      "lat": {
+                        "type": "number"
+                      },
+                      "lng": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/locations/{id}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Get location by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Update location",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Locations"
+        ],
+        "description": "Delete location",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/contacts": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "description": "List all contacts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "description": "Create new contact",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Contact name"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Contact email"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Contact phone"
+                  },
+                  "contact_kind": {
+                    "type": "string",
+                    "description": "Contact type"
+                  },
+                  "location_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Associated location ID"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Contact tags"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Additional metadata"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/contacts/{id}": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "description": "Get contact by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Contacts"
+        ],
+        "description": "Update contact",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Contacts"
+        ],
+        "description": "Delete contact",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/contacts/bulk-import": {
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "description": "Bulk import contacts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "contacts"
+                ],
+                "properties": {
+                  "contacts": {
+                    "type": "array",
+                    "description": "Array of contacts to import",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "contact_kind": {
+                          "type": "string"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/interactions": {
+      "get": {
+        "tags": [
+          "Interactions"
+        ],
+        "description": "List all interactions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Interactions"
+        ],
+        "description": "Create new interaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "contact_id",
+                  "interaction_type",
+                  "interaction_date"
+                ],
+                "properties": {
+                  "contact_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contact ID"
+                  },
+                  "location_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Location ID (optional)"
+                  },
+                  "interaction_type": {
+                    "type": "string",
+                    "description": "Type of interaction (e.g., \"meeting\", \"call\", \"email\", \"event\")"
+                  },
+                  "interaction_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of interaction"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Interaction notes"
+                  },
+                  "has_follow_up": {
+                    "type": "boolean",
+                    "description": "Whether follow-up is needed",
+                    "default": false
+                  },
+                  "follow_up_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Scheduled follow-up date (if has_follow_up is true)"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Additional metadata"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/interactions/{id}": {
+      "get": {
+        "tags": [
+          "Interactions"
+        ],
+        "description": "Get interaction by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Interactions"
+        ],
+        "description": "Update interaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contact_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Contact ID"
+                  },
+                  "location_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Location ID"
+                  },
+                  "interaction_type": {
+                    "type": "string",
+                    "description": "Type of interaction"
+                  },
+                  "interaction_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Interaction notes"
+                  },
+                  "has_follow_up": {
+                    "type": "boolean",
+                    "description": "Whether follow-up is needed"
+                  },
+                  "follow_up_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Scheduled follow-up date"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Additional metadata"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Interactions"
+        ],
+        "description": "Delete interaction",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/interactions/follow-ups/upcoming": {
+      "get": {
+        "tags": [
+          "Interactions"
+        ],
+        "description": "List upcoming follow-ups",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/assets": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "description": "List all assets",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Assets"
+        ],
+        "description": "Create new asset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "asset_type"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Asset name (e.g., \"Holiday Flyer 2024\")"
+                  },
+                  "asset_type": {
+                    "type": "string",
+                    "description": "Asset type (e.g., \"flyer\", \"poster\", \"brochure\", \"digital\")"
+                  },
+                  "campaign_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Associated campaign ID (optional)"
+                  },
+                  "file_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to asset file (e.g., in Supabase Storage or S3)"
+                  },
+                  "file_size": {
+                    "type": "integer",
+                    "description": "File size in bytes"
+                  },
+                  "file_type": {
+                    "type": "string",
+                    "description": "MIME type (e.g., \"application/pdf\", \"image/png\")"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Additional metadata (dimensions, colors, etc.)"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/assets/{id}": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "description": "Get asset by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Assets"
+        ],
+        "description": "Update asset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Asset name"
+                  },
+                  "asset_type": {
+                    "type": "string",
+                    "description": "Asset type"
+                  },
+                  "campaign_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Campaign ID"
+                  },
+                  "file_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to asset file"
+                  },
+                  "file_size": {
+                    "type": "integer",
+                    "description": "File size in bytes"
+                  },
+                  "file_type": {
+                    "type": "string",
+                    "description": "MIME type"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Additional metadata"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Assets"
+        ],
+        "description": "Delete asset",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/auth-url": {
+      "get": {
+        "tags": [
+          "Gmail"
+        ],
+        "description": "Get OAuth URL to connect Gmail account",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/callback": {
+      "get": {
+        "tags": [
+          "Gmail"
+        ],
+        "description": "OAuth callback from Google (handles redirect)",
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/status": {
+      "get": {
+        "tags": [
+          "Gmail"
+        ],
+        "description": "Check Gmail connection status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/disconnect": {
+      "post": {
+        "tags": [
+          "Gmail"
+        ],
+        "description": "Disconnect Gmail account",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/send": {
+      "post": {
+        "tags": [
+          "Gmail"
+        ],
+        "description": "Send email via connected Gmail account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "to",
+                  "subject",
+                  "body"
+                ],
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Recipient email address"
+                  },
+                  "cc": {
+                    "type": "string",
+                    "description": "CC recipients (comma-separated emails)"
+                  },
+                  "bcc": {
+                    "type": "string",
+                    "description": "BCC recipients (comma-separated emails)"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "Email subject line"
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "Email body in HTML format"
+                  },
+                  "contactId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Associated contact ID (optional)"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/draft": {
+      "post": {
+        "tags": [
+          "Gmail"
+        ],
+        "description": "Create draft in Gmail account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "to",
+                  "subject",
+                  "body"
+                ],
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Recipient email address"
+                  },
+                  "cc": {
+                    "type": "string",
+                    "description": "CC recipients (comma-separated emails)"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "Email subject line"
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "Email body in HTML format"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/sent": {
+      "get": {
+        "tags": [
+          "Gmail"
+        ],
+        "description": "Get sent email history from Gmail",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/contacts/{contactId}/sync": {
+      "post": {
+        "tags": [
+          "Gmail Quick Response"
+        ],
+        "description": "Sync Attra contact to Gmail Contacts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contactId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/contacts/{contactId}/compose-url": {
+      "get": {
+        "tags": [
+          "Gmail Quick Response"
+        ],
+        "description": "Get Gmail compose URL with pre-filled template for quick personal response",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contactId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/quick-response/templates": {
+      "get": {
+        "tags": [
+          "Gmail Quick Response"
+        ],
+        "description": "Get available quick response email templates",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/gmail/quick-response/metrics": {
+      "get": {
+        "tags": [
+          "Gmail Quick Response"
+        ],
+        "description": "Get response metrics (response rate, avg response time, etc.)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/qr-links": {
+      "get": {
+        "tags": [
+          "QR Links"
+        ],
+        "description": "List all QR links",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "QR Links"
+        ],
+        "description": "Create new QR link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "base_url"
+                ],
+                "properties": {
+                  "campaign_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Associated campaign ID (optional)"
+                  },
+                  "asset_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Associated asset ID (optional)"
+                  },
+                  "base_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Destination URL (e.g., \"https://mysite.com/landing\")"
+                  },
+                  "utm_params": {
+                    "type": "object",
+                    "description": "UTM tracking parameters (e.g., {\"utm_source\": \"flyer\", \"utm_campaign\": \"fall_2024\"})"
+                  },
+                  "nickname": {
+                    "type": "string",
+                    "description": "Friendly name for this QR link (e.g., \"Main Flyer QR\")"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/campaigns/{id}/qr-links": {
+      "get": {
+        "tags": [
+          "QR Links"
+        ],
+        "description": "Get QR links for specific campaign",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/qr-links/{id}": {
+      "get": {
+        "tags": [
+          "QR Links"
+        ],
+        "description": "Get QR link by ID with scans and analytics",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "QR Links"
+        ],
+        "description": "Update QR link destination URL (allows changing where printed QR codes redirect)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "base_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "New destination URL"
+                  },
+                  "utm_params": {
+                    "type": "object",
+                    "description": "Updated UTM parameters"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "QR Links"
+        ],
+        "description": "Delete QR link",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/qr-links/{id}/analytics": {
+      "get": {
+        "tags": [
+          "QR Links"
+        ],
+        "description": "Get QR link analytics (scans by day, devices, locations)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/ai/generate-copy": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "description": "Generate marketing copy variations using AI",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "goal",
+                  "vertical"
+                ],
+                "properties": {
+                  "goal": {
+                    "type": "string",
+                    "enum": [
+                      "new_clients",
+                      "open_house",
+                      "brand_awareness",
+                      "retention"
+                    ],
+                    "description": "Campaign goal"
+                  },
+                  "vertical": {
+                    "type": "string",
+                    "enum": [
+                      "dog_walking",
+                      "real_estate",
+                      "restaurant",
+                      "fitness",
+                      "default"
+                    ],
+                    "description": "Business vertical"
+                  },
+                  "location_name": {
+                    "type": "string",
+                    "description": "Name of location (optional)"
+                  },
+                  "additional_context": {
+                    "type": "string",
+                    "description": "Additional context for copy generation (optional)"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "variations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "headline": {
+                            "type": "string"
+                          },
+                          "subheadline": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "generatedAt": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/ai/rate-limit": {
+      "get": {
+        "tags": [
+          "AI"
+        ],
+        "description": "Check AI rate limit status",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "remaining": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "resetAt": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/campaigns/{campaignId}/generate-pdf": {
+      "post": {
+        "tags": [
+          "PDF"
+        ],
+        "description": "Generate PDF flyers for campaign",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "location_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "description": "Specific locations (optional, defaults to all)"
+                  },
+                  "layout": {
+                    "type": "string",
+                    "enum": [
+                      "classic",
+                      "modern",
+                      "minimal"
+                    ],
+                    "description": "Flyer layout template"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "campaignId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assets": {
+                      "type": "array"
+                    },
+                    "jobsEnqueued": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/assets/{assetId}/status": {
+      "get": {
+        "tags": [
+          "PDF"
+        ],
+        "description": "Check PDF generation status",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "assetId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/campaigns/{campaignId}/assets": {
+      "get": {
+        "tags": [
+          "PDF"
+        ],
+        "description": "Get all assets for campaign",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "campaignId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/plans": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "description": "Get all active pricing plans with features and limits",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plans": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "description": "Plan key (e.g., \"free\", \"pro\")"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Plan name"
+                          },
+                          "displayName": {
+                            "type": "string",
+                            "description": "Display name for UI"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Plan description"
+                          },
+                          "pricing": {
+                            "type": "object",
+                            "properties": {
+                              "monthly": {
+                                "type": "number",
+                                "description": "Monthly price in dollars"
+                              },
+                              "yearly": {
+                                "type": "number",
+                                "nullable": true,
+                                "description": "Yearly price in dollars"
+                              },
+                              "currency": {
+                                "type": "string",
+                                "description": "Currency code"
+                              }
+                            }
+                          },
+                          "limits": {
+                            "type": "object",
+                            "description": "Usage limits for this plan (null = unlimited)"
+                          },
+                          "features": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "feature_key": {
+                                  "type": "string"
+                                },
+                                "feature_name": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "category": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "featuresSummary": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Key features for marketing"
+                          },
+                          "tierLevel": {
+                            "type": "integer",
+                            "description": "Plan tier (0=free, 1=starter, etc.)"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/features/{featureKey}/check": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "description": "Check if current user has access to a specific feature",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "featureKey",
+            "required": true,
+            "description": "Feature key to check (e.g., \"gmail_integration\")"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hasAccess": {
+                      "type": "boolean",
+                      "description": "Whether user has access"
+                    },
+                    "userPlan": {
+                      "type": "string",
+                      "description": "User's current plan"
+                    },
+                    "requiredPlan": {
+                      "type": "string",
+                      "description": "Plan required for this feature"
+                    },
+                    "feature": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "upgradeUrl": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "URL to upgrade (null if has access)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plans/limits/{limitKey}": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "description": "Get a specific plan limit for the current user",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "limitKey",
+            "required": true,
+            "description": "Limit key to fetch (e.g., \"contacts_per_month\")"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "limitKey": {
+                      "type": "string"
+                    },
+                    "limitValue": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Limit value (null = unlimited)"
+                    },
+                    "isUnlimited": {
+                      "type": "boolean",
+                      "description": "Whether the limit is unlimited"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plans/limits": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "description": "Get all plan limits for the current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "planKey": {
+                      "type": "string",
+                      "description": "User's current plan"
+                    },
+                    "limits": {
+                      "type": "object",
+                      "description": "Map of limit keys to limit values",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "isUnlimited": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/features": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "description": "Get all features grouped by category",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "features": {
+                      "type": "object",
+                      "description": "Features grouped by category",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "requiredPlan": {
+                              "type": "string"
+                            },
+                            "requiredPlanName": {
+                              "type": "string"
+                            },
+                            "tierLevel": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/plans/{planKey}": {
+      "patch": {
+        "tags": [
+          "Plans Admin"
+        ],
+        "description": "Update plan pricing (admin only)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "price_monthly_cents": {
+                    "type": "integer",
+                    "description": "Monthly price in cents"
+                  },
+                  "price_yearly_cents": {
+                    "type": "integer",
+                    "description": "Yearly price in cents"
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "description": "Display name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Plan description"
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "description": "Whether plan is active"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "planKey",
+            "required": true,
+            "description": "Plan key to update"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": "object",
+                      "description": "Updated plan"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/plans/{planKey}/limits/{limitKey}": {
+      "patch": {
+        "tags": [
+          "Plans Admin"
+        ],
+        "description": "Update a plan limit (admin only)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "limitValue": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Limit value (null for unlimited)"
+                  }
+                },
+                "required": [
+                  "limitValue"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "planKey",
+            "required": true,
+            "description": "Plan key"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "limitKey",
+            "required": true,
+            "description": "Limit key"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "limit": {
+                      "type": "object",
+                      "description": "Updated limit"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants": {
+      "get": {
+        "tags": [
+          "Public API"
+        ],
+        "description": "List tenants (public API)",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "slug": {
+                        "type": "string"
+                      },
+                      "vertical_key": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.attra.io",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "internal",
+      "description": "Internal API endpoints (JWT auth)"
+    },
+    {
+      "name": "public",
+      "description": "Public API endpoints (API key auth)"
+    },
+    {
+      "name": "realtime",
+      "description": "Realtime and analytics endpoints"
+    }
+  ]
+}
