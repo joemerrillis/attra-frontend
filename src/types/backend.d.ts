@@ -8,14 +8,56 @@ export interface Database {
         Row: {
           id: string;
           email: string;
+          full_name: string | null;
+          avatar_url: string | null;
           created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       tenants: {
         Row: {
           id: string;
           name: string;
+          slug: string | null;
+          logo_url: string | null;
+          primary_color: string;
+          plan_key: string;
           created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug?: string | null;
+          logo_url?: string | null;
+          primary_color?: string;
+          plan_key?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      user_tenants: {
+        Row: {
+          id: string;
+          user_id: string;
+          tenant_id: string;
+          role: 'owner' | 'admin' | 'member' | 'viewer';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          tenant_id: string;
+          role?: 'owner' | 'admin' | 'member' | 'viewer';
+          created_at?: string;
         };
       };
       campaigns: {

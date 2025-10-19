@@ -16,6 +16,13 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 export type { Database };
 export type User = Database['public']['Tables']['users']['Row'];
 export type Tenant = Database['public']['Tables']['tenants']['Row'];
+export type UserTenant = {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+  created_at: string;
+};
 export type Campaign = Database['public']['Tables']['campaigns']['Row'];
 export type Contact = Database['public']['Tables']['contacts']['Row'];
 export type Location = Database['public']['Tables']['locations']['Row'];
