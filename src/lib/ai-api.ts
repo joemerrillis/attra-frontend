@@ -1,10 +1,14 @@
+import { supabase } from './supabase';
+
 type GenerateCopyRequest = any;
 type GenerateCopyResponse = any;
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('supabase.auth.token');
+  // Get access token from Supabase session
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
