@@ -14,6 +14,7 @@ import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
 import NewCampaign from '@/pages/campaigns/New';
 import ScanLanding from '@/pages/public/ScanLanding';
+import Upgrade from '@/pages/Upgrade';
 
 function App() {
   return (
@@ -55,6 +56,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <NewCampaign />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/upgrade"
+              element={
+                <ProtectedRoute>
+                  <Upgrade />
                 </ProtectedRoute>
               }
             />
