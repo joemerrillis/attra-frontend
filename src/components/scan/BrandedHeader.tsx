@@ -17,7 +17,7 @@ export function BrandedHeader({
     <div className="text-center mb-8">
       {/* ●> Symbol - Physical to Digital */}
       <div className="mb-4">
-        <span className="text-5xl text-blue-600 font-bold">●></span>
+        <span className="text-5xl text-blue-600 font-bold">●&gt;</span>
       </div>
 
       {/* Tenant Logo */}

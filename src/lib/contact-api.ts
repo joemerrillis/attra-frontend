@@ -1,9 +1,13 @@
-import type { paths } from '@/types/api';
-
-type CreateContactRequest = paths['/api/internal/contacts']['post']['requestBody']['content']['application/json'];
-type ContactResponse = paths['/api/internal/contacts']['post']['responses']['200']['content']['application/json'];
-
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+interface ContactResponse {
+  contact: {
+    id: string;
+    name: string;
+    email: string;
+    contact_kind: string;
+  };
+}
 
 export const contactApi = {
   /**

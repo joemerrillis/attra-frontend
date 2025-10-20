@@ -1,8 +1,24 @@
-import type { paths } from '@/types/api';
-
-type QRLinkResponse = paths['/api/internal/qr-links/{id}']['get']['responses']['200']['content']['application/json'];
-
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+interface QRLinkResponse {
+  id: string;
+  campaign_id?: string;
+  tenant?: {
+    id: string;
+    name: string;
+    branding?: {
+      logo_url?: string;
+    };
+  };
+  campaign?: {
+    id: string;
+    headline?: string;
+    subheadline?: string;
+    cta?: string;
+  };
+  redirect_url?: string;
+  base_url?: string;
+}
 
 export const scanApi = {
   /**

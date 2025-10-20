@@ -119,7 +119,7 @@ export default function ScanLanding() {
         {/* Powered by Attra */}
         <p className="text-center text-xs text-gray-500 mt-4">
           Powered by{' '}
-          <span className="font-semibold text-gray-700">●>attra>●</span>
+          <span className="font-semibold text-gray-700">●&gt;attra&gt;●</span>
         </p>
       </div>
     </div>
