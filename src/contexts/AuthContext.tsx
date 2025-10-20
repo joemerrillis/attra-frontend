@@ -75,15 +75,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // User has tenant_id - fetch team member data via backend API
-      const { team_members } = await teamApi.list();
+      // User has tenant_id - try to fetch full tenant data via backend API
+      try {
+        const { team_members } = await teamApi.list();
+        const teamMember = team_members.find(tm => tm.user_id === userId && tm.is_active);
 
-      // Find current user's team member record
-      const teamMember = team_members.find(tm => tm.user_id === userId && tm.is_active);
-
-      if (!teamMember || !teamMember.tenants) {
-        // Shouldn't happen, but handle gracefully
-        console.error('Team member not found despite having tenant_id in JWT');
+        if (teamMember?.tenants) {
+          // Full tenant data available
+          setUser({
+            id: authUser.id,
+            email: authUser.email!,
+            full_name: teamMember.display_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
+            avatar_url: authUser.user_metadata?.avatar_url || null,
+            created_at: authUser.created_at,
+            updated_at: teamMember.updated_at,
+          });
+          setTenant(teamMember.tenants);
+        } else {
+          throw new Error('Team data not available');
+        }
+      } catch (teamError) {
+        // Team API failed, but user has tenant_id in JWT - create minimal tenant
+        console.warn('Could not load full tenant data, using minimal tenant object:', teamError);
         setUser({
           id: authUser.id,
           email: authUser.email!,
@@ -92,21 +105,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           created_at: authUser.created_at,
           updated_at: new Date().toISOString(),
         });
-        setTenant(null);
-        setLoading(false);
-        return;
+        // Create minimal tenant object - user can still access the app
+        setTenant({
+          id: tenantId,
+          name: 'Loading...',
+          slug: null,
+          branding: null,
+          plan_key: 'free',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
       }
-
-      // User has tenant - set complete profile
-      setUser({
-        id: authUser.id,
-        email: authUser.email!,
-        full_name: teamMember.display_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
-        avatar_url: authUser.user_metadata?.avatar_url || null,
-        created_at: authUser.created_at,
-        updated_at: teamMember.updated_at,
-      });
-      setTenant(teamMember.tenants);
 
     } catch (error) {
       console.error('Error loading user data:', error);
