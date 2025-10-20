@@ -2,37 +2,37 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { DashboardMetrics } from '@/lib/analytics-utils';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
 export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      // Fetch data directly from Supabase
+      const { data: scans } = await supabase
+        .from('qr_scans')
+        .select('id');
 
-      const response = await fetch(`${API_BASE}/api/realtime/analytics`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
+      const { data: contacts } = await supabase
+        .from('contacts')
+        .select('id');
 
-      if (!response.ok) throw new Error('Failed to fetch stats');
+      const { data: campaigns } = await supabase
+        .from('campaigns')
+        .select('id')
+        .eq('status', 'active');
 
-      const data = await response.json();
-
-      // Calculate conversion rate
-      const conversionRate = data.snapshot.scans > 0
-        ? Math.round((data.snapshot.contacts / data.snapshot.scans) * 100)
+      const totalScans = scans?.length || 0;
+      const totalContacts = contacts?.length || 0;
+      const conversionRate = totalScans > 0
+        ? Math.round((totalContacts / totalScans) * 100)
         : 0;
 
       return {
-        totalScans: data.snapshot.scans,
-        totalContacts: data.snapshot.contacts,
+        totalScans,
+        totalContacts,
         conversionRate,
         avgResponseTime: '2h 15m', // TODO: Calculate from contact_responses
-        activeCampaigns: data.snapshot.assets,
-        lastUpdated: data.snapshot.lastUpdated,
+        activeCampaigns: campaigns?.length || 0,
+        lastUpdated: new Date().toISOString(),
       } as DashboardMetrics;
     },
     refetchInterval: 30000, // Refresh every 30 seconds

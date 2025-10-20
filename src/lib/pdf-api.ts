@@ -52,6 +52,8 @@ interface Asset {
 
 interface GenerateFlyerRequest {
   assetId: string;
+  locationId: string;
+  layout?: 'classic' | 'modern' | 'minimal';
 }
 
 export const pdfApi = {

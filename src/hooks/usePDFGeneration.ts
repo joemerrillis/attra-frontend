@@ -4,8 +4,9 @@ import { useToast } from '@/hooks/use-toast';
 
 interface GenerateFlyerData {
   campaignId: string;
+  locationId: string;
   name: string;
-  layout: string;
+  layout: 'classic' | 'modern' | 'minimal';
   headline: string;
   subheadline: string;
   cta: string;
@@ -40,6 +41,8 @@ export function usePDFGeneration(campaignId?: string) {
       // Step 2: Generate PDF flyer from asset (queues background job)
       await pdfApi.generateFlyer(data.campaignId, {
         assetId: asset.id,
+        locationId: data.locationId,
+        layout: data.layout,
       });
 
       return asset;

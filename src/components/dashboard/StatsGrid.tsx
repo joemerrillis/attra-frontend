@@ -1,9 +1,21 @@
-import { Target, Users, TrendingUp, Clock } from 'lucide-react';
+import { Target, Users, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { StatCard } from './StatCard';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function StatsGrid() {
-  const { data: stats, isLoading } = useDashboardStats();
+  const { data: stats, isLoading, error } = useDashboardStats();
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load dashboard stats. {error instanceof Error ? error.message : 'Please try again.'}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

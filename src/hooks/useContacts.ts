@@ -72,7 +72,7 @@ export function useContacts(filters: ContactFilters = {}) {
       if (!session) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_BASE}/api/internal/contacts/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',

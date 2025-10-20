@@ -90,10 +90,15 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
 
   const handleGenerate = () => {
     if (campaignId) {
+      // TODO: Get locationId from user selection or first location
+      // For now, we'll need to update this component to accept locationId
+      console.warn('PDF generation requires locationId - update PDFPreview component');
+
       generate({
         campaignId,
+        locationId: 'temp-location-id', // TODO: Pass real locationId
         name: campaignData.name,
-        layout: campaignData.layout,
+        layout: (campaignData.layout || 'classic') as 'classic' | 'modern' | 'minimal',
         headline: campaignData.headline,
         subheadline: campaignData.subheadline,
         cta: campaignData.cta,

@@ -35,20 +35,12 @@ export const scanApi = {
   },
 
   /**
-   * Log scan event (public, no auth required)
+   * Log scan event by redirecting to QR URL
+   * The backend automatically logs the scan on GET /q/:id and redirects
    */
-  async logScan(qrId: string, metadata: {
-    user_agent?: string;
-    referrer?: string;
-    ip_address?: string;
-  }): Promise<void> {
-    await fetch(`${API_BASE}/q/${qrId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(metadata),
-    });
+  logScan(qrId: string): void {
+    // Simply redirect - backend will log the scan automatically
+    window.location.href = `${API_BASE}/q/${qrId}`;
   },
 
   /**

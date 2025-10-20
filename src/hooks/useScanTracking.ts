@@ -7,20 +7,14 @@ export function useScanTracking(qrId: string) {
   useEffect(() => {
     if (!qrId || hasTracked.current) return;
 
-    const trackScan = async () => {
-      try {
-        await scanApi.logScan(qrId, {
-          user_agent: navigator.userAgent,
-          referrer: document.referrer,
-          // IP captured server-side
-        });
-        hasTracked.current = true;
-      } catch (error) {
-        console.error('Failed to track scan:', error);
-      }
-    };
-
-    trackScan();
+    // Simply redirect to the QR URL - backend will log the scan automatically
+    // The backend's GET /q/:id endpoint logs the scan and redirects
+    try {
+      scanApi.logScan(qrId);
+      hasTracked.current = true;
+    } catch (error) {
+      console.error('Failed to redirect to QR URL:', error);
+    }
   }, [qrId]);
 
   return { isTracked: hasTracked.current };
