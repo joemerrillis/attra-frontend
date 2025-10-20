@@ -42,6 +42,10 @@ interface CreateLocationRequest {
 }
 
 export const locationApi = {
+  async list(): Promise<any> {
+    return fetchWithAuth('/api/internal/locations');
+  },
+
   async create(data: CreateLocationRequest): Promise<any> {
     return fetchWithAuth('/api/internal/locations', {
       method: 'POST',

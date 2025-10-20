@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Download, Loader2, FileText } from 'lucide-react';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { campaignApi } from '@/lib/campaign-api';
+import { locationApi } from '@/lib/location-api';
 import { supabase } from '@/lib/supabase';
 import { QRCodeDisplay } from './QRCodeDisplay';
 
@@ -23,6 +24,7 @@ interface PDFPreviewProps {
 
 export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [locationId, setLocationId] = useState<string | null>(null);
   const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [loadingPreview, setLoadingPreview] = useState(true);
@@ -80,6 +82,27 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
     createCampaign();
   }, []);
 
+  // Fetch user's locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await locationApi.list();
+        const locations = (response as any)?.locations || [];
+
+        if (locations.length > 0) {
+          setLocationId(locations[0].id);
+          console.log('Using location:', locations[0]);
+        } else {
+          console.error('❌ No locations found for user');
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch locations:', error);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
   // Load preview HTML from backend
   useEffect(() => {
     const loadPreview = async () => {
@@ -115,14 +138,12 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
   }, [campaignData.layout, campaignData.headline, campaignData.subheadline, campaignData.cta]);
 
   const handleGenerate = () => {
-    if (campaignId) {
-      // TODO: Get locationId from user selection or first location
-      // For now, we'll need to update this component to accept locationId
-      console.warn('PDF generation requires locationId - update PDFPreview component');
+    if (campaignId && locationId) {
+      console.log('Generating PDF for campaign:', campaignId, 'location:', locationId);
 
       generate({
         campaignId,
-        locationId: 'temp-location-id', // TODO: Pass real locationId
+        locationId,
         name: campaignData.name,
         layout: (campaignData.layout || 'classic') as 'classic' | 'modern' | 'minimal',
         headline: campaignData.headline,
@@ -130,6 +151,8 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
         cta: campaignData.cta,
         branding: tenantBranding,
       });
+    } else {
+      console.error('❌ Cannot generate PDF:', { campaignId, locationId });
     }
   };
 
@@ -197,7 +220,7 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
             {!hasPDF ? (
               <Button
                 onClick={handleGenerate}
-                disabled={isGenerating || isCreatingCampaign || !campaignId}
+                disabled={isGenerating || isCreatingCampaign || !campaignId || !locationId}
                 className="w-full"
                 size="lg"
               >
