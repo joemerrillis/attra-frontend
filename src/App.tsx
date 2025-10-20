@@ -15,6 +15,8 @@ import Dashboard from '@/pages/Dashboard';
 import NewCampaign from '@/pages/campaigns/New';
 import ScanLanding from '@/pages/public/ScanLanding';
 import Upgrade from '@/pages/Upgrade';
+import ContactsIndex from '@/pages/contacts/Index';
+import ContactDetail from '@/pages/contacts/Detail';
 
 function App() {
   return (
@@ -65,6 +67,24 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Upgrade />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/contacts"
+              element={
+                <ProtectedRoute>
+                  <ContactsIndex />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/contacts/:id"
+              element={
+                <ProtectedRoute>
+                  <ContactDetail />
                 </ProtectedRoute>
               }
             />
