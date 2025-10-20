@@ -21,8 +21,8 @@ export default function AuthCallback() {
         throw new Error('No session found');
       }
 
-      // Check JWT metadata for tenant_id (backend sets this when creating tenant)
-      const tenantId = data.session.user.user_metadata?.tenant_id;
+      // Check JWT metadata for tenant_id (backend sets this in app_metadata when creating tenant)
+      const tenantId = data.session.user.app_metadata?.tenant_id;
 
       if (!tenantId) {
         // New user - no tenant yet, redirect to onboarding

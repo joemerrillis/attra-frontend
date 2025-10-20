@@ -56,8 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Failed to get authenticated user');
       }
 
-      // Check JWT metadata for tenant_id (backend sets this when creating tenant)
-      const tenantId = authUser.user_metadata?.tenant_id;
+      // Check JWT metadata for tenant_id (backend sets this in app_metadata when creating tenant)
+      const tenantId = authUser.app_metadata?.tenant_id;
 
       if (!tenantId) {
         // User authenticated but has no tenant - needs onboarding
