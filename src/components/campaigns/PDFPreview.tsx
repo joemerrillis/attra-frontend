@@ -46,7 +46,12 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
     if (campaignId) {
       generate({
         campaignId,
+        name: campaignData.name,
         layout: campaignData.layout,
+        headline: campaignData.headline,
+        subheadline: campaignData.subheadline,
+        cta: campaignData.cta,
+        branding: tenantBranding,
       });
     }
   };
