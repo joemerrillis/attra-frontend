@@ -21,17 +21,10 @@ export default function AuthCallback() {
         throw new Error('No session found');
       }
 
-      const userId = data.session.user.id;
+      // Check JWT metadata for tenant_id (backend sets this when creating tenant)
+      const tenantId = data.session.user.user_metadata?.tenant_id;
 
-      // Check if user has an active team member record (which means they have a tenant)
-      const { data: teamMember, error: teamError } = await supabase
-        .from('team_members')
-        .select('id, tenant_id')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .single();
-
-      if (teamError || !teamMember) {
+      if (!tenantId) {
         // New user - no tenant yet, redirect to onboarding
         console.log('New user, redirecting to onboarding');
         navigate('/onboarding');

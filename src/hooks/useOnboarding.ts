@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { tenantApi } from '@/lib/tenant-api';
 import { verticalApi } from '@/lib/vertical-api';
 import { locationApi } from '@/lib/location-api';
+import { uploadApi } from '@/lib/upload-api';
 import { VERTICAL_CONFIGS } from '@/lib/vertical-configs';
 
 interface OnboardingData {
@@ -43,39 +44,29 @@ export const useOnboarding = () => {
         vertical_key: data.vertical,
       });
 
-      // STEP 2: Upload logo if provided (AFTER tenant exists)
-      let logoUrl: string | null = null;
+      // STEP 2: Refresh session to get updated JWT with tenant_id
+      // Backend updates user_metadata.tenant_id when creating tenant
+      // But the client's JWT is stale until we refresh it
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) throw refreshError;
+      if (!session) throw new Error('Failed to refresh session');
+
+      // STEP 3: Upload logo if provided (now JWT has tenant_id for RLS)
       if (data.logoFile) {
-        const fileExt = data.logoFile.name.split('.').pop();
-        const fileName = `${tenant.id}/logo.${fileExt}`;
+        await uploadApi.uploadLogo(data.logoFile);
+      }
 
-        const { error: uploadError } = await supabase.storage
-          .from('logos')
-          .upload(fileName, data.logoFile, {
-            upsert: true,
-            contentType: data.logoFile.type,
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('logos')
-          .getPublicUrl(fileName);
-
-        logoUrl = publicUrl;
-
-        // STEP 3: Update tenant branding
+      // STEP 4: Update branding (color only - logo already updated by upload)
+      if (data.primaryColor) {
         await tenantApi.updateBranding(tenant.id, {
           branding: {
-            logo_url: logoUrl,
-            logo: logoUrl, // PDF worker compatibility
-            primaryColor: data.primaryColor || '#6366f1',
-            primary_color: data.primaryColor || '#6366f1',
+            primaryColor: data.primaryColor,
+            primary_color: data.primaryColor,
           },
         });
       }
 
-      // STEP 4: Create tenant_vertical
+      // STEP 5: Create tenant_vertical
       const verticalConfig = VERTICAL_CONFIGS[data.vertical] || VERTICAL_CONFIGS.default;
       await verticalApi.createTenantVertical({
         tenant_id: tenant.id,
@@ -87,7 +78,7 @@ export const useOnboarding = () => {
         },
       });
 
-      // STEP 5: Create first location (tenant_id extracted from JWT)
+      // STEP 6: Create first location (tenant_id extracted from JWT)
       await locationApi.create({
         name: data.location.name,
         address: data.location.address,
@@ -102,13 +93,13 @@ export const useOnboarding = () => {
           : undefined,
       });
 
-      // STEP 6: Store campaign goal in localStorage (for campaign creation)
+      // STEP 7: Store campaign goal in localStorage (for campaign creation)
       localStorage.setItem('attra_campaign_goal', data.campaignGoal);
 
-      // STEP 7: Refresh user context (now has tenant via team_members)
+      // STEP 8: Refresh user context (now has tenant via team_members)
       await refreshUser();
 
-      // STEP 8: Redirect to campaign creation
+      // STEP 9: Redirect to campaign creation
       navigate('/campaigns/new');
 
     } catch (err: any) {

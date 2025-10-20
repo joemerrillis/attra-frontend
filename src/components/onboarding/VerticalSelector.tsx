@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import React from 'react';
 import { Home, Dog, Wrench, Leaf, Briefcase } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -24,35 +23,19 @@ interface VerticalSelectorProps {
   onChange: (value: string) => void;
 }
 
+// Hardcoded verticals list - no backend API route for this yet
+const VERTICALS: Vertical[] = [
+  { key: 'real_estate', name: 'Real Estate', description: 'Agents, brokers, and property managers', icon: 'Home' },
+  { key: 'pet_services', name: 'Pet Services', description: 'Dog walking, pet sitting, grooming', icon: 'Dog' },
+  { key: 'home_services', name: 'Home Services', description: 'Cleaning, repairs, maintenance', icon: 'Wrench' },
+  { key: 'landscaping', name: 'Landscaping', description: 'Lawn care, landscaping, snow removal', icon: 'Leaf' },
+  { key: 'professional', name: 'Professional Services', description: 'Consulting, coaching, other services', icon: 'Briefcase' },
+];
+
 export const VerticalSelector: React.FC<VerticalSelectorProps> = ({
   value,
   onChange,
 }) => {
-  const [verticals, setVerticals] = useState<Vertical[]>([]);
-
-  useEffect(() => {
-    loadVerticals();
-  }, []);
-
-  const loadVerticals = async () => {
-    const { data, error } = await supabase
-      .from('verticals')
-      .select('key, name, description, icon')
-      .order('name');
-
-    if (!error && data) {
-      setVerticals(data);
-    } else {
-      // Fallback to hardcoded verticals if database query fails
-      setVerticals([
-        { key: 'real_estate', name: 'Real Estate', description: 'Agents, brokers, and property managers', icon: 'Home' },
-        { key: 'pet_services', name: 'Pet Services', description: 'Dog walking, pet sitting, grooming', icon: 'Dog' },
-        { key: 'home_services', name: 'Home Services', description: 'Cleaning, repairs, maintenance', icon: 'Wrench' },
-        { key: 'landscaping', name: 'Landscaping', description: 'Lawn care, landscaping, snow removal', icon: 'Leaf' },
-        { key: 'professional', name: 'Professional Services', description: 'Consulting, coaching, other services', icon: 'Briefcase' },
-      ]);
-    }
-  };
 
   return (
     <div>
@@ -63,7 +46,7 @@ export const VerticalSelector: React.FC<VerticalSelectorProps> = ({
 
       <RadioGroup value={value} onValueChange={onChange}>
         <div className="space-y-3">
-          {verticals.map((vertical) => {
+          {VERTICALS.map((vertical) => {
             const Icon = iconMap[vertical.icon] || Briefcase;
             return (
               <Label

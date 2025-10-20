@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, User, Tenant } from '@/lib/supabase';
+import { teamApi } from '@/lib/team-api';
 
 interface AuthContextType {
   session: Session | null;
@@ -55,27 +56,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Failed to get authenticated user');
       }
 
-      // Fetch team member profile (includes tenant data)
-      const { data: teamMember, error: teamError } = await supabase
-        .from('team_members')
-        .select(`
-          *,
-          tenants (
-            id,
-            name,
-            slug,
-            logo_url,
-            primary_color,
-            plan_key,
-            created_at,
-            updated_at
-          )
-        `)
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .single();
+      // Check JWT metadata for tenant_id (backend sets this when creating tenant)
+      const tenantId = authUser.user_metadata?.tenant_id;
 
-      if (teamError || !teamMember) {
+      if (!tenantId) {
         // User authenticated but has no tenant - needs onboarding
         console.log('User has no tenant, needs onboarding');
         setUser({
@@ -91,17 +75,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      // User has tenant_id - fetch team member data via backend API
+      const { team_members } = await teamApi.list();
+
+      // Find current user's team member record
+      const teamMember = team_members.find(tm => tm.user_id === userId && tm.is_active);
+
+      if (!teamMember || !teamMember.tenants) {
+        // Shouldn't happen, but handle gracefully
+        console.error('Team member not found despite having tenant_id in JWT');
+        setUser({
+          id: authUser.id,
+          email: authUser.email!,
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
+          avatar_url: authUser.user_metadata?.avatar_url || null,
+          created_at: authUser.created_at,
+          updated_at: new Date().toISOString(),
+        });
+        setTenant(null);
+        setLoading(false);
+        return;
+      }
+
       // User has tenant - set complete profile
-      const tenantData = (teamMember as any).tenants;
       setUser({
         id: authUser.id,
         email: authUser.email!,
-        full_name: (teamMember as any).display_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
+        full_name: teamMember.display_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
         avatar_url: authUser.user_metadata?.avatar_url || null,
         created_at: authUser.created_at,
-        updated_at: (teamMember as any).updated_at,
+        updated_at: teamMember.updated_at,
       });
-      setTenant(tenantData);
+      setTenant(teamMember.tenants);
 
     } catch (error) {
       console.error('Error loading user data:', error);
