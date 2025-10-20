@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, Loader2, FileText } from 'lucide-react';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
-import { useCampaign } from '@/hooks/useCampaign';
+import { campaignApi } from '@/lib/campaign-api';
 import { QRCodeDisplay } from './QRCodeDisplay';
 
 interface PDFPreviewProps {
@@ -20,26 +20,33 @@ interface PDFPreviewProps {
 
 export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
   const [campaignId, setCampaignId] = useState<string | null>(null);
-  const { create, isCreating } = useCampaign();
+  const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
   const { assets, generate, isGenerating } = usePDFGeneration(campaignId || undefined);
 
   // Create campaign on mount if not exists
   useEffect(() => {
-    if (!campaignId) {
-      create(
-        {
-          name: `${campaignData.goal} Campaign - ${new Date().toLocaleDateString()}`,
-          description: `${campaignData.headline}`,
-          goal: campaignData.goal,
-          status: 'draft',
-        },
-        {
-          onSuccess: (data: any) => {
-            setCampaignId(data.id);
-          },
+    const createCampaign = async () => {
+      if (!campaignId && !isCreatingCampaign) {
+        setIsCreatingCampaign(true);
+        try {
+          const response = await campaignApi.create({
+            name: `${campaignData.goal} Campaign - ${new Date().toLocaleDateString()}`,
+            description: `${campaignData.headline}`,
+            goal: campaignData.goal,
+            status: 'draft',
+          } as any);
+
+          console.log('Campaign created:', response);
+          setCampaignId((response as any).campaign?.id || (response as any).id);
+        } catch (error) {
+          console.error('Failed to create campaign:', error);
+        } finally {
+          setIsCreatingCampaign(false);
         }
-      );
-    }
+      }
+    };
+
+    createCampaign();
   }, []);
 
   const handleGenerate = () => {
@@ -107,11 +114,11 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
             {!hasPDF ? (
               <Button
                 onClick={handleGenerate}
-                disabled={isGenerating || isCreating || !campaignId}
+                disabled={isGenerating || isCreatingCampaign || !campaignId}
                 className="w-full"
                 size="lg"
               >
-                {isGenerating || isCreating ? (
+                {isGenerating || isCreatingCampaign ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                     Generating PDF...
