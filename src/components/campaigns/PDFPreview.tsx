@@ -72,6 +72,7 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
             layout: campaignData.layout,
             headline: campaignData.headline,
             subheadline: campaignData.subheadline,
+            cta: campaignData.cta,
           }),
         });
 
@@ -85,7 +86,7 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
     };
 
     loadPreview();
-  }, [campaignData.layout, campaignData.headline, campaignData.subheadline]);
+  }, [campaignData.layout, campaignData.headline, campaignData.subheadline, campaignData.cta]);
 
   const handleGenerate = () => {
     if (campaignId) {

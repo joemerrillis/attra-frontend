@@ -118,6 +118,7 @@ export function CampaignWizard() {
             onSelect={(layout) => updateCampaignData({ layout: layout as any })}
             headline={campaignData.headline}
             subheadline={campaignData.subheadline}
+            cta={campaignData.cta}
           />
         )}
 

@@ -26,17 +26,18 @@ interface LayoutSelectorProps {
   onSelect: (layoutId: string) => void;
   headline?: string;
   subheadline?: string;
+  cta?: string;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-export function LayoutSelector({ selected, onSelect, headline, subheadline }: LayoutSelectorProps) {
+export function LayoutSelector({ selected, onSelect, headline, subheadline, cta }: LayoutSelectorProps) {
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPreviews();
-  }, [headline, subheadline]); // Reload when copy changes
+  }, [headline, subheadline, cta]); // Reload when copy changes
 
   const loadPreviews = async () => {
     try {
@@ -56,6 +57,7 @@ export function LayoutSelector({ selected, onSelect, headline, subheadline }: La
             layout: layout.id,
             headline: headline || 'Your Headline Here',
             subheadline: subheadline || 'Your subheadline goes here',
+            cta: cta || 'Scan to learn more',
           }),
         });
 
