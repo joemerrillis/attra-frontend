@@ -13,6 +13,7 @@ import AuthCallback from '@/pages/auth/Callback';
 import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
 import NewCampaign from '@/pages/campaigns/New';
+import ScanLanding from '@/pages/public/ScanLanding';
 
 function App() {
   return (
@@ -20,11 +21,15 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public routes */}
+            {/* Public routes - NO AUTH REQUIRED */}
             <Route path="/" element={<Landing />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+
+            {/* Public QR scan routes - NO AUTH REQUIRED */}
+            <Route path="/q/:id" element={<ScanLanding />} />
+            <Route path="/go/:id" element={<ScanLanding />} />
 
             {/* Protected routes */}
             <Route

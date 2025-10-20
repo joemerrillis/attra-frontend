@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
@@ -13,6 +13,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireTenant = true
 }) => {
   const { session, tenant, loading } = useAuth();
+  const location = useLocation();
+
+  // Allow public QR scan routes without authentication
+  if (location.pathname.startsWith('/q/') || location.pathname.startsWith('/go/')) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
