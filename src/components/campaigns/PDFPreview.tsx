@@ -87,16 +87,36 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
     const fetchLocations = async () => {
       try {
         const response = await locationApi.list();
-        const locations = (response as any)?.locations || [];
+        console.log('Locations API response:', response);
+        console.log('Response type:', typeof response);
+        console.log('Response keys:', Object.keys(response || {}));
 
-        if (locations.length > 0) {
+        // Try multiple possible response structures
+        const locations =
+          (response as any)?.locations || // { locations: [...] }
+          (response as any) || // Direct array
+          [];
+
+        console.log('Parsed locations:', locations);
+        console.log('Is array?', Array.isArray(locations));
+
+        if (Array.isArray(locations) && locations.length > 0) {
           setLocationId(locations[0].id);
-          console.log('Using location:', locations[0]);
+          console.log('✅ Using location:', locations[0]);
+        } else if (locations.length > 0) {
+          // Might be array-like object
+          const firstLocation = locations[0];
+          setLocationId(firstLocation.id);
+          console.log('✅ Using location (array-like):', firstLocation);
         } else {
           console.error('❌ No locations found for user');
+          console.error('Response structure:', JSON.stringify(response, null, 2));
         }
       } catch (error) {
         console.error('❌ Failed to fetch locations:', error);
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+        }
       }
     };
 
