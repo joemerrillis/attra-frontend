@@ -4,7 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Download, Loader2, FileText } from 'lucide-react';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { campaignApi } from '@/lib/campaign-api';
+import { supabase } from '@/lib/supabase';
 import { QRCodeDisplay } from './QRCodeDisplay';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 interface PDFPreviewProps {
   campaignData: {
@@ -21,6 +24,8 @@ interface PDFPreviewProps {
 export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string>('');
+  const [loadingPreview, setLoadingPreview] = useState(true);
   const { assets, generate, isGenerating } = usePDFGeneration(campaignId || undefined);
 
   // Create campaign on mount if not exists
@@ -48,6 +53,39 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
 
     createCampaign();
   }, []);
+
+  // Load preview HTML from backend
+  useEffect(() => {
+    const loadPreview = async () => {
+      setLoadingPreview(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        const response = await fetch(`${API_BASE}/api/internal/pdf/preview`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            layout: campaignData.layout,
+            headline: campaignData.headline,
+            subheadline: campaignData.subheadline,
+          }),
+        });
+
+        const html = await response.text();
+        setPreviewHtml(html);
+      } catch (error) {
+        console.error('Failed to load preview:', error);
+      } finally {
+        setLoadingPreview(false);
+      }
+    };
+
+    loadPreview();
+  }, [campaignData.layout, campaignData.headline, campaignData.subheadline]);
 
   const handleGenerate = () => {
     if (campaignId) {
@@ -86,26 +124,39 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Visual Preview */}
-          <div className="aspect-[8.5/11] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center p-8 text-center">
-            {tenantBranding?.logo_url && (
-              <img
-                src={tenantBranding.logo_url}
-                alt="Logo"
-                className="h-16 mb-6"
-              />
-            )}
-            <h3 className="text-2xl font-bold mb-3">{campaignData.headline}</h3>
-            <p className="text-muted-foreground mb-6 max-w-md">
-              {campaignData.subheadline}
-            </p>
-            <div className="bg-white p-4 rounded shadow-sm mb-4">
-              <div className="w-32 h-32 bg-black" />
-              <p className="text-xs text-muted-foreground mt-2">QR Code</p>
-            </div>
-            {campaignData.cta && (
-              <p className="text-lg font-semibold text-primary">
-                {campaignData.cta}
-              </p>
+          <div className="aspect-[8.5/11] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center p-8">
+            {loadingPreview ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Loading preview...</p>
+              </div>
+            ) : previewHtml ? (
+              <div
+                style={{
+                  width: '595px',
+                  height: '770px',
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}
+              >
+                <iframe
+                  srcDoc={previewHtml}
+                  style={{
+                    width: '850px',
+                    height: '1100px',
+                    transform: 'scale(0.7)',
+                    transformOrigin: 'top left',
+                    border: 'none',
+                  }}
+                  sandbox="allow-same-origin"
+                  title="Flyer preview"
+                />
+              </div>
+            ) : (
+              <div className="text-center">
+                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Preview unavailable</p>
+              </div>
             )}
           </div>
 
