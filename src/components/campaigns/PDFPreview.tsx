@@ -37,14 +37,12 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
           console.log('Creating campaign with data:', {
             name: `${campaignData.goal} Campaign - ${new Date().toLocaleDateString()}`,
             description: `${campaignData.headline}`,
-            goal: campaignData.goal,
             status: 'draft',
           });
 
           const response = await campaignApi.create({
             name: `${campaignData.goal} Campaign - ${new Date().toLocaleDateString()}`,
             description: `${campaignData.headline}`,
-            goal: campaignData.goal,
             status: 'draft',
           } as any);
 
