@@ -111,6 +111,8 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
         } else {
           console.error('❌ No locations found for user');
           console.error('Response structure:', JSON.stringify(response, null, 2));
+          console.warn('⚠️ You need to create a location first. Onboarding should have created one.');
+          console.warn('⚠️ To fix: Go through onboarding OR manually create a location in settings.');
         }
       } catch (error) {
         console.error('❌ Failed to fetch locations:', error);
@@ -237,6 +239,16 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
 
           {/* Generate/Download Actions */}
           <div className="space-y-3">
+            {!campaignId && (
+              <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded p-3">
+                ⚠️ Creating campaign...
+              </p>
+            )}
+            {!locationId && campaignId && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">
+                ❌ No business location found. Please contact support or go through onboarding again.
+              </p>
+            )}
             {!hasPDF ? (
               <Button
                 onClick={handleGenerate}
