@@ -116,6 +116,8 @@ export function CampaignWizard() {
           <LayoutSelector
             selected={campaignData.layout}
             onSelect={(layout) => updateCampaignData({ layout: layout as any })}
+            headline={campaignData.headline}
+            subheadline={campaignData.subheadline}
           />
         )}
 

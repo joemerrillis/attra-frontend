@@ -24,17 +24,19 @@ const LAYOUTS = [
 interface LayoutSelectorProps {
   selected: string;
   onSelect: (layoutId: string) => void;
+  headline?: string;
+  subheadline?: string;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-export function LayoutSelector({ selected, onSelect }: LayoutSelectorProps) {
+export function LayoutSelector({ selected, onSelect, headline, subheadline }: LayoutSelectorProps) {
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPreviews();
-  }, []);
+  }, [headline, subheadline]); // Reload when copy changes
 
   const loadPreviews = async () => {
     try {
@@ -50,7 +52,11 @@ export function LayoutSelector({ selected, onSelect }: LayoutSelectorProps) {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ layout: layout.id }),
+          body: JSON.stringify({
+            layout: layout.id,
+            headline: headline || 'Your Headline Here',
+            subheadline: subheadline || 'Your subheadline goes here',
+          }),
         });
 
         const html = await response.text();
@@ -107,20 +113,35 @@ export function LayoutSelector({ selected, onSelect }: LayoutSelectorProps) {
               </CardHeader>
 
               <CardContent>
-                <div className="aspect-[8.5/11] bg-gray-100 rounded border-2 border-gray-200 overflow-hidden">
+                <div className="bg-gray-100 rounded border border-gray-200 overflow-hidden flex items-center justify-center">
                   {loading ? (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center p-12">
                       <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : previews[layout.id] ? (
-                    <iframe
-                      srcDoc={previews[layout.id]}
-                      className="w-full h-full border-0"
-                      sandbox="allow-same-origin"
-                      title={`${layout.name} preview`}
-                    />
+                    <div
+                      style={{
+                        width: '297.5px',
+                        height: '385px',
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
+                    >
+                      <iframe
+                        srcDoc={previews[layout.id]}
+                        style={{
+                          width: '850px',
+                          height: '1100px',
+                          transform: 'scale(0.35)',
+                          transformOrigin: 'top left',
+                          border: 'none',
+                        }}
+                        sandbox="allow-same-origin"
+                        title={`${layout.name} preview`}
+                      />
+                    </div>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center p-12">
                       <span className="text-muted-foreground">Preview</span>
                     </div>
                   )}
