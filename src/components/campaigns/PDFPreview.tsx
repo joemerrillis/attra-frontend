@@ -34,6 +34,13 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
       if (!campaignId && !isCreatingCampaign) {
         setIsCreatingCampaign(true);
         try {
+          console.log('Creating campaign with data:', {
+            name: `${campaignData.goal} Campaign - ${new Date().toLocaleDateString()}`,
+            description: `${campaignData.headline}`,
+            goal: campaignData.goal,
+            status: 'draft',
+          });
+
           const response = await campaignApi.create({
             name: `${campaignData.goal} Campaign - ${new Date().toLocaleDateString()}`,
             description: `${campaignData.headline}`,
@@ -41,10 +48,31 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
             status: 'draft',
           } as any);
 
-          console.log('Campaign created:', response);
-          setCampaignId((response as any).campaign?.id || (response as any).id);
+          console.log('Campaign created response:', response);
+          console.log('Response type:', typeof response);
+          console.log('Response keys:', Object.keys(response || {}));
+
+          // Try multiple possible response structures
+          const newCampaignId =
+            (response as any)?.campaign?.id ||  // { campaign: { id: ... } }
+            (response as any)?.id ||             // { id: ... }
+            (response as any)?.data?.id ||       // { data: { id: ... } }
+            (response as any)?.campaign_id;      // { campaign_id: ... }
+
+          console.log('Extracted campaignId:', newCampaignId);
+
+          if (newCampaignId) {
+            setCampaignId(newCampaignId);
+          } else {
+            console.error('❌ No campaign ID found in response');
+            console.error('Full response structure:', JSON.stringify(response, null, 2));
+          }
         } catch (error) {
-          console.error('Failed to create campaign:', error);
+          console.error('❌ Failed to create campaign:', error);
+          console.error('Error details:', error instanceof Error ? error.message : error);
+          if (error instanceof Error && 'stack' in error) {
+            console.error('Stack trace:', error.stack);
+          }
         } finally {
           setIsCreatingCampaign(false);
         }
