@@ -111,8 +111,28 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
         } else {
           console.error('❌ No locations found for user');
           console.error('Response structure:', JSON.stringify(response, null, 2));
-          console.warn('⚠️ You need to create a location first. Onboarding should have created one.');
-          console.warn('⚠️ To fix: Go through onboarding OR manually create a location in settings.');
+          console.warn('⚠️ Creating default location automatically...');
+
+          // Auto-create a default location
+          try {
+            const defaultLocation = await locationApi.create({
+              name: 'Main Location',
+              address: '',
+              city: '',
+              state: '',
+              zip: '',
+            });
+
+            console.log('✅ Created default location:', defaultLocation);
+            const newLocationId = (defaultLocation as any)?.location?.id || (defaultLocation as any)?.id;
+
+            if (newLocationId) {
+              setLocationId(newLocationId);
+              console.log('✅ Using newly created location:', newLocationId);
+            }
+          } catch (createError) {
+            console.error('❌ Failed to create default location:', createError);
+          }
         }
       } catch (error) {
         console.error('❌ Failed to fetch locations:', error);
