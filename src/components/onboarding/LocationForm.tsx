@@ -60,9 +60,9 @@ export const LocationForm: React.FC<LocationFormProps> = ({
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-2">Add Your First Location</h2>
+      <h2 className="text-2xl font-bold mb-2">Your Business Location</h2>
       <p className="text-gray-600 mb-6">
-        Where will you be distributing your first flyers?
+        Where is your business located? This will be used for analytics and tracking.
       </p>
 
       <div className="space-y-4">
@@ -72,11 +72,11 @@ export const LocationForm: React.FC<LocationFormProps> = ({
             id="locationName"
             value={location.name}
             onChange={(e) => onLocationChange({ ...location, name: e.target.value })}
-            placeholder="The Hamilton Building"
+            placeholder="Main Office"
             className="mt-1"
           />
           <p className="text-xs text-gray-500 mt-1">
-            A memorable name for this location
+            A name for this business location (e.g., "Main Office", "Downtown Store")
           </p>
         </div>
 

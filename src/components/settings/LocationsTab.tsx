@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import {
 import { MapPin, Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { locationApi } from '@/lib/location-api';
 import { useToast } from '@/hooks/use-toast';
+import { loadGooglePlaces, parsePlaceResult } from '@/lib/google-places';
 
 interface Location {
   id: string;
@@ -262,6 +263,7 @@ interface LocationFormProps {
 }
 
 function LocationForm({ initialData, onSubmit, isLoading }: LocationFormProps) {
+  const addressInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     address: initialData?.address || '',
@@ -270,6 +272,39 @@ function LocationForm({ initialData, onSubmit, isLoading }: LocationFormProps) {
     zip: initialData?.zip || '',
     neighborhood: initialData?.neighborhood || '',
   });
+
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    const initAutocomplete = async () => {
+      try {
+        await loadGooglePlaces();
+
+        if (addressInputRef.current && window.google) {
+          const autocomplete = new google.maps.places.Autocomplete(
+            addressInputRef.current,
+            { types: ['address'] }
+          );
+
+          autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            const parsed = parsePlaceResult(place);
+
+            setFormData(prev => ({
+              ...prev,
+              address: parsed.address,
+              city: parsed.city,
+              state: parsed.state,
+              zip: parsed.zipCode,
+            }));
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load Google Places:', error);
+      }
+    };
+
+    initAutocomplete();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,11 +348,15 @@ function LocationForm({ initialData, onSubmit, isLoading }: LocationFormProps) {
         <div className="space-y-2">
           <Label htmlFor="address">Street Address</Label>
           <Input
+            ref={addressInputRef}
             id="address"
             value={formData.address}
             onChange={(e) => updateField('address', e.target.value)}
-            placeholder="123 Main St"
+            placeholder="Start typing an address..."
           />
+          <p className="text-xs text-muted-foreground">
+            Google will autocomplete as you type
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
