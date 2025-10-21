@@ -15,6 +15,7 @@ import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
 import Analytics from '@/pages/Analytics';
 import CampaignsIndex from '@/pages/campaigns/Index';
+import CampaignDetail from '@/pages/campaigns/Detail';
 import NewCampaign from '@/pages/campaigns/New';
 import Locations from '@/pages/Locations';
 import ScanLanding from '@/pages/public/ScanLanding';
@@ -89,6 +90,17 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <NewCampaign />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/campaigns/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CampaignDetail />
                   </AppLayout>
                 </ProtectedRoute>
               }

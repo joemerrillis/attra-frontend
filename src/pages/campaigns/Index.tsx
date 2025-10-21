@@ -57,7 +57,11 @@ export default function CampaignsIndex() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {campaignList.map((campaign: any) => (
-            <Card key={campaign.id} className="hover:border-primary/50 transition-colors cursor-pointer">
+            <Card
+              key={campaign.id}
+              className="hover:border-primary/50 transition-colors cursor-pointer"
+              onClick={() => navigate(`/campaigns/${campaign.id}`)}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{campaign.name}</CardTitle>
