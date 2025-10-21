@@ -105,10 +105,11 @@ export function LocationsTab() {
         description: 'The location has been removed',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Delete location error:', error);
       toast({
         title: 'Failed to delete location',
-        description: 'Please try again',
+        description: error?.message || 'Please try again',
         variant: 'destructive',
       });
     },
