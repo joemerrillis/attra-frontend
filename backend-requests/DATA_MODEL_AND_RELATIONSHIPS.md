@@ -1,18 +1,21 @@
 # 📊 Complete Data Model & Relationships Documentation
 
-**Date:** 2025-10-20
+**Date:** 2025-10-20 (Updated with location_id FK)
 **Priority:** CRITICAL
-**Issue:** Backend trying to join assets ↔ locations but relationship doesn't exist
+**Status:** ✅ RESOLVED - Backend added optional location_id FK to assets table
 
 ---
 
-## 🚨 The Problem
+## ✅ The Solution (IMPLEMENTED)
 
-**Error:** `Could not find a relationship between 'assets' and 'locations' in the schema cache`
+**Migration completed:** Backend added `location_id UUID` (nullable) FK to assets table
 
-**Why it's happening:** Backend is trying to JOIN assets and locations tables directly, but **there is NO direct relationship between them**.
+**This supports three asset types:**
+1. **Flyers** - `location_id` set (one-to-one: each flyer for a specific location)
+2. **Business cards** - `location_id` null (location-agnostic, used anywhere)
+3. **Menu squares** - Multiple assets with same `location_id` (many-to-one: multiple menu items at one location)
 
-**The fix:** Understand the ACTUAL data flow and relationships.
+**Key insight:** The relationship is OPTIONAL - not all assets need a location.
 
 ---
 
@@ -102,8 +105,9 @@ CREATE TABLE assets (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
   campaign_id UUID REFERENCES campaigns(id) ON DELETE SET NULL,
+  location_id UUID REFERENCES locations(id) ON DELETE SET NULL,  -- ✅ NEW: Optional location
   name TEXT NOT NULL,
-  asset_type TEXT NOT NULL, -- 'flyer', 'pdf', 'image'
+  asset_type TEXT NOT NULL, -- 'flyer', 'pdf', 'image', 'business_card', 'menu_square'
   file_url TEXT,
   file_size INTEGER,
   file_type TEXT,
@@ -111,13 +115,20 @@ CREATE TABLE assets (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Index for performance
+CREATE INDEX idx_assets_location_id ON assets(location_id);
 ```
 
 **Relationships:**
-- `assets.tenant_id` → `tenants.id` (many-to-one)
-- `assets.campaign_id` → `campaigns.id` (many-to-one, NULLABLE)
+- `assets.tenant_id` → `tenants.id` (many-to-one, REQUIRED)
+- `assets.campaign_id` → `campaigns.id` (many-to-one, OPTIONAL)
+- `assets.location_id` → `locations.id` (many-to-one, OPTIONAL) ✅ **NEW**
 
-**⚠️ CRITICAL:** Assets do NOT have a direct foreign key to locations!
+**✅ UPDATED:** Assets now have an OPTIONAL foreign key to locations!
+- Flyers: location_id populated (each flyer for specific location)
+- Business cards: location_id null (used anywhere)
+- Menu squares: Multiple assets share same location_id (many items at one location)
 
 ---
 

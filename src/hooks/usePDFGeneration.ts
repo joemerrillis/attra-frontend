@@ -24,11 +24,12 @@ export function usePDFGeneration(campaignId?: string) {
 
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateFlyerData) => {
-      // Step 1: Create asset record with metadata
+      // Step 1: Create asset record with metadata and location
       const { asset } = await pdfApi.createAsset({
         name: data.name,
         asset_type: 'flyer',
         campaign_id: data.campaignId,
+        location_id: data.locationId,  // Link flyer to specific location
         metadata: {
           layout: data.layout,
           headline: data.headline,

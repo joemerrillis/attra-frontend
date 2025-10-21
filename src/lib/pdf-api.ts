@@ -28,6 +28,7 @@ interface CreateAssetRequest {
   name: string;
   asset_type: string;
   campaign_id?: string;
+  location_id?: string;  // NEW: Optional location for flyers, menu squares, etc.
   metadata?: {
     layout?: string;
     headline?: string;
@@ -42,6 +43,7 @@ interface Asset {
   name: string;
   asset_type: string;
   campaign_id: string | null;
+  location_id: string | null;  // NEW: Optional FK to locations
   file_url: string | null;
   file_size: number | null;
   file_type: string | null;
