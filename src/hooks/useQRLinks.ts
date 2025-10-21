@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 async function fetchWithAuth(url: string) {
-  const token = localStorage.getItem('supabase.auth.token');
+  // Get access token from Supabase session (consistent with other API calls)
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
   const response = await fetch(`${API_BASE}${url}`, {
     headers: {
