@@ -25,7 +25,12 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
     throw new Error(error.error || `HTTP ${response.status}`);
   }
 
-  return response.json();
+  // Handle empty responses (e.g., 204 No Content for DELETE)
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  }
+  return {}; // Return empty object for non-JSON responses
 }
 
 interface CreateLocationRequest {
