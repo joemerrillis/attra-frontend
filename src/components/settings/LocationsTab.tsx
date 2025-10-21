@@ -273,7 +273,12 @@ function LocationForm({ initialData, onSubmit, isLoading }: LocationFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Remove empty string fields to send only provided values
+    const cleanedData = Object.fromEntries(
+      Object.entries(formData).filter(([_, value]) => value !== '')
+    );
+    console.log('Submitting location data:', cleanedData);
+    onSubmit(cleanedData);
   };
 
   const updateField = (field: string, value: string) => {

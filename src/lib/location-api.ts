@@ -35,6 +35,7 @@ interface CreateLocationRequest {
   state?: string;
   zip?: string;
   neighborhood?: string;
+  location_type?: 'business' | 'advertisement';
   geo?: {
     lat: number;
     lng: number;
