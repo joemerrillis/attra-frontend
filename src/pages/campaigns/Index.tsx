@@ -56,12 +56,23 @@ export default function CampaignsIndex() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campaignList.map((campaign: any) => (
-            <Card
-              key={campaign.id}
-              className="hover:border-primary/50 transition-colors cursor-pointer"
-              onClick={() => navigate(`/campaigns/${campaign.id}`)}
-            >
+          {campaignList.map((campaign: any) => {
+            // If campaign is draft, navigate to wizard to complete it
+            // Otherwise, navigate to detail page
+            const handleClick = () => {
+              if (campaign.status === 'draft') {
+                navigate(`/campaigns/new?draft=${campaign.id}`);
+              } else {
+                navigate(`/campaigns/${campaign.id}`);
+              }
+            };
+
+            return (
+              <Card
+                key={campaign.id}
+                className="hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={handleClick}
+              >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{campaign.name}</CardTitle>
@@ -93,7 +104,8 @@ export default function CampaignsIndex() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -15,16 +15,28 @@ const STEPS = [
   { id: 'preview', name: 'Generate', icon: '📄' },
 ];
 
-export function CampaignWizard() {
+interface CampaignWizardProps {
+  initialData?: {
+    name?: string;
+    goal?: string;
+    headline?: string;
+    subheadline?: string;
+    cta?: string;
+    layout?: 'classic' | 'modern' | 'minimal';
+  };
+  initialStep?: number;
+}
+
+export function CampaignWizard({ initialData, initialStep = 0 }: CampaignWizardProps) {
   const { tenant } = useAuth();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [campaignData, setCampaignData] = useState({
-    name: '',
-    goal: '',
-    headline: '',
-    subheadline: '',
-    cta: '',
-    layout: 'modern' as 'classic' | 'modern' | 'minimal',
+    name: initialData?.name || '',
+    goal: initialData?.goal || '',
+    headline: initialData?.headline || '',
+    subheadline: initialData?.subheadline || '',
+    cta: initialData?.cta || '',
+    layout: (initialData?.layout || 'modern') as 'classic' | 'modern' | 'minimal',
   });
 
   const canProceed = () => {
