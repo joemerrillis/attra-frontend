@@ -17,6 +17,7 @@ import ScanLanding from '@/pages/public/ScanLanding';
 import Upgrade from '@/pages/Upgrade';
 import ContactsIndex from '@/pages/contacts/Index';
 import ContactDetail from '@/pages/contacts/Detail';
+import Settings from '@/pages/Settings';
 
 function App() {
   return (
@@ -85,6 +86,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ContactDetail />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />

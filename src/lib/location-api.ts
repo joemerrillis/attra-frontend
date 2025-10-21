@@ -52,4 +52,21 @@ export const locationApi = {
       body: JSON.stringify(data),
     });
   },
+
+  async getById(id: string): Promise<any> {
+    return fetchWithAuth(`/api/internal/locations/${id}`);
+  },
+
+  async update(id: string, data: Partial<CreateLocationRequest>): Promise<any> {
+    return fetchWithAuth(`/api/internal/locations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(id: string): Promise<any> {
+    return fetchWithAuth(`/api/internal/locations/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };
