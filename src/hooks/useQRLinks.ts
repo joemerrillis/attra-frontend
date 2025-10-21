@@ -8,14 +8,22 @@ async function fetchWithAuth(url: string) {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
 
+  if (!token) {
+    console.error('❌ No auth token available for QR links request');
+    throw new Error('No authentication token available');
+  }
+
   const response = await fetch(`${API_BASE}${url}`, {
     headers: {
-      'Authorization': token ? `Bearer ${token}` : '',
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch QR links');
+    const errorText = await response.text();
+    console.error('❌ QR links request failed:', response.status, errorText);
+    throw new Error(`Failed to fetch QR links: ${response.status}`);
   }
 
   return response.json();

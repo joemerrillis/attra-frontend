@@ -198,7 +198,16 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
     }
   };
 
-  const hasPDF = assets && assets.length > 0;
+  // Check if we have a completed PDF (asset with file_url populated)
+  const hasPDF = assets && assets.length > 0 && assets[0].file_url;
+
+  // Debug logging
+  console.log('PDF Preview State:', {
+    assetsCount: assets?.length || 0,
+    firstAsset: assets?.[0],
+    hasPDF,
+    isGenerating,
+  });
 
   return (
     <div className="space-y-6">
@@ -294,12 +303,19 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
                   asChild
                   className="w-full"
                   size="lg"
+                  disabled={!assets[0]?.file_url}
                 >
                   <a
-                    href={assets[0].file_url}
+                    href={assets[0]?.file_url || '#'}
                     download={`${campaignData.name}.pdf`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!assets[0]?.file_url) {
+                        e.preventDefault();
+                        console.error('❌ No file URL available for download');
+                      }
+                    }}
                   >
                     <Download className="w-5 h-5 mr-2" />
                     Download PDF
