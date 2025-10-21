@@ -1,15 +1,14 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Palette, MapPin, Plug, CreditCard } from 'lucide-react';
+import { User, Palette, Plug, CreditCard } from 'lucide-react';
 import { ProfileTab } from '@/components/settings/ProfileTab';
 import { BrandingTab } from '@/components/settings/BrandingTab';
-import { LocationsTab } from '@/components/settings/LocationsTab';
 import { IntegrationsTab } from '@/components/settings/IntegrationsTab';
 import { BillingTab } from '@/components/settings/BillingTab';
 import { useSearchParams } from 'react-router-dom';
 
 export default function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'locations';
+  const activeTab = searchParams.get('tab') || 'profile';
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
@@ -23,17 +22,13 @@ export default function SettingsPage() {
           <span className="text-gray-400">&gt;●</span> Settings
         </h1>
         <p className="text-muted-foreground">
-          Manage your account, locations, branding, and integrations
+          Manage your account, branding, and integrations
         </p>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="locations" className="gap-2">
-            <MapPin className="w-4 h-4" />
-            <span className="hidden sm:inline">Locations</span>
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
             <span className="hidden sm:inline">Profile</span>
@@ -53,10 +48,6 @@ export default function SettingsPage() {
         </TabsList>
 
         <div className="mt-6">
-          <TabsContent value="locations">
-            <LocationsTab />
-          </TabsContent>
-
           <TabsContent value="profile">
             <ProfileTab />
           </TabsContent>

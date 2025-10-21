@@ -4,6 +4,7 @@ import { queryClient } from '@/lib/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { AppLayout } from '@/components/layout/AppLayout';
 
 // Pages
 import Landing from '@/pages/Landing';
@@ -12,7 +13,10 @@ import Login from '@/pages/Login';
 import AuthCallback from '@/pages/auth/Callback';
 import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
+import Analytics from '@/pages/Analytics';
+import CampaignsIndex from '@/pages/campaigns/Index';
 import NewCampaign from '@/pages/campaigns/New';
+import Locations from '@/pages/Locations';
 import ScanLanding from '@/pages/public/ScanLanding';
 import Upgrade from '@/pages/Upgrade';
 import ContactsIndex from '@/pages/contacts/Index';
@@ -45,11 +49,36 @@ function App() {
               }
             />
 
+            {/* Main app routes with AppLayout */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Analytics />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/campaigns"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CampaignsIndex />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -58,16 +87,20 @@ function App() {
               path="/campaigns/new"
               element={
                 <ProtectedRoute>
-                  <NewCampaign />
+                  <AppLayout>
+                    <NewCampaign />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
 
             <Route
-              path="/upgrade"
+              path="/locations"
               element={
                 <ProtectedRoute>
-                  <Upgrade />
+                  <AppLayout>
+                    <Locations />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -76,7 +109,9 @@ function App() {
               path="/contacts"
               element={
                 <ProtectedRoute>
-                  <ContactsIndex />
+                  <AppLayout>
+                    <ContactsIndex />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -85,7 +120,9 @@ function App() {
               path="/contacts/:id"
               element={
                 <ProtectedRoute>
-                  <ContactDetail />
+                  <AppLayout>
+                    <ContactDetail />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -94,7 +131,20 @@ function App() {
               path="/settings"
               element={
                 <ProtectedRoute>
-                  <Settings />
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/upgrade"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Upgrade />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
