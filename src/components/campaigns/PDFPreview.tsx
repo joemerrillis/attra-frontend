@@ -183,10 +183,14 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
     if (campaignId && locationId) {
       console.log('Generating PDF for campaign:', campaignId, 'location:', locationId);
 
+      // Generate asset name from campaign data
+      const assetName = campaignData.name ||
+        `${campaignData.goal || 'Campaign'} Flyer - ${new Date().toLocaleDateString()}`;
+
       generate({
         campaignId,
         locationId,
-        name: campaignData.name,
+        name: assetName,
         layout: (campaignData.layout || 'classic') as 'classic' | 'modern' | 'minimal',
         headline: campaignData.headline,
         subheadline: campaignData.subheadline,
