@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { GenerateAssetsRequest } from '@/types/campaign';
 
 type CampaignsResponse = any;
 type CreateCampaignRequest = any;
@@ -64,5 +65,24 @@ export const campaignApi = {
 
   async getStats(id: string) {
     return fetchWithAuth(`/api/internal/campaigns/${id}/stats`);
+  },
+
+  async generateAssets(
+    campaignId: string,
+    request: GenerateAssetsRequest
+  ): Promise<{
+    message: string;
+    campaign_id: string;
+    assets_created: number;
+    qr_links_created: number;
+    jobs_enqueued: number;
+    assets: any[];
+    qr_links: any[];
+    job_ids: string[];
+  }> {
+    return fetchWithAuth(`/api/internal/campaigns/${campaignId}/generate-flyer`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
   },
 };

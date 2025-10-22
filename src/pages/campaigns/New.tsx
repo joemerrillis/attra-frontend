@@ -1,41 +1,227 @@
-import { useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { CampaignWizard } from '@/components/campaigns/CampaignWizard';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useCampaignWizard } from '@/hooks/useCampaignWizard';
 import { campaignApi } from '@/lib/campaign-api';
+import { Step1Goal } from '@/components/campaigns/wizard/Step1Goal';
+import { Step2Locations } from '@/components/campaigns/wizard/Step2Locations';
+import { Step3AssetType } from '@/components/campaigns/wizard/Step3AssetType';
+import { Step4DesignShared } from '@/components/campaigns/wizard/Step4DesignShared';
+import { Step4DesignPerLocation } from '@/components/campaigns/wizard/Step4DesignPerLocation';
+import { Step5Review } from '@/components/campaigns/wizard/Step5Review';
+import type { GenerateAssetsRequest } from '@/types/campaign';
+
+const STEPS = [
+  { number: 1, label: 'Goal' },
+  { number: 2, label: 'Locations' },
+  { number: 3, label: 'Asset Type' },
+  { number: 4, label: 'Design' },
+  { number: 5, label: 'Review' }
+];
 
 export default function NewCampaign() {
-  const [searchParams] = useSearchParams();
-  const draftId = searchParams.get('draft');
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { currentStep, wizardData, updateData, canProceed, nextStep, prevStep } = useCampaignWizard();
+  const [campaignId, setCampaignId] = useState<string | null>(null);
 
-  const { data: draftCampaign, isLoading } = useQuery({
-    queryKey: ['campaign', draftId],
-    queryFn: () => campaignApi.getById(draftId!),
-    enabled: !!draftId,
+  // Create campaign mutation
+  const { mutate: createCampaign, isPending: isCreatingCampaign } = useMutation({
+    mutationFn: () => campaignApi.create({
+      name: `${wizardData.goal} Campaign - ${new Date().toLocaleDateString()}`,
+      goal: wizardData.goal!,
+      description: 'Created via wizard'
+    }),
+    onSuccess: (campaign: any) => {
+      // Handle both response formats: { campaign: { id } } or { id }
+      const newCampaignId = campaign?.campaign?.id || campaign?.id;
+      setCampaignId(newCampaignId);
+      toast({ title: 'Campaign created!', description: 'Moving to next step' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message || 'Failed to create campaign', variant: 'destructive' });
+    }
   });
 
-  if (draftId && isLoading) {
-    return (
-      <div className="container py-8">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Loading draft campaign...</p>
-        </div>
-      </div>
-    );
-  }
+  // Generate assets mutation
+  const { mutate: generateAssets, isPending: isGenerating } = useMutation({
+    mutationFn: () => {
+      if (!campaignId) throw new Error('Campaign ID not found');
+
+      const request: GenerateAssetsRequest = {
+        asset_type: wizardData.assetType!,
+        base_url: wizardData.destinationUrl!
+      };
+
+      if (wizardData.customizePerLocation) {
+        // Per-location mode
+        request.assets = wizardData.locationAssets;
+      } else {
+        // Shared mode
+        request.location_ids = wizardData.selectedLocations;
+        request.layout = wizardData.layout;
+        request.copy = wizardData.copy;
+      }
+
+      return campaignApi.generateAssets(campaignId, request);
+    },
+    onSuccess: (response) => {
+      toast({ title: 'Assets queued!', description: `${response.assets_created} asset(s) queued for generation` });
+      navigate(`/campaigns/${campaignId}`);
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message || 'Failed to generate assets', variant: 'destructive' });
+    }
+  });
+
+  // Create campaign when moving from step 1 to 2
+  useEffect(() => {
+    if (currentStep === 2 && !campaignId && !isCreatingCampaign && wizardData.goal) {
+      createCampaign();
+    }
+  }, [currentStep, campaignId, isCreatingCampaign, wizardData.goal]);
+
+  const handleNext = () => {
+    nextStep();
+  };
+
+  const handleFinish = () => {
+    generateAssets();
+  };
+
+  const progress = (currentStep / STEPS.length) * 100;
 
   return (
-    <div className="container py-8">
-      <CampaignWizard
-        initialData={draftCampaign ? {
-          name: draftCampaign.name,
-          goal: draftCampaign.goal,
-          headline: draftCampaign.headline,
-          subheadline: draftCampaign.subheadline,
-          cta: draftCampaign.cta,
-          layout: draftCampaign.layout,
-        } : undefined}
-        initialStep={draftCampaign ? 3 : 0} // Start at "Generate" step for drafts
-      />
+    <div className="container max-w-4xl py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          <span className="text-muted-foreground">&gt;●</span> Create Campaign
+        </h1>
+        <p className="text-muted-foreground">
+          Transform digital planning into physical flyers
+        </p>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="flex justify-between mb-2">
+          {STEPS.map((step) => (
+            <div
+              key={step.number}
+              className={`text-sm font-medium transition-colors ${
+                currentStep >= step.number
+                  ? 'text-primary'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              {step.label}
+            </div>
+          ))}
+        </div>
+        <Progress value={progress} className="h-2" />
+      </div>
+
+      {/* Step Content */}
+      <div className="mb-8">
+        {currentStep === 1 && (
+          <Step1Goal
+            value={wizardData.goal}
+            onChange={(goal) => updateData({ goal })}
+          />
+        )}
+
+        {currentStep === 2 && (
+          <Step2Locations
+            value={wizardData.selectedLocations}
+            onChange={(selectedLocations) => updateData({ selectedLocations })}
+          />
+        )}
+
+        {currentStep === 3 && (
+          <Step3AssetType
+            assetType={wizardData.assetType}
+            onAssetTypeChange={(assetType) => updateData({ assetType })}
+            customizePerLocation={wizardData.customizePerLocation}
+            onCustomizeChange={(customizePerLocation) => updateData({ customizePerLocation })}
+          />
+        )}
+
+        {currentStep === 4 && !wizardData.customizePerLocation && (
+          <Step4DesignShared
+            destinationUrl={wizardData.destinationUrl || ''}
+            onDestinationUrlChange={(destinationUrl) => updateData({ destinationUrl })}
+            copy={wizardData.copy || { headline: '', subheadline: '', cta: '' }}
+            onCopyChange={(copy) => updateData({ copy })}
+            layout={wizardData.layout || 'modern'}
+            onLayoutChange={(layout) => updateData({ layout })}
+          />
+        )}
+
+        {currentStep === 4 && wizardData.customizePerLocation && (
+          <Step4DesignPerLocation
+            selectedLocationIds={wizardData.selectedLocations}
+            destinationUrl={wizardData.destinationUrl || ''}
+            onDestinationUrlChange={(destinationUrl) => updateData({ destinationUrl })}
+            locationAssets={wizardData.locationAssets || []}
+            onLocationAssetsChange={(locationAssets) => updateData({ locationAssets })}
+          />
+        )}
+
+        {currentStep === 5 && (
+          <Step5Review data={wizardData} />
+        )}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button
+          variant="outline"
+          onClick={prevStep}
+          disabled={currentStep === 1 || isGenerating || isCreatingCampaign}
+        >
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+
+        {currentStep < 5 ? (
+          <Button
+            onClick={handleNext}
+            disabled={!canProceed || isCreatingCampaign}
+          >
+            {isCreatingCampaign ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button
+            onClick={handleFinish}
+            disabled={isGenerating}
+            size="lg"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>Generate Assets</>
+            )}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
