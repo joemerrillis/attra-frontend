@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { WizardLayout } from '@/components/onboarding/WizardLayout';
 import { VerticalSelector } from '@/components/onboarding/VerticalSelector';
 import { BrandingForm } from '@/components/onboarding/BrandingForm';
+import { BrandMomentForm } from '@/components/onboarding/BrandMomentForm';
 import { LocationForm } from '@/components/onboarding/LocationForm';
 import { CampaignGoalSelector } from '@/components/onboarding/CampaignGoalSelector';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -36,8 +37,10 @@ export default function Onboarding() {
       case 2:
         return tenantName.trim() !== '' && primaryColor !== '';
       case 3:
-        return location.name.trim() !== '' && location.address.trim() !== '';
+        return true; // Brand Moment is optional - always can proceed
       case 4:
+        return location.name.trim() !== '' && location.address.trim() !== '';
+      case 5:
         return campaignGoal !== '';
       default:
         return false;
@@ -45,9 +48,14 @@ export default function Onboarding() {
   };
 
   const handleNext = () => {
-    if (step < 4) {
+    if (step < 5) {
       setStep(step + 1);
     }
+  };
+
+  const handleSkipBrandMoment = () => {
+    // Skip Step 3 (Brand Moment) and go directly to Step 4 (Location)
+    setStep(4);
   };
 
   const handleBack = () => {
@@ -68,7 +76,7 @@ export default function Onboarding() {
   };
 
   return (
-    <WizardLayout currentStep={step} totalSteps={4}>
+    <WizardLayout currentStep={step} totalSteps={5}>
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
@@ -92,10 +100,17 @@ export default function Onboarding() {
       )}
 
       {step === 3 && (
-        <LocationForm location={location} onLocationChange={setLocation} />
+        <BrandMomentForm
+          onComplete={handleNext}
+          onSkip={handleSkipBrandMoment}
+        />
       )}
 
       {step === 4 && (
+        <LocationForm location={location} onLocationChange={setLocation} />
+      )}
+
+      {step === 5 && (
         <CampaignGoalSelector
           vertical={vertical}
           value={campaignGoal}
@@ -103,32 +118,34 @@ export default function Onboarding() {
         />
       )}
 
-      {/* Navigation buttons */}
-      <div className="flex justify-between mt-8 pt-6 border-t">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          disabled={step === 1 || loading}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-
-        {step < 4 ? (
-          <Button onClick={handleNext} disabled={!canProceed()}>
-            Next
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
+      {/* Navigation buttons - Hidden for Step 3 (Brand Moment has its own controls) */}
+      {step !== 3 && (
+        <div className="flex justify-between mt-8 pt-6 border-t">
           <Button
-            onClick={handleComplete}
-            disabled={!canProceed() || loading}
+            variant="outline"
+            onClick={handleBack}
+            disabled={step === 1 || loading}
           >
-            {loading ? 'Setting up...' : 'Complete Setup'}
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
           </Button>
-        )}
-      </div>
+
+          {step < 5 ? (
+            <Button onClick={handleNext} disabled={!canProceed()}>
+              Next
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleComplete}
+              disabled={!canProceed() || loading}
+            >
+              {loading ? 'Setting up...' : 'Complete Setup'}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          )}
+        </div>
+      )}
     </WizardLayout>
   );
 }
