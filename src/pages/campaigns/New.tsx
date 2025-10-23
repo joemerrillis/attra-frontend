@@ -161,8 +161,10 @@ export default function NewCampaign() {
             onDestinationUrlChange={(destinationUrl) => updateData({ destinationUrl })}
             copy={wizardData.copy || { headline: '', subheadline: '', cta: '' }}
             onCopyChange={(copy) => updateData({ copy })}
-            layout={wizardData.layout || 'modern'}
+            layout={wizardData.layout}
             onLayoutChange={(layout) => updateData({ layout })}
+            backgroundId={wizardData.background_id}
+            onBackgroundIdChange={(background_id) => updateData({ background_id })}
           />
         )}
 
