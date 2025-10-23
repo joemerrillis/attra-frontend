@@ -6,17 +6,34 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin } from 'lucide-react';
+import { MapPin, Sparkles, Palette } from 'lucide-react';
+import { BackgroundLibrary } from '@/components/campaigns/BackgroundLibrary';
+import { useBackgroundGeneration } from '@/hooks/useBackgroundGeneration';
+import { useAuth } from '@/hooks/useAuth';
 import { locationApi } from '@/lib/location-api';
 import type { LayoutType, CampaignCopy, LocationAsset } from '@/types/campaign';
+import type { Background } from '@/types/background';
 
 const LAYOUTS: Array<{
   value: LayoutType;
   label: string;
+  description: string;
 }> = [
-  { value: 'classic', label: 'Classic' },
-  { value: 'modern', label: 'Modern' },
-  { value: 'minimal', label: 'Minimal' }
+  {
+    value: 'classic',
+    label: 'Classic',
+    description: 'Traditional layout with elegant styling'
+  },
+  {
+    value: 'modern',
+    label: 'Modern',
+    description: 'Clean, contemporary design with bold typography'
+  },
+  {
+    value: 'minimal',
+    label: 'Minimal',
+    description: 'Simple and understated with maximum impact'
+  }
 ];
 
 interface Step4DesignPerLocationProps {
@@ -34,7 +51,21 @@ export function Step4DesignPerLocation({
   locationAssets,
   onLocationAssetsChange
 }: Step4DesignPerLocationProps) {
+  const { tenant } = useAuth();
   const [activeTab, setActiveTab] = useState(selectedLocationIds[0] || '');
+  const [designModes, setDesignModes] = useState<Record<string, 'ai' | 'classic'>>({});
+  const [showGenerationModal, setShowGenerationModal] = useState<string | null>(null);
+
+  const { generate, isGenerating } = useBackgroundGeneration({
+    tenantId: tenant?.id || '',
+    onSuccess: (background: Background) => {
+      if (showGenerationModal) {
+        updateLocationAsset(showGenerationModal, { background_id: background.id });
+        setDesignModes({ ...designModes, [showGenerationModal]: 'ai' });
+        setShowGenerationModal(null);
+      }
+    },
+  });
 
   const { data: response } = useQuery({
     queryKey: ['locations', selectedLocationIds],
@@ -85,6 +116,30 @@ export function Step4DesignPerLocation({
     }
   };
 
+  const handleSelectBackground = (locationId: string, backgroundId: string) => {
+    updateLocationAsset(locationId, { background_id: backgroundId });
+    setDesignModes({ ...designModes, [locationId]: 'ai' });
+  };
+
+  const handleGenerateNew = (locationId: string) => {
+    generate(undefined);
+    setShowGenerationModal(locationId);
+  };
+
+  const handleTabChange = (locationId: string, value: string) => {
+    const mode = value as 'ai' | 'classic';
+    setDesignModes({ ...designModes, [locationId]: mode });
+
+    if (mode === 'classic') {
+      // Clear background selection and ensure layout is set
+      const asset = locationAssets.find(a => a.location_id === locationId);
+      updateLocationAsset(locationId, {
+        background_id: undefined,
+        layout: asset?.layout || 'modern'
+      });
+    }
+  };
+
   if (!locations || locations.length === 0) {
     return <div>Loading locations...</div>;
   }
@@ -131,6 +186,7 @@ export function Step4DesignPerLocation({
           const asset = locationAssets.find(a => a.location_id === location.id) || {
             location_id: location.id,
             layout: 'modern' as LayoutType,
+            background_id: undefined,
             copy: { headline: '', subheadline: '', cta: '' }
           };
 
@@ -205,28 +261,87 @@ export function Step4DesignPerLocation({
                 </CardContent>
               </Card>
 
-              {/* Layout Selection */}
+              {/* Background Selection: AI vs Classic Templates */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Layout</CardTitle>
-                  <CardDescription>Choose design style for {location.name}</CardDescription>
+                  <CardTitle>Choose Background Style</CardTitle>
+                  <CardDescription>Use AI-generated backgrounds or classic HTML templates for {location.name}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup
-                    value={asset.layout}
-                    onValueChange={(value) => updateLocationAsset(location.id, { layout: value as LayoutType })}
+                  <Tabs
+                    value={designModes[location.id] || (asset.background_id ? 'ai' : 'classic')}
+                    onValueChange={(value) => handleTabChange(location.id, value)}
                   >
-                    <div className="grid gap-3">
-                      {LAYOUTS.map((layoutOption) => (
-                        <div key={layoutOption.value} className="flex items-center space-x-2">
-                          <RadioGroupItem value={layoutOption.value} id={`${location.id}-${layoutOption.value}`} />
-                          <Label htmlFor={`${location.id}-${layoutOption.value}`} className="cursor-pointer">
-                            {layoutOption.label}
-                          </Label>
+                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                      <TabsTrigger value="ai" className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        AI Backgrounds
+                      </TabsTrigger>
+                      <TabsTrigger value="classic" className="flex items-center gap-2">
+                        <Palette className="w-4 h-4" />
+                        Classic Templates
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* AI Backgrounds Tab */}
+                    <TabsContent value="ai" className="space-y-4">
+                      {isGenerating && showGenerationModal === location.id && (
+                        <Card className="border-blue-200 bg-blue-50/50">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            <Sparkles className="w-5 h-5 text-blue-600 animate-pulse" />
+                            <div>
+                              <p className="font-medium">Generating AI background...</p>
+                              <p className="text-sm text-muted-foreground">This may take 5-10 seconds</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      <BackgroundLibrary
+                        selectedId={asset.background_id}
+                        onSelect={(id) => handleSelectBackground(location.id, id)}
+                        onGenerateNew={() => handleGenerateNew(location.id)}
+                        previewCopy={asset.copy}
+                        compact={true}
+                      />
+                    </TabsContent>
+
+                    {/* Classic Templates Tab */}
+                    <TabsContent value="classic" className="space-y-4">
+                      <RadioGroup
+                        value={asset.layout || 'modern'}
+                        onValueChange={(value) => updateLocationAsset(location.id, { layout: value as LayoutType })}
+                      >
+                        <div className="grid gap-4">
+                          {LAYOUTS.map((layoutOption) => {
+                            const isSelected = asset.layout === layoutOption.value;
+
+                            return (
+                              <Card
+                                key={layoutOption.value}
+                                className={`cursor-pointer transition-all hover:border-primary ${
+                                  isSelected ? 'border-primary ring-2 ring-primary ring-offset-2' : ''
+                                }`}
+                                onClick={() => updateLocationAsset(location.id, { layout: layoutOption.value })}
+                              >
+                                <CardHeader className="flex flex-row items-center space-x-4 pb-2">
+                                  <RadioGroupItem value={layoutOption.value} id={`${location.id}-${layoutOption.value}`} />
+                                  <div className="flex-1">
+                                    <Label htmlFor={`${location.id}-${layoutOption.value}`} className="cursor-pointer">
+                                      <CardTitle className="text-base">{layoutOption.label}</CardTitle>
+                                    </Label>
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  <CardDescription>{layoutOption.description}</CardDescription>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
                         </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
+                      </RadioGroup>
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </TabsContent>
