@@ -67,7 +67,18 @@ export const tenantApi = {
     });
   },
 
+  async getById(tenantId: string): Promise<any> {
+    return fetchWithAuth(`/api/internal/tenants/${tenantId}`);
+  },
+
   async updateBranding(tenantId: string, data: UpdateBrandingRequest): Promise<any> {
+    return fetchWithAuth(`/api/internal/tenants/${tenantId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateBrandingContext(tenantId: string, data: { branding_ai_context: any }): Promise<any> {
     return fetchWithAuth(`/api/internal/tenants/${tenantId}`, {
       method: 'PUT',
       body: JSON.stringify(data),

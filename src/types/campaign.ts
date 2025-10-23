@@ -33,9 +33,10 @@ export type AssetType =
 
 export type LayoutType = 'classic' | 'modern' | 'minimal';
 
-export interface LocationCopy {
+export interface LocationAsset {
   location_id: string;
-  layout: LayoutType;
+  layout?: LayoutType;
+  background_id?: string; // NEW: AI background selection
   copy: CampaignCopy;
 }
 
@@ -57,15 +58,20 @@ export interface WizardData {
   // Steps 4-6 (Shared mode)
   destinationUrl?: string;
   layout?: LayoutType;
+  background_id?: string; // NEW: AI background selection
   copy?: CampaignCopy;
 
   // Steps 4-6 (Per-location mode)
-  locationAssets?: LocationCopy[];
+  locationAssets?: LocationAsset[];
 }
 
 export interface GenerateAssetsRequest {
   asset_type: AssetType;
   base_url: string;
+
+  // NEW: Background selection (mutually exclusive with layout)
+  background_id?: string;
+  generate_new_background?: boolean;
 
   // Shared mode
   location_ids?: string[];
@@ -75,7 +81,8 @@ export interface GenerateAssetsRequest {
   // Per-location mode
   assets?: Array<{
     location_id: string;
-    layout: LayoutType;
+    layout?: LayoutType;
+    background_id?: string;
     copy: CampaignCopy;
   }>;
 }
