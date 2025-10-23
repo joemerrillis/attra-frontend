@@ -16,8 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, X, Sparkles, AlertCircle, Globe, Instagram, Package } from 'lucide-react';
-import { useBrandingCapture } from '@/hooks/useBrandingCapture';
-import { useBackgroundGeneration } from '@/hooks/useBackgroundGeneration';
+import { brandingApi } from '@/lib/branding-api';
+import { backgroundsApi } from '@/lib/backgrounds-api';
 import { useAuth } from '@/hooks/useAuth';
 
 interface BrandMomentFormProps {
@@ -35,30 +35,8 @@ export function BrandMomentForm({ onComplete, onSkip }: BrandMomentFormProps) {
   const [instagramScreenshots, setInstagramScreenshots] = useState<File[]>([]);
   const [productImages, setProductImages] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const { capture, isCapturing } = useBrandingCapture({
-    tenantId: tenant?.id || '',
-    onCaptureSuccess: () => {
-      // After successful capture, auto-generate first background
-      generate(undefined);
-    },
-    onError: (err) => {
-      setError(err.message);
-    },
-  });
-
-  const { generate, isGenerating } = useBackgroundGeneration({
-    tenantId: tenant?.id || '',
-    onSuccess: () => {
-      // Background generated successfully - move to next step
-      onComplete();
-    },
-    onError: (err) => {
-      console.error('Background generation failed:', err);
-      // Still proceed even if generation fails
-      onComplete();
-    },
-  });
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -106,12 +84,37 @@ export function BrandMomentForm({ onComplete, onSkip }: BrandMomentFormProps) {
       return;
     }
 
-    // Submit to backend
-    capture({
-      websiteUrl,
-      instagramScreenshots: instagramScreenshots.length > 0 ? instagramScreenshots : undefined,
-      productImages: productImages.length > 0 ? productImages : undefined,
-    });
+    try {
+      // Step 1: Capture branding using onboarding endpoint
+      setIsCapturing(true);
+      await brandingApi.captureOnboarding({
+        websiteUrl,
+        instagramScreenshots: instagramScreenshots.length > 0 ? instagramScreenshots : undefined,
+        productImages: productImages.length > 0 ? productImages : undefined,
+      });
+
+      // Step 2: Auto-generate first background (if tenant exists)
+      if (tenant?.id) {
+        setIsCapturing(false);
+        setIsGenerating(true);
+        try {
+          await backgroundsApi.generate(tenant.id, {});
+          // Background generated successfully
+          onComplete();
+        } catch (genError) {
+          console.error('Background generation failed:', genError);
+          // Still proceed even if generation fails
+          onComplete();
+        }
+      } else {
+        // No tenant yet (shouldn't happen in onboarding flow, but handle gracefully)
+        onComplete();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to capture brand assets');
+      setIsCapturing(false);
+      setIsGenerating(false);
+    }
   };
 
   const isSubmitting = isCapturing || isGenerating;

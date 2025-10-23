@@ -95,4 +95,37 @@ export const brandingApi = {
   async getStatus(tenantId: string): Promise<{ status: string; analysis?: BrandAnalysis }> {
     return fetchWithAuth(`/api/internal/tenants/${tenantId}/branding-status`);
   },
+
+  /**
+   * Capture branding during onboarding (before tenant exists)
+   * Uses tenant_id from JWT, no tenantId parameter needed
+   */
+  async captureOnboarding(data: {
+    websiteUrl: string;
+    instagramScreenshots?: File[];
+    productImages?: File[];
+  }): Promise<BrandingCaptureResponse> {
+    const formData = new FormData();
+    formData.append('website_url', data.websiteUrl);
+
+    // Add Instagram screenshots
+    if (data.instagramScreenshots) {
+      data.instagramScreenshots.forEach((file, index) => {
+        formData.append(`instagram_screenshot_${index + 1}`, file);
+      });
+    }
+
+    // Add product images
+    if (data.productImages) {
+      data.productImages.forEach((file, index) => {
+        formData.append(`product_image_${index + 1}`, file);
+      });
+    }
+
+    return fetchWithAuth(`/api/internal/branding/capture-onboarding`, {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Let browser set Content-Type for FormData
+    });
+  },
 };
