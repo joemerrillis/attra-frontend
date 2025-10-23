@@ -73,6 +73,8 @@ export interface BackgroundStatusResponse {
   status: 'processing' | 'completed' | 'failed';
   background?: Background;
   error?: string;
+  progress?: number;
+  estimated_seconds_remaining?: number;
 }
 
 export interface BackgroundsListResponse {
@@ -80,6 +82,7 @@ export interface BackgroundsListResponse {
   total: number;
   limit: number;
   offset: number;
+  has_more?: boolean;
 }
 
 export interface BrandingCaptureRequest {

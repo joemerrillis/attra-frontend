@@ -9,7 +9,6 @@
  */
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -25,6 +24,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BackgroundCard } from './BackgroundCard';
 import { BackgroundPreviewModal } from './BackgroundPreviewModal';
+import { useBackgrounds } from '@/hooks/useBackgrounds';
+import { useAuth } from '@/hooks/useAuth';
 import type { Background } from '@/types/background';
 import type { CampaignCopy } from '@/types/campaign';
 
@@ -47,35 +48,28 @@ export function BackgroundLibrary({
   previewCopy,
   className = '',
 }: BackgroundLibraryProps) {
-  const queryClient = useQueryClient();
+  const { tenant } = useAuth();
   const [sort, setSort] = useState<SortOption>('recent');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [previewBackground, setPreviewBackground] = useState<Background | null>(null);
 
-  // TODO: Replace with actual API hook when created
-  const { data: backgrounds = [], isLoading, error } = useQuery({
-    queryKey: ['backgrounds', sort, favoritesOnly],
-    queryFn: async () => {
-      // Placeholder - will be replaced with actual API call
-      return [] as Background[];
-    },
-  });
-
-  // TODO: Replace with actual API hook when created
-  const toggleFavoriteMutation = useMutation({
-    mutationFn: async ({ id, isFavorite }: { id: string; isFavorite: boolean }) => {
-      // Placeholder - will be replaced with actual API call
-      return { id, is_favorite: isFavorite };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backgrounds'] });
-    },
+  // Use real backgrounds hook
+  const {
+    backgrounds,
+    isLoading,
+    isError,
+    toggleFavorite,
+  } = useBackgrounds({
+    tenantId: tenant?.id || '',
+    sort,
+    favoritesOnly,
+    enabled: !!tenant?.id,
   });
 
   const handleToggleFavorite = (background: Background, e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleFavoriteMutation.mutate({
-      id: background.id,
+    toggleFavorite({
+      backgroundId: background.id,
       isFavorite: !background.is_favorite,
     });
   };
@@ -135,7 +129,7 @@ export function BackgroundLibrary({
       </div>
 
       {/* Error State */}
-      {error && (
+      {isError && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
           <AlertDescription>
@@ -154,7 +148,7 @@ export function BackgroundLibrary({
       )}
 
       {/* Empty State */}
-      {!isLoading && backgrounds.length === 0 && !error && (
+      {!isLoading && backgrounds.length === 0 && !isError && (
         <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
           <ImageIcon className="w-16 h-16 text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold mb-2">
@@ -211,8 +205,8 @@ export function BackgroundLibrary({
         onSelect={handleSelectBackground}
         onToggleFavorite={() => {
           if (previewBackground) {
-            toggleFavoriteMutation.mutate({
-              id: previewBackground.id,
+            toggleFavorite({
+              backgroundId: previewBackground.id,
               isFavorite: !previewBackground.is_favorite,
             });
             // Update local state
