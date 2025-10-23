@@ -1,10 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { MapPin, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { MapPin, Loader2, Plus } from 'lucide-react';
 import { locationApi } from '@/lib/location-api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface Location {
   id: string;
@@ -20,9 +31,51 @@ interface Step2LocationsProps {
 }
 
 export function Step2Locations({ value, onChange }: Step2LocationsProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newLocationName, setNewLocationName] = useState('');
+  const [newLocationAddress, setNewLocationAddress] = useState('');
+  const [newLocationCity, setNewLocationCity] = useState('');
+  const [newLocationState, setNewLocationState] = useState('');
+  const [newLocationZip, setNewLocationZip] = useState('');
+
   const { data: response, isLoading } = useQuery({
     queryKey: ['locations'],
     queryFn: locationApi.list
+  });
+
+  const createLocationMutation = useMutation({
+    mutationFn: () => locationApi.create({
+      name: newLocationName,
+      address: newLocationAddress,
+      city: newLocationCity,
+      state: newLocationState,
+      zip: newLocationZip,
+    }),
+    onSuccess: (response: any) => {
+      const newLocation = response?.location || response;
+      const newLocationId = newLocation?.id;
+
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+      toast({ title: 'Location created', description: `${newLocationName} has been added` });
+
+      // Auto-select the newly created location
+      if (newLocationId) {
+        onChange([...value, newLocationId]);
+      }
+
+      // Reset form and close dialog
+      setNewLocationName('');
+      setNewLocationAddress('');
+      setNewLocationCity('');
+      setNewLocationState('');
+      setNewLocationZip('');
+      setShowCreateDialog(false);
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to create location', description: error.message, variant: 'destructive' });
+    }
   });
 
   // Extract locations from response (handle both direct array and wrapped response)
@@ -46,6 +99,12 @@ export function Step2Locations({ value, onChange }: Step2LocationsProps) {
     onChange([]);
   };
 
+  const handleCreateLocation = () => {
+    if (newLocationName.trim()) {
+      createLocationMutation.mutate();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -56,14 +115,108 @@ export function Step2Locations({ value, onChange }: Step2LocationsProps) {
 
   if (!locations || locations.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>No Locations Found</CardTitle>
-          <CardDescription>
-            You need to create at least one location before creating a campaign.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Select Locations</h2>
+          <p className="text-muted-foreground">
+            Choose which locations will use this campaign
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>No Locations Found</CardTitle>
+            <CardDescription>
+              Create your first location to continue
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Location
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Create Location Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Location</DialogTitle>
+              <DialogDescription>
+                Add a business location for this campaign
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="location-name">Location Name <span className="text-destructive">*</span></Label>
+                <Input
+                  id="location-name"
+                  placeholder="e.g., Main Street Store"
+                  value={newLocationName}
+                  onChange={(e) => setNewLocationName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location-address">Address</Label>
+                <Input
+                  id="location-address"
+                  placeholder="123 Main St"
+                  value={newLocationAddress}
+                  onChange={(e) => setNewLocationAddress(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="location-city">City</Label>
+                  <Input
+                    id="location-city"
+                    placeholder="City"
+                    value={newLocationCity}
+                    onChange={(e) => setNewLocationCity(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location-state">State</Label>
+                  <Input
+                    id="location-state"
+                    placeholder="State"
+                    value={newLocationState}
+                    onChange={(e) => setNewLocationState(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location-zip">ZIP Code</Label>
+                <Input
+                  id="location-zip"
+                  placeholder="12345"
+                  value={newLocationZip}
+                  onChange={(e) => setNewLocationZip(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateLocation}
+                disabled={!newLocationName.trim() || createLocationMutation.isPending}
+              >
+                {createLocationMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Location'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     );
   }
 
@@ -77,6 +230,10 @@ export function Step2Locations({ value, onChange }: Step2LocationsProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowCreateDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Location
+          </Button>
           <Button variant="outline" size="sm" onClick={selectAll}>
             Select All
           </Button>
@@ -125,6 +282,85 @@ export function Step2Locations({ value, onChange }: Step2LocationsProps) {
           );
         })}
       </div>
+
+      {/* Create Location Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Location</DialogTitle>
+            <DialogDescription>
+              Add a business location for this campaign
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="location-name">Location Name <span className="text-destructive">*</span></Label>
+              <Input
+                id="location-name"
+                placeholder="e.g., Main Street Store"
+                value={newLocationName}
+                onChange={(e) => setNewLocationName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location-address">Address</Label>
+              <Input
+                id="location-address"
+                placeholder="123 Main St"
+                value={newLocationAddress}
+                onChange={(e) => setNewLocationAddress(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="location-city">City</Label>
+                <Input
+                  id="location-city"
+                  placeholder="City"
+                  value={newLocationCity}
+                  onChange={(e) => setNewLocationCity(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location-state">State</Label>
+                <Input
+                  id="location-state"
+                  placeholder="State"
+                  value={newLocationState}
+                  onChange={(e) => setNewLocationState(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location-zip">ZIP Code</Label>
+              <Input
+                id="location-zip"
+                placeholder="12345"
+                value={newLocationZip}
+                onChange={(e) => setNewLocationZip(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateLocation}
+              disabled={!newLocationName.trim() || createLocationMutation.isPending}
+            >
+              {createLocationMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Location'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

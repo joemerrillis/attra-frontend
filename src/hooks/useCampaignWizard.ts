@@ -15,8 +15,8 @@ export function useCampaignWizard() {
 
   const canProceed = (): boolean => {
     switch (currentStep) {
-      case 1: // Goal
-        return !!wizardData.goal;
+      case 1: // Name & Goal
+        return !!(wizardData.name && wizardData.name.trim() && wizardData.goal);
 
       case 2: // Locations
         return wizardData.selectedLocations.length > 0;

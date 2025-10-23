@@ -32,9 +32,9 @@ export default function NewCampaign() {
   // Create campaign mutation
   const { mutate: createCampaign, isPending: isCreatingCampaign } = useMutation({
     mutationFn: () => campaignApi.create({
-      name: `${wizardData.goal} Campaign - ${new Date().toLocaleDateString()}`,
+      name: wizardData.name || `${wizardData.goal} Campaign - ${new Date().toLocaleDateString()}`,
       goal: wizardData.goal!,
-      description: 'Created via wizard'
+      description: wizardData.description
     }),
     onSuccess: (campaign: any) => {
       // Handle both response formats: { campaign: { id } } or { id }
@@ -130,8 +130,12 @@ export default function NewCampaign() {
       <div className="mb-8">
         {currentStep === 1 && (
           <Step1Goal
-            value={wizardData.goal}
-            onChange={(goal) => updateData({ goal })}
+            name={wizardData.name}
+            onNameChange={(name) => updateData({ name })}
+            description={wizardData.description}
+            onDescriptionChange={(description) => updateData({ description })}
+            goal={wizardData.goal}
+            onGoalChange={(goal) => updateData({ goal })}
           />
         )}
 

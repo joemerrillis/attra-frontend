@@ -41,6 +41,8 @@ export interface LocationCopy {
 
 export interface WizardData {
   // Step 1
+  name?: string;
+  description?: string;
   goal?: CampaignGoal;
 
   // Step 2
