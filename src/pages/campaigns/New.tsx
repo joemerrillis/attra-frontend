@@ -12,6 +12,7 @@ import { Step2Locations } from '@/components/campaigns/wizard/Step2Locations';
 import { Step3AssetType } from '@/components/campaigns/wizard/Step3AssetType';
 import { Step4DesignShared } from '@/components/campaigns/wizard/Step4DesignShared';
 import { Step4DesignPerLocation } from '@/components/campaigns/wizard/Step4DesignPerLocation';
+import { Step4_5Preview } from '@/components/campaigns/wizard/Step4_5Preview';
 import { Step5Review } from '@/components/campaigns/wizard/Step5Review';
 import type { GenerateAssetsRequest } from '@/types/campaign';
 
@@ -20,7 +21,8 @@ const STEPS = [
   { number: 2, label: 'Locations' },
   { number: 3, label: 'Asset Type' },
   { number: 4, label: 'Design' },
-  { number: 5, label: 'Review' }
+  { number: 5, label: 'Preview' },
+  { number: 6, label: 'Review' }
 ];
 
 export default function NewCampaign() {
@@ -179,22 +181,40 @@ export default function NewCampaign() {
         )}
 
         {currentStep === 5 && (
+          <Step4_5Preview
+            copy={!wizardData.customizePerLocation ? wizardData.copy : undefined}
+            layout={!wizardData.customizePerLocation ? wizardData.layout : undefined}
+            backgroundId={!wizardData.customizePerLocation ? wizardData.background_id : undefined}
+            locationAssets={wizardData.customizePerLocation ? wizardData.locationAssets : undefined}
+            onBack={prevStep}
+            onEditCopy={() => {
+              prevStep();
+            }}
+            onChangeBackground={() => {
+              prevStep();
+            }}
+            onApprove={nextStep}
+          />
+        )}
+
+        {currentStep === 6 && (
           <Step5Review data={wizardData} />
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === 1 || isGenerating || isCreatingCampaign}
-        >
-          <ChevronLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+      {/* Navigation (hidden for step 5 which has its own controls) */}
+      {currentStep !== 5 && (
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            disabled={currentStep === 1 || isGenerating || isCreatingCampaign}
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
 
-        {currentStep < 5 ? (
+          {currentStep < 6 ? (
           <Button
             onClick={handleNext}
             disabled={!canProceed || isCreatingCampaign}
@@ -227,7 +247,8 @@ export default function NewCampaign() {
             )}
           </Button>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
