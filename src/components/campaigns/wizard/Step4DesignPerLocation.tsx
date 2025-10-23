@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin } from 'lucide-react';
 import { locationApi } from '@/lib/location-api';
-import type { LayoutType, CampaignCopy, LocationCopy } from '@/types/campaign';
+import type { LayoutType, CampaignCopy, LocationAsset } from '@/types/campaign';
 
 const LAYOUTS: Array<{
   value: LayoutType;
@@ -23,8 +23,8 @@ interface Step4DesignPerLocationProps {
   selectedLocationIds: string[];
   destinationUrl: string;
   onDestinationUrlChange: (url: string) => void;
-  locationAssets: LocationCopy[];
-  onLocationAssetsChange: (assets: LocationCopy[]) => void;
+  locationAssets: LocationAsset[];
+  onLocationAssetsChange: (assets: LocationAsset[]) => void;
 }
 
 export function Step4DesignPerLocation({
@@ -66,7 +66,7 @@ export function Step4DesignPerLocation({
     }
   }, [selectedLocationIds, activeTab]);
 
-  const updateLocationAsset = (locationId: string, updates: Partial<LocationCopy>) => {
+  const updateLocationAsset = (locationId: string, updates: Partial<LocationAsset>) => {
     onLocationAssetsChange(
       locationAssets.map(asset =>
         asset.location_id === locationId

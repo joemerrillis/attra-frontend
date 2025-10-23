@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BackgroundCard } from './BackgroundCard';

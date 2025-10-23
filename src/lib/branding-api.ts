@@ -8,7 +8,6 @@
 
 import { supabase } from './supabase';
 import type {
-  BrandingCaptureRequest,
   BrandingCaptureResponse,
   BrandAnalysis,
 } from '@/types/background';

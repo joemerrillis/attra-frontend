@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ZoomIn, ZoomOut, Maximize2, Edit, Image as ImageIcon } from 'lucide-react';
+import { ZoomIn, Maximize2, Edit, Image as ImageIcon } from 'lucide-react';
 import type { Background } from '@/types/background';
 import type { CampaignCopy, LayoutType } from '@/types/campaign';
 import {
@@ -186,7 +186,7 @@ export function FlyerPreviewWithBackground({
                   <h1
                     key={i}
                     className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
-                    style={{ color: headlineStyle.color }}
+                    style={{ color: 'color' in headlineStyle ? headlineStyle.color : '#FFFFFF' }}
                   >
                     {line}
                   </h1>
@@ -194,7 +194,7 @@ export function FlyerPreviewWithBackground({
                 {copy.subheadline && (
                   <p
                     className="text-xl md:text-2xl mt-4"
-                    style={{ color: headlineStyle.color }}
+                    style={{ color: 'color' in headlineStyle ? headlineStyle.color : '#FFFFFF' }}
                   >
                     {copy.subheadline}
                   </p>
@@ -219,7 +219,7 @@ export function FlyerPreviewWithBackground({
                   <div className="text-center md:text-left">
                     <p
                       className="text-2xl md:text-3xl font-semibold"
-                      style={{ color: qrZoneStyle.color }}
+                      style={{ color: 'color' in qrZoneStyle ? qrZoneStyle.color : '#FFFFFF' }}
                     >
                       {copy.cta}
                     </p>
