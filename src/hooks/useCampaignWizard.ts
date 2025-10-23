@@ -26,13 +26,13 @@ export function useCampaignWizard() {
 
       case 4: // Design (depends on mode)
         if (!wizardData.customizePerLocation) {
-          // Shared mode: need URL, copy, and layout
+          // Shared mode: need URL, copy, and (layout OR background)
           return !!(
             wizardData.destinationUrl &&
             wizardData.copy?.headline &&
             wizardData.copy?.subheadline &&
             wizardData.copy?.cta &&
-            wizardData.layout
+            (wizardData.layout || wizardData.background_id)
           );
         } else {
           // Per-location mode: need all locations configured
@@ -42,12 +42,15 @@ export function useCampaignWizard() {
               asset.copy?.headline &&
               asset.copy?.subheadline &&
               asset.copy?.cta &&
-              asset.layout
+              (asset.layout || asset.background_id)
             )
           );
         }
 
-      case 5: // Review
+      case 5: // Preview - always allow proceeding
+        return true;
+
+      case 6: // Review
         return true;
 
       default:
@@ -57,7 +60,7 @@ export function useCampaignWizard() {
 
   const nextStep = () => {
     if (canProceed()) {
-      setCurrentStep(prev => Math.min(prev + 1, 5));
+      setCurrentStep(prev => Math.min(prev + 1, 6));
     }
   };
 
