@@ -32,6 +32,7 @@ interface CreateTenantRequest {
   name: string;
   slug: string;
   vertical_key?: string;
+  plan_key?: 'free' | 'pro' | 'enterprise';
 }
 
 interface CreateTenantResponse {

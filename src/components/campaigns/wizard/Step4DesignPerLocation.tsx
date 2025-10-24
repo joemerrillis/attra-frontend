@@ -54,15 +54,15 @@ export function Step4DesignPerLocation({
   const { tenant } = useAuth();
   const [activeTab, setActiveTab] = useState(selectedLocationIds[0] || '');
   const [designModes, setDesignModes] = useState<Record<string, 'ai' | 'classic'>>({});
-  const [showGenerationModal, setShowGenerationModal] = useState<string | null>(null);
+  const [generatingForLocation, setGeneratingForLocation] = useState<string | null>(null);
 
   const { generate, isGenerating } = useBackgroundGeneration({
     tenantId: tenant?.id || '',
     onSuccess: (background: Background) => {
-      if (showGenerationModal) {
-        updateLocationAsset(showGenerationModal, { background_id: background.id });
-        setDesignModes({ ...designModes, [showGenerationModal]: 'ai' });
-        setShowGenerationModal(null);
+      if (generatingForLocation) {
+        updateLocationAsset(generatingForLocation, { background_id: background.id });
+        setDesignModes({ ...designModes, [generatingForLocation]: 'ai' });
+        setGeneratingForLocation(null);
       }
     },
   });
@@ -123,7 +123,7 @@ export function Step4DesignPerLocation({
 
   const handleGenerateNew = (locationId: string) => {
     generate(undefined);
-    setShowGenerationModal(locationId);
+    setGeneratingForLocation(locationId);
   };
 
   const handleTabChange = (locationId: string, value: string) => {
@@ -285,22 +285,11 @@ export function Step4DesignPerLocation({
 
                     {/* AI Backgrounds Tab */}
                     <TabsContent value="ai" className="space-y-4">
-                      {isGenerating && showGenerationModal === location.id && (
-                        <Card className="border-blue-200 bg-blue-50/50">
-                          <CardContent className="p-4 flex items-center gap-3">
-                            <Sparkles className="w-5 h-5 text-blue-600 animate-pulse" />
-                            <div>
-                              <p className="font-medium">Generating AI background...</p>
-                              <p className="text-sm text-muted-foreground">This may take 5-10 seconds</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
                       <BackgroundLibrary
                         selectedId={asset.background_id}
                         onSelect={(id) => handleSelectBackground(location.id, id)}
                         onGenerateNew={() => handleGenerateNew(location.id)}
+                        isGenerating={isGenerating && generatingForLocation === location.id}
                         previewCopy={asset.copy}
                         compact={true}
                       />

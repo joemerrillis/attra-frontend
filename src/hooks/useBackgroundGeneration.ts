@@ -7,7 +7,7 @@
  * - Auto-refetch backgrounds list on success
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { backgroundsApi } from '@/lib/backgrounds-api';
 import type { BackgroundGenerationRequest, Background } from '@/types/background';
@@ -23,7 +23,6 @@ export function useBackgroundGeneration({
   onSuccess,
   onError,
 }: UseBackgroundGenerationOptions) {
-  const queryClient = useQueryClient();
   const [generatingBackgroundId, setGeneratingBackgroundId] = useState<string | null>(null);
   const [pollInterval, setPollInterval] = useState<number | false>(false);
 
@@ -32,9 +31,13 @@ export function useBackgroundGeneration({
     mutationFn: (request?: BackgroundGenerationRequest) =>
       backgroundsApi.generate(tenantId, request),
     onSuccess: (response) => {
-      // Response contains job_id - start polling for status
+      // Response contains job_id
+      // With realtime enabled, background will appear automatically via Supabase subscription
+      // We just track that generation is in progress to disable UI
       if (response.job_id) {
         setGeneratingBackgroundId(response.job_id);
+        // No polling needed - realtime subscription will update when ready
+        // But we'll still poll to detect errors and provide progress updates
         setPollInterval(2000); // Poll every 2 seconds
       }
     },
@@ -60,10 +63,10 @@ export function useBackgroundGeneration({
     const { status, background, error } = statusQuery.data;
 
     if (status === 'completed' && background) {
-      // Success! Stop polling and refresh backgrounds list
+      // Success! Stop polling
+      // (Realtime subscription already added background to cache)
       setPollInterval(false);
       setGeneratingBackgroundId(null);
-      queryClient.invalidateQueries({ queryKey: ['backgrounds', tenantId] });
       onSuccess?.(background);
     } else if (status === 'failed') {
       // Failed - stop polling
@@ -72,7 +75,7 @@ export function useBackgroundGeneration({
       onError?.(new Error(error || 'Background generation failed'));
     }
     // If status === 'processing', keep polling (interval already set)
-  }, [statusQuery.data, tenantId, onSuccess, onError, queryClient]);
+  }, [statusQuery.data, onSuccess, onError]);
 
   return {
     // Generation state

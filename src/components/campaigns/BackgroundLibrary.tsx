@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Sparkles, Image as ImageIcon, AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BackgroundCard } from './BackgroundCard';
@@ -33,6 +33,7 @@ interface BackgroundLibraryProps {
   selectedId?: string;
   onSelect: (backgroundId: string) => void;
   onGenerateNew?: () => void;
+  isGenerating?: boolean; // Show generating state
   compact?: boolean; // Smaller grid for per-location mode
   previewCopy?: CampaignCopy; // Show preview with campaign copy
   className?: string;
@@ -44,6 +45,7 @@ export function BackgroundLibrary({
   selectedId,
   onSelect,
   onGenerateNew,
+  isGenerating = false,
   compact = false,
   previewCopy,
   className = '',
@@ -94,9 +96,18 @@ export function BackgroundLibrary({
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         {/* Generate New Button */}
         {onGenerateNew && (
-          <Button onClick={onGenerateNew} className="gap-2">
-            <Sparkles className="w-4 h-4" />
-            Generate New Background
+          <Button onClick={onGenerateNew} disabled={isGenerating} className="gap-2">
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Generate New Background
+              </>
+            )}
           </Button>
         )}
 
@@ -127,6 +138,17 @@ export function BackgroundLibrary({
           </Select>
         </div>
       </div>
+
+      {/* Generating State */}
+      {isGenerating && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <AlertDescription>
+            <strong>Generating new background...</strong> This usually takes 5-10 seconds.
+            Your new background will appear automatically when ready.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Error State */}
       {isError && (

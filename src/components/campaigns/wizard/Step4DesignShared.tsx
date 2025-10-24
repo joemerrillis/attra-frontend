@@ -57,14 +57,12 @@ export function Step4DesignShared({
 }: Step4DesignSharedProps) {
   const { tenant } = useAuth();
   const [designMode, setDesignMode] = useState<'ai' | 'classic'>(backgroundId ? 'ai' : 'classic');
-  const [showGenerationModal, setShowGenerationModal] = useState(false);
 
   const { generate, isGenerating } = useBackgroundGeneration({
     tenantId: tenant?.id || '',
     onSuccess: (background: Background) => {
       onBackgroundIdChange(background.id);
       setDesignMode('ai');
-      setShowGenerationModal(false);
     },
   });
 
@@ -75,7 +73,6 @@ export function Step4DesignShared({
 
   const handleGenerateNew = () => {
     generate(undefined);
-    setShowGenerationModal(true);
   };
 
   const handleTabChange = (value: string) => {
@@ -211,22 +208,11 @@ export function Step4DesignShared({
 
             {/* AI Backgrounds Tab */}
             <TabsContent value="ai" className="space-y-4">
-              {isGenerating && showGenerationModal && (
-                <Card className="border-blue-200 bg-blue-50/50">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-blue-600 animate-pulse" />
-                    <div>
-                      <p className="font-medium">Generating AI background...</p>
-                      <p className="text-sm text-muted-foreground">This may take 5-10 seconds</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
               <BackgroundLibrary
                 selectedId={backgroundId}
                 onSelect={handleSelectBackground}
                 onGenerateNew={handleGenerateNew}
+                isGenerating={isGenerating}
                 previewCopy={copy}
               />
             </TabsContent>

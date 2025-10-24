@@ -42,6 +42,7 @@ export const useOnboarding = () => {
         name: data.tenantName,
         slug,
         vertical_key: data.vertical,
+        plan_key: 'free',
       });
 
       // STEP 2: Refresh session to get updated JWT with tenant_id

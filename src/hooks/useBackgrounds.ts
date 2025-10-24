@@ -5,11 +5,14 @@
  * - List backgrounds with sorting/filtering
  * - Toggle favorites
  * - Delete backgrounds
+ * - Realtime updates via Supabase
  */
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { backgroundsApi } from '@/lib/backgrounds-api';
-import type { BackgroundsListResponse } from '@/types/background';
+import { supabase } from '@/lib/supabase';
+import type { BackgroundsListResponse, Background } from '@/types/background';
 
 interface UseBackgroundsOptions {
   tenantId: string;
@@ -61,6 +64,92 @@ export function useBackgrounds({
       queryClient.invalidateQueries({ queryKey: ['backgrounds', tenantId] });
     },
   });
+
+  // Realtime subscription for new backgrounds
+  useEffect(() => {
+    if (!tenantId || !enabled) return;
+
+    const channel = supabase
+      .channel('backgrounds-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'campaign_backgrounds',
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        (payload) => {
+          // New background created - update cache optimistically
+          queryClient.setQueryData<BackgroundsListResponse>(
+            ['backgrounds', tenantId, sort, favoritesOnly, limit, offset],
+            (oldData) => {
+              if (!oldData) return oldData;
+
+              return {
+                ...oldData,
+                backgrounds: [payload.new as Background, ...oldData.backgrounds],
+                total: oldData.total + 1,
+              };
+            }
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'campaign_backgrounds',
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        (payload) => {
+          // Background updated (e.g., status changed) - update cache
+          queryClient.setQueryData<BackgroundsListResponse>(
+            ['backgrounds', tenantId, sort, favoritesOnly, limit, offset],
+            (oldData) => {
+              if (!oldData) return oldData;
+
+              return {
+                ...oldData,
+                backgrounds: oldData.backgrounds.map((bg) =>
+                  bg.id === (payload.new as Background).id ? (payload.new as Background) : bg
+                ),
+              };
+            }
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'campaign_backgrounds',
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        (payload) => {
+          // Background deleted - update cache
+          queryClient.setQueryData<BackgroundsListResponse>(
+            ['backgrounds', tenantId, sort, favoritesOnly, limit, offset],
+            (oldData) => {
+              if (!oldData) return oldData;
+
+              return {
+                ...oldData,
+                backgrounds: oldData.backgrounds.filter((bg) => bg.id !== (payload.old as Background).id),
+                total: oldData.total - 1,
+              };
+            }
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenantId, enabled, queryClient, sort, favoritesOnly, limit, offset]);
 
   return {
     // Query data
