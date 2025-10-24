@@ -203,29 +203,36 @@ export function FlyerPreviewWithBackground({
             </div>
 
             {/* QR Code + CTA Zone */}
-            <div style={qrZoneStyle}>
-              <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-                {/* QR Code with White Backing */}
-                <div className="bg-white p-4 rounded-lg shadow-2xl">
-                  <img
-                    src={qrCodeUrl || generatePlaceholderQR()}
-                    alt="QR Code"
-                    className="w-32 h-32 md:w-40 md:h-40"
-                  />
-                </div>
-
-                {/* CTA Text */}
-                {copy.cta && (
-                  <div className="text-center md:text-left">
-                    <p
-                      className="text-2xl md:text-3xl font-semibold"
-                      style={{ color: 'color' in qrZoneStyle ? qrZoneStyle.color : '#FFFFFF' }}
-                    >
-                      {copy.cta}
-                    </p>
-                  </div>
-                )}
+            <div
+              style={{
+                ...qrZoneStyle,
+                // Override flex direction from qrZoneStyle to allow horizontal layout
+                flexDirection: 'row',
+              }}
+            >
+              {/* QR Code with White Backing */}
+              <div className="bg-white p-4 rounded-lg shadow-2xl flex-shrink-0">
+                <img
+                  src={qrCodeUrl || generatePlaceholderQR()}
+                  alt="QR Code"
+                  className="w-32 h-32 md:w-40 md:h-40"
+                />
               </div>
+
+              {/* CTA Text */}
+              {copy.cta && (
+                <div className="flex items-center justify-center flex-1">
+                  <p
+                    className="text-2xl md:text-3xl lg:text-4xl font-bold text-center px-4"
+                    style={{
+                      color: 'color' in qrZoneStyle ? qrZoneStyle.color : '#FFFFFF',
+                      textShadow: 'textShadow' in qrZoneStyle ? qrZoneStyle.textShadow as string : '2px 2px 4px rgba(0, 0, 0, 0.8)',
+                    }}
+                  >
+                    {copy.cta}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
