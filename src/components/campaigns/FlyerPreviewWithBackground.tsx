@@ -203,13 +203,7 @@ export function FlyerPreviewWithBackground({
             </div>
 
             {/* QR Code + CTA Zone */}
-            <div
-              style={{
-                ...qrZoneStyle,
-                // Override flex direction from qrZoneStyle to allow horizontal layout
-                flexDirection: 'row',
-              }}
-            >
+            <div style={qrZoneStyle}>
               {/* QR Code with White Backing */}
               <div className="bg-white p-4 rounded-lg shadow-2xl flex-shrink-0">
                 <img

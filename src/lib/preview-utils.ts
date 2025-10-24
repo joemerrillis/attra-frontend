@@ -26,6 +26,7 @@ export function zoneToCSS(zone: Zone) {
 /**
  * Get headline text style based on composition map
  * Selects the largest safe zone for headline placement
+ * If only one large zone exists, subdivides it into top 35% for headline
  */
 export function getHeadlineStyle(compositionMap?: CompositionMap) {
   if (!compositionMap || !compositionMap.safe_zones.length) {
@@ -47,11 +48,23 @@ export function getHeadlineStyle(compositionMap?: CompositionMap) {
     return area > largestArea ? zone : largest;
   });
 
-  const css = zoneToCSS(largestZone);
+  // If only one safe zone and it's tall (> 2000px), subdivide it
+  // Use top 35% for headline, leaving 30% gap, bottom 35% for QR+CTA
+  let headlineZone = largestZone;
+  if (compositionMap.safe_zones.length === 1 && largestZone.height > 2000) {
+    headlineZone = {
+      x: largestZone.x,
+      y: largestZone.y,
+      width: largestZone.width,
+      height: Math.floor(largestZone.height * 0.35), // Top 35%
+    };
+  }
+
+  const css = zoneToCSS(headlineZone);
 
   // Determine text color based on zone brightness
   const isInBrightZone = compositionMap.bright_zones.some(brightZone =>
-    zonesOverlap(largestZone, brightZone)
+    zonesOverlap(headlineZone, brightZone)
   );
 
   return {
@@ -72,6 +85,7 @@ export function getHeadlineStyle(compositionMap?: CompositionMap) {
 /**
  * Get QR code zone style
  * Selects a safe zone near the bottom for QR placement
+ * If only one large zone exists, subdivides it to use bottom 35% for QR+CTA
  */
 export function getQRZoneStyle(compositionMap?: CompositionMap) {
   if (!compositionMap || !compositionMap.safe_zones.length) {
@@ -91,18 +105,31 @@ export function getQRZoneStyle(compositionMap?: CompositionMap) {
     return zone.y > bottom.y ? zone : bottom;
   });
 
-  const css = zoneToCSS(bottomZone);
+  // If only one safe zone and it's tall (> 2000px), subdivide it
+  // Use bottom 35% for QR+CTA (skip top 35% for headline, 30% gap in middle)
+  let qrZone = bottomZone;
+  if (compositionMap.safe_zones.length === 1 && bottomZone.height > 2000) {
+    const bottomHeight = Math.floor(bottomZone.height * 0.35); // Bottom 35%
+    qrZone = {
+      x: bottomZone.x,
+      y: bottomZone.y + bottomZone.height - bottomHeight, // Start at bottom 35%
+      width: bottomZone.width,
+      height: bottomHeight,
+    };
+  }
+
+  const css = zoneToCSS(qrZone);
 
   // Determine text color
   const isInBrightZone = compositionMap.bright_zones.some(brightZone =>
-    zonesOverlap(bottomZone, brightZone)
+    zonesOverlap(qrZone, brightZone)
   );
 
   return {
     position: 'absolute' as const,
     ...css,
     display: 'flex',
-    flexDirection: 'column' as const,
+    flexDirection: 'row' as const, // FIXED: Side-by-side layout (QR + CTA)
     alignItems: 'center',
     justifyContent: 'center',
     gap: '1rem',
