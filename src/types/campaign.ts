@@ -65,6 +65,45 @@ export interface WizardData {
   locationAssets?: LocationAsset[];
 }
 
+export interface RenderInstructions {
+  headline: {
+    text: string;
+    x: number;
+    y: number;
+    width: number;
+    fontSize: number;
+    lineHeight: number;
+    color: string;
+    textAlign: 'center';
+    textShadow?: string;
+  };
+  subheadline: {
+    text: string;
+    x: number;
+    y: number;
+    width: number;
+    fontSize: number;
+    lineHeight: number;
+    color: string;
+    textAlign: 'center';
+    textShadow?: string;
+  };
+  qr: {
+    x: number;
+    y: number;
+    size: number;
+    padding: number;
+  };
+  cta: {
+    text: string;
+    x: number;
+    y: number;
+    fontSize: number;
+    color: string;
+    textShadow?: string;
+  };
+}
+
 export interface GenerateAssetsRequest {
   asset_type: AssetType;
   base_url: string;

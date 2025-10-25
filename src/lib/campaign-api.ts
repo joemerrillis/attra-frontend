@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { backgroundsApi } from './backgrounds-api';
+import { calculateRenderInstructions } from './preview-utils';
 import type { GenerateAssetsRequest } from '@/types/campaign';
 
 type CampaignsResponse = any;
@@ -83,6 +85,95 @@ export const campaignApi = {
     return fetchWithAuth(`/api/internal/campaigns/${campaignId}/generate-flyer`, {
       method: 'POST',
       body: JSON.stringify(request),
+    });
+  },
+
+  /**
+   * Generate campaign assets in batch with render instructions
+   * Calculates exact pixel coordinates for backend PDF generation
+   * Prevents race conditions by deduplicating background fetches
+   */
+  async generateBatch(
+    campaignId: string,
+    params: {
+      location_ids?: string[];
+      shared_copy?: { headline: string; subheadline: string; cta: string };
+      shared_background_id?: string;
+      shared_layout?: string;
+      location_assets?: Array<{
+        location_id: string;
+        headline: string;
+        subheadline: string;
+        cta: string;
+        background_id?: string;
+        layout?: string;
+      }>;
+    }
+  ): Promise<any> {
+    let payload: any = { ...params };
+
+    // SHARED MODE: Calculate render instructions once
+    if (params.shared_copy && (params.shared_background_id || params.shared_layout)) {
+      let background = null;
+
+      if (params.shared_background_id) {
+        background = await backgroundsApi.getById(params.shared_background_id);
+      }
+
+      payload.render_instructions = calculateRenderInstructions(
+        background,
+        params.shared_copy,
+        params.shared_layout as any
+      );
+    }
+
+    // PER-LOCATION MODE: Calculate render instructions for each
+    // Deduplicate background fetches to prevent race conditions
+    if (params.location_assets) {
+      // Collect unique background IDs
+      const uniqueBackgroundIds = [
+        ...new Set(
+          params.location_assets
+            .map(asset => asset.background_id)
+            .filter(id => id !== undefined) as string[]
+        )
+      ];
+
+      // Fetch all backgrounds in parallel (deduplicated)
+      const backgroundsMap = new Map();
+      await Promise.all(
+        uniqueBackgroundIds.map(async (bgId) => {
+          const bg = await backgroundsApi.getById(bgId);
+          backgroundsMap.set(bgId, bg);
+        })
+      );
+
+      // Calculate render instructions for each location
+      payload.location_assets_with_instructions = params.location_assets.map((asset) => {
+        let background = null;
+
+        if (asset.background_id) {
+          background = backgroundsMap.get(asset.background_id) || null;
+        }
+
+        return {
+          ...asset,
+          render_instructions: calculateRenderInstructions(
+            background,
+            {
+              headline: asset.headline,
+              subheadline: asset.subheadline,
+              cta: asset.cta
+            },
+            asset.layout as any
+          )
+        };
+      });
+    }
+
+    return fetchWithAuth(`/api/internal/campaigns/${campaignId}/assets/generate-batch`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   },
 };

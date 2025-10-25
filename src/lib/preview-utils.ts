@@ -5,11 +5,20 @@
  */
 
 import type { CompositionMap, Zone } from '@/types/background';
-import type { LayoutType } from '@/types/campaign';
+import type { LayoutType, RenderInstructions } from '@/types/campaign';
 
 // Flyer dimensions (300 DPI for print quality)
 const FLYER_WIDTH_PX = 2550;  // 8.5" × 300 DPI
 const FLYER_HEIGHT_PX = 3300; // 11" × 300 DPI
+
+// Font sizes at print resolution (match largest responsive size, scaled to 300 DPI)
+const PRINT_FONT_SIZES = {
+  headline: 120,      // lg:text-6xl (60px) * 2 = 120px @ 300 DPI
+  subheadline: 48,    // md:text-2xl (24px) * 2 = 48px @ 300 DPI
+  cta: 72,            // lg:text-4xl (36px) * 2 = 72px @ 300 DPI
+};
+
+const LINE_HEIGHT = 1.2; // Tailwind default for headings
 
 /**
  * Convert absolute pixel zone to percentage-based CSS
@@ -229,4 +238,109 @@ export function generatePlaceholderQR(): string {
       <text x="100" y="105" text-anchor="middle" fill="#fff" font-size="12" font-family="sans-serif">QR</text>
     </svg>
   `)}`;
+}
+
+/**
+ * Convert CSS percentage string to absolute pixels
+ */
+function percentToPx(percentStr: string | undefined, totalPx: number): number {
+  if (!percentStr) return 0;
+  const percent = parseFloat(percentStr.replace('%', ''));
+  return Math.floor((percent / 100) * totalPx);
+}
+
+/**
+ * Calculate exact pixel coordinates for backend PDF generation
+ * Uses same zone logic as preview to ensure WYSIWYG
+ *
+ * @param background - Background with composition_map (or null for classic templates)
+ * @param copy - Campaign copy (headline, subheadline, cta)
+ * @param layout - Classic template layout (if not using AI background)
+ * @returns Absolute pixel coordinates at 300 DPI (2550x3300)
+ */
+export function calculateRenderInstructions(
+  background: { composition_map?: CompositionMap } | null,
+  copy: { headline: string; subheadline: string; cta: string },
+  _layout?: LayoutType
+): RenderInstructions {
+  const compositionMap = background?.composition_map;
+
+  // Get styles from existing functions (these already handle zone logic)
+  const headlineStyle = getHeadlineStyle(compositionMap);
+  const qrZoneStyle = getQRZoneStyle(compositionMap);
+
+  // Convert CSS percentages to absolute pixels
+  // Use 'as any' to handle different return types from style functions
+  const headlineX = percentToPx((headlineStyle as any).left, FLYER_WIDTH_PX);
+  const headlineY = percentToPx((headlineStyle as any).top, FLYER_HEIGHT_PX);
+  const headlineWidth = percentToPx((headlineStyle as any).width, FLYER_WIDTH_PX);
+  const headlineHeight = percentToPx((headlineStyle as any).height, FLYER_HEIGHT_PX);
+
+  const qrZoneX = percentToPx((qrZoneStyle as any).left, FLYER_WIDTH_PX);
+  const qrZoneY = percentToPx((qrZoneStyle as any).top, FLYER_HEIGHT_PX);
+  const qrZoneWidth = percentToPx((qrZoneStyle as any).width, FLYER_WIDTH_PX);
+  const qrZoneHeight = percentToPx((qrZoneStyle as any).height, FLYER_HEIGHT_PX);
+
+  // Calculate vertical positioning for headline area (centered)
+  const headlineFontSize = PRINT_FONT_SIZES.headline;
+  const subheadlineFontSize = PRINT_FONT_SIZES.subheadline;
+  const headlineLineHeight = headlineFontSize * LINE_HEIGHT;
+
+  // Center headline vertically in its zone
+  const headlineTextY = headlineY + (headlineHeight / 2) - headlineLineHeight - 20;
+  const subheadlineTextY = headlineTextY + headlineLineHeight + 40;
+
+  // Calculate QR + CTA positioning (horizontal layout with gap)
+  const qrSize = 320;
+  const qrPadding = 32;
+  const gap = 64; // 1rem @ print resolution
+  const ctaFontSize = PRINT_FONT_SIZES.cta;
+
+  // Center the QR + CTA group horizontally in the zone
+  const totalGroupWidth = (qrSize + qrPadding * 2) + gap + (qrZoneWidth * 0.4); // QR + gap + approximate CTA width
+  const groupStartX = qrZoneX + (qrZoneWidth - totalGroupWidth) / 2;
+
+  // Center vertically in zone
+  const qrCenterY = qrZoneY + (qrZoneHeight / 2);
+  const qrY = qrCenterY - (qrSize + qrPadding * 2) / 2;
+  const ctaY = qrCenterY;
+
+  return {
+    headline: {
+      text: copy.headline,
+      x: headlineX + headlineWidth / 2, // Center X
+      y: headlineTextY,
+      width: headlineWidth,
+      fontSize: headlineFontSize,
+      lineHeight: LINE_HEIGHT,
+      color: (headlineStyle as any).color || '#FFFFFF',
+      textAlign: 'center',
+      textShadow: (headlineStyle as any).textShadow
+    },
+    subheadline: {
+      text: copy.subheadline,
+      x: headlineX + headlineWidth / 2, // Center X
+      y: subheadlineTextY,
+      width: headlineWidth,
+      fontSize: subheadlineFontSize,
+      lineHeight: LINE_HEIGHT,
+      color: (headlineStyle as any).color || '#FFFFFF',
+      textAlign: 'center',
+      textShadow: (headlineStyle as any).textShadow
+    },
+    qr: {
+      x: groupStartX,
+      y: qrY,
+      size: qrSize,
+      padding: qrPadding
+    },
+    cta: {
+      text: copy.cta,
+      x: groupStartX + qrSize + qrPadding * 2 + gap,
+      y: ctaY,
+      fontSize: ctaFontSize,
+      color: (qrZoneStyle as any).color || '#FFFFFF',
+      textShadow: (qrZoneStyle as any).textShadow
+    }
+  };
 }
