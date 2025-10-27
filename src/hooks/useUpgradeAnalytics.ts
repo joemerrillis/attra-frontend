@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { trackUpgradeEvent, type UpgradeEventData } from '@/lib/upgrade-analytics';
+import { trackUpgradeEvent } from '@/lib/upgrade-analytics';
 import { useCurrentPlan } from './useCurrentPlan';
 
 /**

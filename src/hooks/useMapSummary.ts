@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 
 export interface MapLocation {
   location_id: string;
@@ -23,8 +22,6 @@ export interface MapSummary {
   totalLocations?: number;         // Optional - returned by backend
   total_pending_contacts?: number; // Backend uses snake_case
 }
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export function useMapSummary() {
   return useQuery({

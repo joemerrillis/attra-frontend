@@ -4,7 +4,6 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@/styles/map-animations.css';
 import { initMapbox, DEFAULT_MAP_CONFIG } from '@/lib/mapbox-config';
-import { useMapSummary } from '@/hooks/useMapSummary';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useUpgradeAnalytics } from '@/hooks/useUpgradeAnalytics';
 import { PinBottomSheet } from '@/components/map/PinBottomSheet';
@@ -13,12 +12,10 @@ import { MapLoadingSkeleton } from '@/components/map/MapLoadingSkeleton';
 import { MapControls } from '@/components/map/MapControls';
 import { Button } from '@/components/ui/button';
 import type { MapLocation } from '@/hooks/useMapSummary';
-import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 export function MapPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   // Feature gate check for map access
   const {
@@ -520,7 +517,7 @@ export function MapPage() {
             <p className="text-xs text-muted-foreground mt-4">
               {requiredPlan === 'starter'
                 ? 'Included in Starter plan - Starting at $29/month'
-                : requiredPlan === 'professional'
+                : requiredPlan === 'pro'
                 ? 'Included in Professional plan - Starting at $99/month'
                 : 'Upgrade to access this feature'
               }
