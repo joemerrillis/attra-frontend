@@ -4,6 +4,7 @@ import { Check, ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePlanData } from '@/hooks/usePlanData';
 import { useCurrentPlan } from '@/hooks/useCurrentPlan';
+import { useTrackUpgradePageView } from '@/hooks/useUpgradeAnalytics';
 import { formatPrice } from '@/lib/plan-utils';
 import { FeatureBadge } from '@/components/feature-gating/FeatureBadge';
 
@@ -14,6 +15,9 @@ export default function Upgrade() {
 
   const { plans, isLoading } = usePlanData();
   const { planKey: currentPlan } = useCurrentPlan();
+
+  // Track when upgrade page is visited
+  useTrackUpgradePageView();
 
   if (isLoading) {
     return <div className="container py-8">Loading plans...</div>;
@@ -51,7 +55,7 @@ export default function Upgrade() {
 
         {/* Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.filter(p => p.key !== 'free').map((plan) => {
+          {plans.map((plan) => {
             const isCurrentPlan = plan.key === currentPlan;
             const price = plan.pricing.monthly;
 
@@ -105,9 +109,13 @@ export default function Upgrade() {
                   <Button
                     className="w-full"
                     variant={plan.key === 'pro' ? 'default' : 'outline'}
-                    disabled={isCurrentPlan}
+                    disabled={isCurrentPlan || plan.key === 'free'}
                   >
-                    {isCurrentPlan ? 'Current Plan' : `Upgrade to ${plan.displayName}`}
+                    {isCurrentPlan
+                      ? 'Current Plan'
+                      : plan.key === 'free'
+                      ? 'Free Plan'
+                      : `Upgrade to ${plan.displayName}`}
                   </Button>
                 </CardContent>
               </Card>
