@@ -29,3 +29,6 @@ test-results/
 playwright-report/
 playwright/.cache/
 tests/screenshots/
+
+# Multi-agent communication (ephemeral, not committed)
+communication/
