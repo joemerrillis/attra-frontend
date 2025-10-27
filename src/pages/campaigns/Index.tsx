@@ -63,7 +63,7 @@ export default function CampaignsIndex() {
           </p>
         </div>
 
-        <Button onClick={() => navigate('/campaigns/new')}>
+        <Button variant="accent" onClick={() => navigate('/campaigns/new')}>
           <Plus className="w-4 h-4 mr-2" />
           New Campaign
         </Button>
@@ -82,7 +82,7 @@ export default function CampaignsIndex() {
             <p className="text-muted-foreground mb-4 text-center">
               Create your first campaign to start tracking attribution
             </p>
-            <Button onClick={() => navigate('/campaigns/new')}>
+            <Button variant="accent" onClick={() => navigate('/campaigns/new')}>
               <Plus className="w-4 h-4 mr-2" />
               Create Campaign
             </Button>

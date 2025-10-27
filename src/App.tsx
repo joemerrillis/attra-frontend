@@ -23,6 +23,8 @@ import Upgrade from '@/pages/Upgrade';
 import ContactsIndex from '@/pages/contacts/Index';
 import ContactDetail from '@/pages/contacts/Detail';
 import Settings from '@/pages/Settings';
+import { Map } from '@/pages/Map';
+import { MapSimple } from '@/pages/MapSimple';
 
 function App() {
   return (
@@ -113,6 +115,26 @@ function App() {
                   <AppLayout>
                     <Locations />
                   </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/map"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Map />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/map-simple"
+              element={
+                <ProtectedRoute>
+                  <MapSimple />
                 </ProtectedRoute>
               }
             />

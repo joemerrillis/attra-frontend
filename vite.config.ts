@@ -11,6 +11,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    watch: {
+      ignored: ['**/communication/**']
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
