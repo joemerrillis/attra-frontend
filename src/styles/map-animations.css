@@ -1,0 +1,61 @@
+/* Map marker animations */
+
+/* Fade in and scale animation for markers */
+@keyframes marker-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Pulse animation for live markers */
+@keyframes marker-pulse {
+  0%, 100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Bounce animation for new markers */
+@keyframes marker-bounce {
+  0% {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(10px);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Apply appear animation to all markers */
+.map-marker-container {
+  animation: marker-appear 0.3s ease-out;
+}
+
+/* Focus ring styles for keyboard navigation */
+.map-marker-container:focus-within {
+  outline: none;
+}
+
+/* Smooth transitions for marker interactions */
+.map-marker-container > div {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* Enhanced focus state */
+.map-marker-container > div:focus {
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.3);
+}

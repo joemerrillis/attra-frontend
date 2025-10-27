@@ -16,7 +16,7 @@ export function initMapbox() {
 
 // Default map config
 export const DEFAULT_MAP_CONFIG = {
-  style: 'mapbox://styles/mapbox/light-v11',
+  style: 'mapbox://styles/joemerrill/cmh9myy2j003y01sgfx33bnwj',
   center: [-98.5795, 39.8283] as [number, number], // Center of USA
   zoom: 3,
   minZoom: 2,
@@ -25,9 +25,9 @@ export const DEFAULT_MAP_CONFIG = {
 
 // Map theme based on user's brand color
 export function getMapStyle(_primaryColor?: string) {
-  // For MVP, use light style
+  // Use custom Attra map style
   // Future: customize based on tenant branding
-  return 'mapbox://styles/mapbox/light-v11';
+  return 'mapbox://styles/joemerrill/cmh9myy2j003y01sgfx33bnwj';
 }
 
 // Create custom marker element
