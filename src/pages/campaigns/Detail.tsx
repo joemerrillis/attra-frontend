@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, TrendingUp, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, TrendingUp, FileText, Loader2 } from 'lucide-react';
 import { campaignApi } from '@/lib/campaign-api';
 
 export default function CampaignDetail() {
@@ -14,6 +14,11 @@ export default function CampaignDetail() {
     queryKey: ['campaign', id],
     queryFn: () => campaignApi.getById(id!),
     enabled: !!id,
+    refetchInterval: (query) => {
+      // If any asset is still generating, poll every 5 seconds
+      const hasGenerating = query?.state?.data?.assets?.some((asset: any) => !asset.file_url);
+      return hasGenerating ? 5000 : false;
+    },
   });
 
   if (isLoading) {
@@ -167,6 +172,60 @@ export default function CampaignDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Campaign Assets */}
+      {campaign.assets && campaign.assets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Campaign Assets</CardTitle>
+            <CardDescription>
+              Download your generated flyers and marketing materials
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {campaign.assets.map((asset: any) => (
+                <div
+                  key={asset.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium">{asset.name || 'Campaign Asset'}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {asset.asset_type || 'flyer'} • Created {new Date(asset.created_at).toLocaleDateString()}
+                    </p>
+                    {!asset.file_url && (
+                      <Badge variant="secondary" className="mt-2">
+                        Generating...
+                      </Badge>
+                    )}
+                    {asset.file_url && (
+                      <Badge variant="default" className="mt-2">
+                        Ready
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {asset.file_url ? (
+                      <Button asChild>
+                        <a href={asset.file_url} download target="_blank" rel="noopener noreferrer">
+                          <FileText className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button disabled>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Placeholder for future sections */}
       <Card>
