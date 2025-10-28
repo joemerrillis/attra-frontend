@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import { fetchWithAuth } from '@/lib/api-client';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface DashboardSummary {
   campaignCount: number;
@@ -12,34 +14,28 @@ export interface DashboardSummary {
   }>;
 }
 
-// Mock data for development (remove when backend endpoint is ready)
-const MOCK_SUMMARY: DashboardSummary = {
-  campaignCount: 2,
-  assetCount: 8,
-  todayScans: 5,
-  contactsReady: 3,
-  emailsSentToday: 1,
-  scansByLocation: [
-    { name: 'Downtown Coffee', count: 3 },
-    { name: 'Uptown Bakery', count: 2 },
-  ],
-};
-
 export function useDashboardSummary() {
-  return useQuery({
-    queryKey: ['dashboard', 'summary'],
-    queryFn: async () => {
-      // TODO: Replace with real API call when backend is ready
-      // const response = await fetch('/api/realtime/dashboard-summary');
-      // if (!response.ok) throw new Error('Failed to fetch dashboard summary');
-      // return response.json() as Promise<DashboardSummary>;
+  const { tenant } = useAuth();
 
-      // For now, return mock data with simulated network delay
-      return new Promise<DashboardSummary>((resolve) => {
-        setTimeout(() => resolve(MOCK_SUMMARY), 500);
-      });
+  return useQuery({
+    queryKey: ['dashboard', 'summary', tenant?.id],
+    queryFn: async () => {
+      if (!tenant?.id) {
+        throw new Error('No tenant ID available');
+      }
+
+      console.log('📊 [useDashboardSummary] Fetching dashboard summary for tenant:', tenant.id);
+
+      // Real API call
+      const data = await fetchWithAuth<DashboardSummary>(
+        `/api/realtime/tenants/${tenant.id}/dashboard-summary`
+      );
+
+      console.log('✅ [useDashboardSummary] Dashboard summary loaded:', data);
+      return data;
     },
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refresh every minute
+    enabled: !!tenant?.id, // Only run query when tenant is loaded
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
+    refetchInterval: 30 * 1000, // Refresh every 30 seconds
   });
 }
