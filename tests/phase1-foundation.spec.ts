@@ -1,9 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { authenticateWithTestToken } from './helpers/auth';
 
 test.describe('Phase 1: Foundation', () => {
-  test('should show 4 bottom nav items', async ({ page }) => {
-    await page.goto('/');
+  // Authenticate before each test
+  test.beforeEach(async ({ page }) => {
+    await authenticateWithTestToken(page);
+  });
 
+  test('should show 4 bottom nav items', async ({ page }) => {
     // Wait for navigation to load
     await page.waitForSelector('nav[aria-label="Mobile navigation"]');
 
@@ -18,8 +22,6 @@ test.describe('Phase 1: Foundation', () => {
   });
 
   test('should show orange FAB', async ({ page }) => {
-    await page.goto('/');
-
     // Wait for FAB to load
     const fab = page.locator('a[aria-label="Create Campaign"]');
     await expect(fab).toBeVisible();
@@ -35,8 +37,6 @@ test.describe('Phase 1: Foundation', () => {
   });
 
   test('should show orange active indicator on bottom nav', async ({ page }) => {
-    await page.goto('/');
-
     // Wait for navigation
     await page.waitForSelector('nav[aria-label="Mobile navigation"]');
 
@@ -80,7 +80,6 @@ test.describe('Phase 1: Foundation', () => {
   test('should position FAB above bottom nav on mobile', async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
 
     // Wait for elements
     await page.waitForSelector('nav[aria-label="Mobile navigation"]');
@@ -101,7 +100,6 @@ test.describe('Phase 1: Foundation', () => {
 
   test('should have proper touch targets (≥44px)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
 
     // Check bottom nav items
     await page.waitForSelector('nav[aria-label="Mobile navigation"]');
@@ -128,7 +126,6 @@ test.describe('Phase 1: Foundation', () => {
   });
 
   test('should be keyboard accessible', async ({ page }) => {
-    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // Tab through navigation
@@ -147,7 +144,6 @@ test.describe('Phase 1: Foundation', () => {
   test('should work on desktop breakpoint', async ({ page }) => {
     // Set desktop viewport
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto('/');
 
     await page.waitForLoadState('networkidle');
 
@@ -169,7 +165,6 @@ test.describe('Phase 1: Foundation', () => {
   });
 
   test('should show slate text colors', async ({ page }) => {
-    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // Check that primary text is using slate colors

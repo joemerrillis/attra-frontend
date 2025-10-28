@@ -40,6 +40,17 @@ export default defineConfig({
 
     // Video on failure
     video: 'retain-on-failure',
+
+    // Environment variables available in tests
+    // VITE_API_URL is used by auth helper to call /api/dev/generate-token
+    extraHTTPHeaders: {
+      'Accept': 'application/json',
+    },
+  },
+
+  // Environment variables for test execution
+  env: {
+    VITE_API_URL: process.env.VITE_API_URL || 'http://localhost:8080',
   },
 
   // Configure projects for major browsers
@@ -47,6 +58,16 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+
+    {
+      name: 'vivaldi',
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chrome',
+        // Vivaldi is Chromium-based, use default Chromium executable
+        // User can override with PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH env var
+      },
     },
 
     // Uncomment to test on Firefox
