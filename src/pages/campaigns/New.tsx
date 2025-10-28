@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCampaignWizard } from '@/hooks/useCampaignWizard';
 import { campaignApi } from '@/lib/campaign-api';
+import { getPreferences } from '@/lib/api/preferences';
 import { Step1Goal } from '@/components/campaigns/wizard/Step1Goal';
 import { Step2Locations } from '@/components/campaigns/wizard/Step2Locations';
 import { Step3AssetType } from '@/components/campaigns/wizard/Step3AssetType';
@@ -28,8 +29,20 @@ const STEPS = [
 export default function NewCampaign() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const { currentStep, wizardData, updateData, canProceed, nextStep, prevStep } = useCampaignWizard();
   const [campaignId, setCampaignId] = useState<string | null>(null);
+
+  // Show welcome toast when coming from onboarding
+  useEffect(() => {
+    const fromOnboarding = searchParams.get('fromOnboarding') === 'true';
+    if (fromOnboarding && wizardData._goalSuggestion) {
+      toast({
+        title: "Welcome! We've started your campaign",
+        description: `Pre-filled with copy for "${wizardData._goalSuggestion.label}". Feel free to customize!`,
+      });
+    }
+  }, []); // Only run once on mount
 
   // Create campaign mutation
   const { mutate: createCampaign, isPending: isCreatingCampaign } = useMutation({
@@ -51,8 +64,23 @@ export default function NewCampaign() {
 
   // Generate assets mutation
   const { mutate: generateAssets, isPending: isGenerating } = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!campaignId) throw new Error('Campaign ID not found');
+
+      // Check if this is the first campaign
+      try {
+        const prefs = await getPreferences();
+        const isFirstCampaign = !prefs?.first_campaign_created;
+
+        // If first campaign, set celebration flag
+        if (isFirstCampaign) {
+          localStorage.setItem(`celebrate_campaign_${campaignId}`, 'true');
+          console.log('[Campaign Wizard] First campaign detected - celebration flag set');
+        }
+      } catch (error) {
+        console.error('[Campaign Wizard] Failed to check preferences:', error);
+        // Non-blocking - continue with asset generation
+      }
 
       const request: GenerateAssetsRequest = {
         asset_type: wizardData.assetType!,

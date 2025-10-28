@@ -7,6 +7,7 @@ import { verticalApi } from '@/lib/vertical-api';
 import { locationApi } from '@/lib/location-api';
 import { uploadApi } from '@/lib/upload-api';
 import { VERTICAL_CONFIGS } from '@/lib/vertical-configs';
+import { saveOnboardingGoal } from '@/lib/api/preferences';
 
 interface OnboardingData {
   vertical: string;
@@ -94,14 +95,27 @@ export const useOnboarding = () => {
           : undefined,
       });
 
-      // STEP 7: Store campaign goal in localStorage (for campaign creation)
-      localStorage.setItem('attra_campaign_goal', data.campaignGoal);
+      // STEP 7: Save campaign goal to backend
+      try {
+        await saveOnboardingGoal({
+          goal: data.campaignGoal,
+          vertical: data.vertical,
+          metadata: {},
+        });
+        console.log('[Onboarding] Campaign goal saved to backend');
+      } catch (error) {
+        console.error('[Onboarding] Failed to save campaign goal:', error);
+        // Non-blocking - continue even if this fails
+      }
 
-      // STEP 8: Refresh user context (now has tenant via team_members)
+      // STEP 8: Remove old localStorage approach
+      localStorage.removeItem('attra_campaign_goal'); // Clean up old data
+
+      // STEP 9: Refresh user context (now has tenant via team_members)
       await refreshUser();
 
-      // STEP 9: Redirect to campaign creation
-      navigate('/campaigns/new');
+      // STEP 10: Redirect to campaign creation WITH goal parameter
+      navigate(`/campaigns/new?goal=${data.campaignGoal}&vertical=${data.vertical}&fromOnboarding=true`);
 
     } catch (err: any) {
       console.error('Onboarding error:', err);

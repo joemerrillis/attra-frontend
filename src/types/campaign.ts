@@ -1,3 +1,5 @@
+import type { GoalSuggestion } from '@/lib/goal-suggestions';
+
 export interface Campaign {
   id: string;
   tenant_id: string;
@@ -63,6 +65,9 @@ export interface WizardData {
 
   // Steps 4-6 (Per-location mode)
   locationAssets?: LocationAsset[];
+
+  // Internal: Goal suggestion for pre-population (not sent to backend)
+  _goalSuggestion?: GoalSuggestion;
 }
 
 export interface RenderInstructions {

@@ -5,10 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Palette } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles, Palette, Check } from 'lucide-react';
 import { BackgroundLibrary } from '@/components/campaigns/BackgroundLibrary';
 import { useBackgroundGeneration } from '@/hooks/useBackgroundGeneration';
+import { useBackgrounds } from '@/hooks/useBackgrounds';
 import { useAuth } from '@/hooks/useAuth';
+import { formatRelativeTime } from '@/lib/utils';
 import type { LayoutType, CampaignCopy } from '@/types/campaign';
 import type { Background } from '@/types/background';
 
@@ -66,9 +69,29 @@ export function Step4DesignShared({
     },
   });
 
+  // Fetch backgrounds to show featured AI background
+  const { backgrounds } = useBackgrounds({
+    tenantId: tenant?.id || '',
+    sort: 'recent',
+    enabled: !!tenant?.id && designMode === 'ai',
+  });
+
+  // Get most recent AI background
+  const aiBackground = backgrounds?.backgrounds?.[0];
+
+  // Check if background was recently generated (within last hour)
+  const isRecentlyGenerated = aiBackground &&
+    (Date.now() - new Date(aiBackground.created_at).getTime()) < 3600000;
+
   const handleSelectBackground = (id: string) => {
     onBackgroundIdChange(id);
     setDesignMode('ai');
+  };
+
+  const handleSelectAIBackground = () => {
+    if (aiBackground) {
+      onBackgroundIdChange(aiBackground.id);
+    }
   };
 
   const handleGenerateNew = () => {
@@ -208,6 +231,86 @@ export function Step4DesignShared({
 
             {/* AI Backgrounds Tab */}
             <TabsContent value="ai" className="space-y-4">
+              {/* FEATURED: Your AI Background */}
+              {aiBackground && (
+                <>
+                  <div className="border-2 border-blue-300 rounded-xl p-6 bg-gradient-to-br from-blue-50 to-purple-50 shadow-lg">
+                    <div className="flex items-start gap-4">
+                      {/* Icon */}
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          <Sparkles className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-gray-900">Your AI Background</h3>
+                          {isRecentlyGenerated && (
+                            <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                              NEW
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-3">
+                          Custom-generated based on your brand assets
+                          {aiBackground.created_at && (
+                            <span className="text-gray-500">
+                              {' '}• Generated {formatRelativeTime(aiBackground.created_at)}
+                            </span>
+                          )}
+                        </p>
+
+                        {/* Preview */}
+                        <div className="relative rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '16/9' }}>
+                          <img
+                            src={aiBackground.image_url}
+                            alt="Your AI-generated background"
+                            className="w-full h-full object-cover"
+                          />
+                          {backgroundId === aiBackground.id && (
+                            <div className="absolute inset-0 bg-blue-500/20 border-4 border-blue-500 flex items-center justify-center">
+                              <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                                <Check className="w-5 h-5" />
+                                Selected
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Button */}
+                        <Button
+                          onClick={handleSelectAIBackground}
+                          disabled={backgroundId === aiBackground.id}
+                          className={
+                            backgroundId === aiBackground.id
+                              ? 'w-full'
+                              : 'w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                          }
+                          variant={backgroundId === aiBackground.id ? 'secondary' : 'default'}
+                        >
+                          {backgroundId === aiBackground.id
+                            ? '✓ Currently Selected'
+                            : 'Use This Background'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white text-gray-500">Or choose from library</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
               <BackgroundLibrary
                 selectedId={backgroundId}
                 onSelect={handleSelectBackground}
@@ -216,7 +319,6 @@ export function Step4DesignShared({
                 previewCopy={copy}
               />
             </TabsContent>
-
             {/* Classic Templates Tab */}
             <TabsContent value="classic" className="space-y-4">
               <RadioGroup value={layout || 'modern'} onValueChange={onLayoutChange}>

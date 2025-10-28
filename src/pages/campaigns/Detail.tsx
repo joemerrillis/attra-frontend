@@ -1,14 +1,18 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, TrendingUp, FileText, Loader2 } from 'lucide-react';
 import { campaignApi } from '@/lib/campaign-api';
+import { markFirstCampaignCreated } from '@/lib/api/preferences';
+import { FirstCampaignCelebration } from '@/components/campaigns/FirstCampaignCelebration';
 
 export default function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const { data: campaign, isLoading, error } = useQuery({
     queryKey: ['campaign', id],
@@ -20,6 +24,42 @@ export default function CampaignDetail() {
       return hasGenerating ? 5000 : false;
     },
   });
+
+  // Mutation to mark first campaign created
+  const { mutate: markFirstCampaign } = useMutation({
+    mutationFn: () => markFirstCampaignCreated(id!),
+    onSuccess: () => {
+      console.log('[Celebration] First campaign marked in backend');
+    },
+    onError: (error) => {
+      console.error('[Celebration] Failed to mark first campaign:', error);
+      // Non-blocking - celebration still shows
+    },
+  });
+
+  // Check if we should show celebration
+  useEffect(() => {
+    if (!id || !campaign) return;
+
+    // Check localStorage for celebration flag
+    const shouldCelebrate = localStorage.getItem(`celebrate_campaign_${id}`);
+
+    if (shouldCelebrate === 'true') {
+      // Show celebration
+      setShowCelebration(true);
+
+      // Mark as created in backend
+      markFirstCampaign();
+
+      // Clean up localStorage flag
+      localStorage.removeItem(`celebrate_campaign_${id}`);
+      console.log('[Celebration] Showing celebration modal for first campaign');
+    }
+  }, [campaign, id]);
+
+  const handleCloseCelebration = () => {
+    setShowCelebration(false);
+  };
 
   if (isLoading) {
     return (
@@ -242,6 +282,13 @@ export default function CampaignDetail() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Celebration Modal */}
+      <FirstCampaignCelebration
+        open={showCelebration}
+        onClose={handleCloseCelebration}
+        campaignName={campaign?.name}
+      />
     </div>
   );
 }

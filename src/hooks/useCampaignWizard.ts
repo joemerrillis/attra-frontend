@@ -1,12 +1,50 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { WizardData } from '@/types/campaign';
+import { getSuggestion } from '@/lib/goal-suggestions';
 
 export function useCampaignWizard() {
+  const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
-  const [wizardData, setWizardData] = useState<WizardData>({
-    selectedLocations: [],
-    customizePerLocation: false,
-    locationAssets: []
+  const [wizardData, setWizardData] = useState<WizardData>(() => {
+    // Initialize from URL params if coming from onboarding
+    const goalParam = searchParams.get('goal');
+    const verticalParam = searchParams.get('vertical');
+    const fromOnboarding = searchParams.get('fromOnboarding') === 'true';
+
+    if (fromOnboarding && goalParam) {
+      const suggestion = getSuggestion(goalParam);
+
+      if (suggestion) {
+        return {
+          // Pre-populate name and goal
+          name: `${suggestion.label} Campaign`,
+          goal: goalParam,
+
+          // Pre-populate copy from suggestions
+          copy: {
+            headline: suggestion.defaultHeadline,
+            subheadline: suggestion.defaultSubheadline,
+            cta: suggestion.defaultCTA,
+          },
+
+          // Store suggestion for reference
+          _goalSuggestion: suggestion,
+
+          // Empty defaults for other fields
+          selectedLocations: [],
+          customizePerLocation: false,
+          locationAssets: [],
+        };
+      }
+    }
+
+    // Default empty state if not from onboarding
+    return {
+      selectedLocations: [],
+      customizePerLocation: false,
+      locationAssets: [],
+    };
   });
 
   const updateData = (updates: Partial<WizardData>) => {
