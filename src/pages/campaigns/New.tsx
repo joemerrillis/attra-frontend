@@ -67,6 +67,7 @@ export default function NewCampaign() {
         request.location_ids = wizardData.selectedLocations;
         request.layout = wizardData.layout;
         request.copy = wizardData.copy;
+        request.background_id = wizardData.background_id;
       }
 
       return campaignApi.generateAssets(campaignId, request);
