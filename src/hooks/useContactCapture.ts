@@ -2,10 +2,14 @@ import { useMutation } from '@tanstack/react-query';
 import { contactApi } from '@/lib/contact-api';
 
 interface CaptureContactData {
+  tenant_id: string;        // Required
+  campaign_id?: string;
+  location_id?: string;     // Optional attribution
+  qr_link_id: string;
   name: string;
   email: string;
-  qr_link_id: string;
-  campaign_id?: string;
+  phone?: string;           // Optional phone number
+  metadata?: Record<string, any>;
 }
 
 export function useContactCapture() {

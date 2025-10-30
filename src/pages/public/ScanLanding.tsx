@@ -22,14 +22,17 @@ export default function ScanLanding() {
   const { capture, isCapturing, isSuccess, error: captureError } = useContactCapture();
 
   // Handle form submission
-  const handleSubmit = (data: { name: string; email: string }) => {
+  const handleSubmit = (data: { name: string; email: string; phone?: string }) => {
     if (!qrData) return;
 
     capture({
+      tenant_id: (qrData as any).tenant_id,     // Required for public endpoint
+      campaign_id: (qrData as any).campaign_id,
+      location_id: (qrData as any).location_id, // Optional attribution
+      qr_link_id: qrId!,
       name: data.name,
       email: data.email,
-      qr_link_id: qrId!,
-      campaign_id: (qrData as any).campaign_id,
+      phone: data.phone,                        // Optional phone if form includes it
     });
   };
 
