@@ -115,6 +115,11 @@ export function useCampaignWizard() {
     });
   };
 
+  const restoreFromDraft = (draftData: Partial<WizardData>, step: number) => {
+    setWizardData(prev => ({ ...prev, ...draftData }));
+    setCurrentStep(step);
+  };
+
   return {
     currentStep,
     wizardData,
@@ -122,6 +127,7 @@ export function useCampaignWizard() {
     canProceed: canProceed(),
     nextStep,
     prevStep,
-    reset
+    reset,
+    restoreFromDraft
   };
 }

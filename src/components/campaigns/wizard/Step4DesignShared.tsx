@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Sparkles, Palette, Check } from 'lucide-react';
 import { BackgroundLibrary } from '@/components/campaigns/BackgroundLibrary';
 import { useBackgroundGeneration } from '@/hooks/useBackgroundGeneration';
@@ -59,7 +60,8 @@ export function Step4DesignShared({
   onBackgroundIdChange
 }: Step4DesignSharedProps) {
   const { tenant } = useAuth();
-  const [designMode, setDesignMode] = useState<'ai' | 'classic'>(backgroundId ? 'ai' : 'classic');
+  // Default to AI backgrounds to showcase the feature
+  const [designMode, setDesignMode] = useState<'ai' | 'classic'>('ai');
 
   const { generate, isGenerating } = useBackgroundGeneration({
     tenantId: tenant?.id || '',
@@ -222,6 +224,7 @@ export function Step4DesignShared({
               <TabsTrigger value="ai" className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 AI Backgrounds
+                <Badge variant="secondary" className="ml-1 text-xs">Recommended</Badge>
               </TabsTrigger>
               <TabsTrigger value="classic" className="flex items-center gap-2">
                 <Palette className="w-4 h-4" />

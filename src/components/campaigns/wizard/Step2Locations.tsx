@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,6 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useNavigate } from 'react-router-dom';
+import { loadGooglePlaces, parsePlaceResult } from '@/lib/google-places';
 
 interface Location {
   id: string;
@@ -42,6 +43,39 @@ export function Step2Locations({ value, onChange }: Step2LocationsProps) {
   const [newLocationCity, setNewLocationCity] = useState('');
   const [newLocationState, setNewLocationState] = useState('');
   const [newLocationZip, setNewLocationZip] = useState('');
+  const addressInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize Google Places autocomplete when dialog opens
+  useEffect(() => {
+    if (showCreateDialog) {
+      initAutocomplete();
+    }
+  }, [showCreateDialog]);
+
+  const initAutocomplete = async () => {
+    try {
+      await loadGooglePlaces();
+
+      if (addressInputRef.current && window.google) {
+        const autocomplete = new google.maps.places.Autocomplete(
+          addressInputRef.current,
+          { types: ['address'] }
+        );
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          const parsed = parsePlaceResult(place);
+
+          setNewLocationAddress(parsed.address);
+          setNewLocationCity(parsed.city);
+          setNewLocationState(parsed.state);
+          setNewLocationZip(parsed.zipCode);
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load Google Places:', error);
+    }
+  };
 
   // Feature gate check for bulk campaigns (multi-location)
   const { hasAccess: canSelectMultiple } = useFeatureGate('bulk_campaigns');
@@ -183,11 +217,15 @@ export function Step2Locations({ value, onChange }: Step2LocationsProps) {
               <div className="space-y-2">
                 <Label htmlFor="location-address">Address</Label>
                 <Input
+                  ref={addressInputRef}
                   id="location-address"
-                  placeholder="123 Main St"
+                  placeholder="Start typing an address..."
                   value={newLocationAddress}
                   onChange={(e) => setNewLocationAddress(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Google will autocomplete as you type
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -361,11 +399,15 @@ export function Step2Locations({ value, onChange }: Step2LocationsProps) {
             <div className="space-y-2">
               <Label htmlFor="location-address">Address</Label>
               <Input
+                ref={addressInputRef}
                 id="location-address"
-                placeholder="123 Main St"
+                placeholder="Start typing an address..."
                 value={newLocationAddress}
                 onChange={(e) => setNewLocationAddress(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Google will autocomplete as you type
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
