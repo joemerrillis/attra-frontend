@@ -13,6 +13,7 @@ import { MapControls } from '@/components/map/MapControls';
 import { Button } from '@/components/ui/button';
 import type { MapLocation } from '@/hooks/useMapSummary';
 import { useNavigate } from 'react-router-dom';
+import { locationApi } from '@/lib/location-api';
 
 export function MapPage() {
   const navigate = useNavigate();
@@ -39,6 +40,9 @@ export function MapPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<Map<string, mapboxgl.Marker>>(new Map());
+
+  // Fetch real locations from backend instead of using mock data
+  const [businessLocation, setBusinessLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // ALL HOOKS MUST BE BEFORE ANY EARLY RETURNS
   // Memoized handlers
@@ -100,46 +104,61 @@ export function MapPage() {
     }
   }, [isCheckingAccess, hasMapAccess, requiredPlan, trackFeatureGateEncountered, trackPromptViewed]);
 
-  // Fetch data (bypassing React Query temporarily)
+  // Fetch real location data from backend
   useEffect(() => {
-    console.log('🗺️ [Map] Loading mock data...');
+    const fetchLocations = async () => {
+      console.log('🗺️ [Map] Fetching real location data...');
+      setIsLoading(true);
+      setError(null);
 
-    const mockData = {
-      locations: [
-        {
-          location_id: 'loc_1',
-          location_name: 'San Francisco Office',
-          latitude: 37.7749,
-          longitude: -122.4194,
-          scans_today: 5,
-          contacts_pending: 3,
-          contacts: [
-            {
-              id: 'contact_1',
-              name: 'John Doe',
-              email: 'john@example.com',
-              scanned_at: new Date().toISOString(),
-              follow_up_status: 'pending' as const,
-            },
-          ],
-        },
-        {
-          location_id: 'loc_2',
-          location_name: 'New York Office',
-          latitude: 40.7128,
-          longitude: -74.0060,
-          scans_today: 0,
-          contacts_pending: 7,
-          contacts: [],
-        },
-      ],
+      try {
+        // Fetch user's locations from backend
+        const response = await locationApi.list();
+        console.log('📍 [Map] Locations API response:', response);
+
+        // Handle multiple possible response structures
+        const locations = (response as any)?.locations || (response as any) || [];
+
+        if (!Array.isArray(locations) || locations.length === 0) {
+          console.warn('⚠️ [Map] No locations found, using empty state');
+          setMapData({ locations: [] });
+          setIsLoading(false);
+          return;
+        }
+
+        // Store the first location as primary business location for initial viewport
+        const primaryLocation = locations[0];
+        if (primaryLocation?.latitude && primaryLocation?.longitude) {
+          setBusinessLocation({
+            latitude: primaryLocation.latitude,
+            longitude: primaryLocation.longitude,
+          });
+          console.log('📍 [Map] Set business location:', primaryLocation.name);
+        }
+
+        // Transform backend locations to MapLocation format
+        // Note: Backend should eventually provide scans_today and contacts_pending
+        const mapLocations: MapLocation[] = locations.map((loc: any) => ({
+          location_id: loc.id,
+          location_name: loc.name || 'Unnamed Location',
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          scans_today: loc.scans_today || 0,
+          contacts_pending: loc.contacts_pending || 0,
+          contacts: loc.contacts || [],
+        })).filter((loc: MapLocation) => loc.latitude && loc.longitude);
+
+        console.log('✅ [Map] Loaded', mapLocations.length, 'locations');
+        setMapData({ locations: mapLocations });
+        setIsLoading(false);
+      } catch (err) {
+        console.error('❌ [Map] Failed to fetch locations:', err);
+        setError(err instanceof Error ? err : new Error('Failed to load map data'));
+        setIsLoading(false);
+      }
     };
 
-    setTimeout(() => {
-      console.log('✅ [Map] Mock data loaded');
-      setMapData(mockData);
-      setIsLoading(false);
-    }, 500);
+    fetchLocations();
   }, []);
 
   // Initialize Mapbox map
@@ -154,9 +173,28 @@ export function MapPage() {
       return;
     }
 
+    // Determine initial viewport based on available data
+    let initialCenter = DEFAULT_MAP_CONFIG.center;
+    let initialZoom = DEFAULT_MAP_CONFIG.zoom;
+
+    if (mapData.locations.length > 0) {
+      // If we have locations, center on them
+      const firstLocation = mapData.locations[0];
+      initialCenter = [firstLocation.longitude, firstLocation.latitude];
+      initialZoom = 12; // City-level zoom
+      console.log('📍 [Map] Centering on location:', firstLocation.location_name);
+    } else if (businessLocation) {
+      // Fallback to business location from onboarding
+      initialCenter = [businessLocation.longitude, businessLocation.latitude];
+      initialZoom = 12;
+      console.log('📍 [Map] Centering on business location');
+    }
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      ...DEFAULT_MAP_CONFIG,
+      style: DEFAULT_MAP_CONFIG.style,
+      center: initialCenter,
+      zoom: initialZoom,
       // Mobile-friendly settings
       touchZoomRotate: true,
       touchPitch: false,
@@ -174,7 +212,7 @@ export function MapPage() {
       map.current?.remove();
       map.current = null;
     };
-  }, [isLoading, mapData]);
+  }, [isLoading, mapData, businessLocation]);
 
   // Update markers when location data changes
   useEffect(() => {
@@ -326,45 +364,37 @@ export function MapPage() {
   if (error) {
     console.error('🗺️ [Map] Error rendering:', error);
 
-    const handleRetry = () => {
+    const handleRetry = async () => {
       console.log('🗺️ [Map] Retry button clicked - reloading...');
       setError(null);
       setIsLoading(true);
-      // Re-trigger data fetch
-      setTimeout(() => {
-        const mockData = {
-          locations: [
-            {
-              location_id: 'loc_1',
-              location_name: 'San Francisco Office',
-              latitude: 37.7749,
-              longitude: -122.4194,
-              scans_today: 5,
-              contacts_pending: 3,
-              contacts: [
-                {
-                  id: 'contact_1',
-                  name: 'John Doe',
-                  email: 'john@example.com',
-                  scanned_at: new Date().toISOString(),
-                  follow_up_status: 'pending' as const,
-                },
-              ],
-            },
-            {
-              location_id: 'loc_2',
-              location_name: 'New York Office',
-              latitude: 40.7128,
-              longitude: -74.0060,
-              scans_today: 0,
-              contacts_pending: 7,
-              contacts: [],
-            },
-          ],
-        };
-        setMapData(mockData);
+
+      try {
+        const response = await locationApi.list();
+        const locations = (response as any)?.locations || (response as any) || [];
+
+        if (!Array.isArray(locations) || locations.length === 0) {
+          setMapData({ locations: [] });
+          setIsLoading(false);
+          return;
+        }
+
+        const mapLocations: MapLocation[] = locations.map((loc: any) => ({
+          location_id: loc.id,
+          location_name: loc.name || 'Unnamed Location',
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          scans_today: loc.scans_today || 0,
+          contacts_pending: loc.contacts_pending || 0,
+          contacts: loc.contacts || [],
+        })).filter((loc: MapLocation) => loc.latitude && loc.longitude);
+
+        setMapData({ locations: mapLocations });
         setIsLoading(false);
-      }, 500);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to load map data'));
+        setIsLoading(false);
+      }
     };
 
     return (
