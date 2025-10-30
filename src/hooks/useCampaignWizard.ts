@@ -9,7 +9,6 @@ export function useCampaignWizard() {
   const [wizardData, setWizardData] = useState<WizardData>(() => {
     // Initialize from URL params if coming from onboarding
     const goalParam = searchParams.get('goal');
-    const verticalParam = searchParams.get('vertical');
     const fromOnboarding = searchParams.get('fromOnboarding') === 'true';
 
     if (fromOnboarding && goalParam) {
@@ -19,7 +18,7 @@ export function useCampaignWizard() {
         return {
           // Pre-populate name and goal
           name: `${suggestion.label} Campaign`,
-          goal: goalParam,
+          goal: goalParam as WizardData['goal'],
 
           // Pre-populate copy from suggestions
           copy: {

@@ -64,10 +64,12 @@ async function loginWithGoogle(page: Page) {
   console.log('   Please complete login in the browser window');
   console.log('   This may open a popup or redirect to Google');
 
-  // Wait for redirect back to app
-  await page.waitForURL(/app\.attra\.io/, { timeout: 120000 }); // 2 minute timeout for manual login
+  // Wait for redirect back to app (may go through Supabase domain first)
+  // Wait for the full OAuth flow to complete and land on dashboard
+  await page.waitForURL(/app\.attra\.io\/(dashboard|campaigns|onboarding)/, { timeout: 120000 }); // 2 minute timeout for manual login
 
-  // Wait for dashboard or onboarding
+  // Wait for page to fully load
+  await page.waitForLoadState('networkidle', { timeout: 10000 });
   await page.waitForTimeout(2000);
 
   console.log('✅ Login completed!');

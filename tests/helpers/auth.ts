@@ -65,12 +65,17 @@ export async function authenticateWithTestToken(page: Page) {
   // Navigate to the app (needed to set localStorage)
   await page.goto('/');
 
+  // Extract Supabase project ref from URL
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://beugqqrtrcqgqnhdbqfv.supabase.co';
+  const projectRef = supabaseUrl.match(/https:\/\/(.+?)\.supabase\.co/)?.[1] || 'beugqqrtrcqgqnhdbqfv';
+  const storageKey = `sb-${projectRef}-auth-token`;
+
   // Inject the session into localStorage
-  await page.evaluate((sessionData) => {
-    // Supabase stores session under this key format
-    const key = `sb-${window.location.hostname}-auth-token`;
+  await page.evaluate(({ sessionData, key }) => {
+    console.log('[Auth Helper] Setting localStorage key:', key);
     localStorage.setItem(key, JSON.stringify(sessionData));
-  }, session);
+    console.log('[Auth Helper] Session stored successfully');
+  }, { sessionData: session, key: storageKey });
 
   // Reload to pick up the session
   await page.reload();

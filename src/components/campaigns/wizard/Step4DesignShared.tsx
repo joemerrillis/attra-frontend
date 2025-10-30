@@ -79,7 +79,7 @@ export function Step4DesignShared({
   });
 
   // Get most recent AI background
-  const aiBackground = backgrounds?.backgrounds?.[0];
+  const aiBackground = backgrounds?.[0];
 
   // Check if background was recently generated (within last hour)
   const isRecentlyGenerated = aiBackground &&

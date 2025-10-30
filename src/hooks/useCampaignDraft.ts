@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface WizardState {
   currentStep: number;
@@ -50,7 +50,7 @@ export function useCampaignDraft() {
    */
   const getToken = useCallback(async () => {
     // Get token from Supabase session
-    const { default: supabase } = await import('@/lib/supabase');
+    const { supabase } = await import('@/lib/supabase');
     const { data: { session } } = await supabase.auth.getSession();
     return session?.access_token;
   }, []);
