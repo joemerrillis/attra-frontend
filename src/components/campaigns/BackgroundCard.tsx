@@ -46,8 +46,11 @@ export function BackgroundCard({
         src={background.thumbnail_url}
         alt="Background"
         className={cn(
-          'w-full object-cover',
-          compact ? 'aspect-[2/3]' : 'aspect-[2/3]'
+          'w-full',
+          // On mobile: use object-contain to show full image
+          // On desktop: use object-cover for better aesthetics
+          'max-md:object-contain max-md:h-auto md:object-cover',
+          compact ? 'aspect-[2/3]' : 'md:aspect-[2/3]'
         )}
         loading="lazy"
       />

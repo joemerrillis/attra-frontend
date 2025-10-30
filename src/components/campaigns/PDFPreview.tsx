@@ -7,6 +7,7 @@ import { campaignApi } from '@/lib/campaign-api';
 import { locationApi } from '@/lib/location-api';
 import { supabase } from '@/lib/supabase';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import { AssetGenerationProgress } from './AssetGenerationProgress';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -282,11 +283,25 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
                 ❌ No business location found. Please contact support or go through onboarding again.
               </p>
             )}
+
+            {/* Show progress indicator when generating */}
+            {isGenerating && assets && assets.length > 0 && (
+              <AssetGenerationProgress
+                assetId={assets[0].id}
+                onComplete={() => {
+                  console.log('✅ PDF generation complete');
+                }}
+                onError={(error) => {
+                  console.error('❌ PDF generation failed:', error);
+                }}
+              />
+            )}
+
             {!hasPDF ? (
               <Button
                 onClick={handleGenerate}
                 disabled={isGenerating || isCreatingCampaign || !campaignId || !locationId}
-                className="w-full"
+                className="w-full min-h-[44px]"
                 size="lg"
               >
                 {isGenerating || isCreatingCampaign ? (
@@ -305,7 +320,7 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
               <>
                 <Button
                   asChild
-                  className="w-full"
+                  className="w-full min-h-[44px]"
                   size="lg"
                   disabled={!assets[0]?.file_url}
                 >
@@ -330,7 +345,8 @@ export function PDFPreview({ campaignData, tenantBranding }: PDFPreviewProps) {
                   variant="outline"
                   onClick={handleGenerate}
                   disabled={isGenerating}
-                  className="w-full"
+                  className="w-full min-h-[44px]"
+                  size="lg"
                 >
                   Regenerate PDF
                 </Button>

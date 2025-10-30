@@ -87,24 +87,29 @@ export function BackgroundLibrary({
   };
 
   const gridClassName = compact
-    ? 'grid grid-cols-2 gap-3'
-    : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+    ? 'grid grid-cols-2 gap-4'
+    : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6';
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 md:space-y-6 p-4 md:p-6 ${className}`}>
       {/* Header with Controls */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        {/* Generate New Button */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4 md:gap-6">
+        {/* Generate New Button - Full width on mobile for better touch target */}
         {onGenerateNew && (
-          <Button onClick={onGenerateNew} disabled={isGenerating} className="gap-2">
+          <Button
+            onClick={onGenerateNew}
+            disabled={isGenerating}
+            className="gap-2 w-full sm:w-auto min-h-[44px]"
+            size="lg"
+          >
             {isGenerating ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
                 Generating...
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-5 h-5" />
                 Generate New Background
               </>
             )}
@@ -112,22 +117,22 @@ export function BackgroundLibrary({
         )}
 
         {/* Sort and Filter Controls */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
           {/* Favorites Only Toggle */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 min-h-[44px]">
             <Switch
               id="favorites-only"
               checked={favoritesOnly}
               onCheckedChange={setFavoritesOnly}
             />
-            <Label htmlFor="favorites-only" className="text-sm">
+            <Label htmlFor="favorites-only" className="text-sm font-medium cursor-pointer">
               Favorites Only
             </Label>
           </div>
 
           {/* Sort Dropdown */}
           <Select value={sort} onValueChange={(value) => setSort(value as SortOption)}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[160px] min-h-[44px]">
               <SelectValue placeholder="Sort by..." />
             </SelectTrigger>
             <SelectContent>
