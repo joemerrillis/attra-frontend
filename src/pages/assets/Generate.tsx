@@ -197,9 +197,9 @@ export default function AssetGenerate() {
   };
 
   const filteredLocations = locations.filter(loc =>
-    loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    loc.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    loc.city.toLowerCase().includes(searchTerm.toLowerCase())
+    loc?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    loc?.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    loc?.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const steps = [
@@ -325,7 +325,7 @@ export default function AssetGenerate() {
                     </div>
 
                     <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                      {filteredLocations.map(loc => (
+                      {filteredLocations.filter(Boolean).map(loc => (
                         <label
                           key={loc.id}
                           className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-accent/5 min-h-[44px] transition-colors"
@@ -469,7 +469,8 @@ export default function AssetGenerate() {
                 <div className="text-sm text-muted-foreground mt-1">
                   {locations
                     .filter(loc => selectedLocations.includes(loc.id))
-                    .map(loc => loc.name)
+                    .map(loc => loc?.name)
+                    .filter(Boolean)
                     .join(', ')}
                 </div>
               </div>
