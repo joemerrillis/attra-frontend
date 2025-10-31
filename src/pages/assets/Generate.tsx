@@ -22,7 +22,7 @@ const ASSET_TYPES = [
 
 export default function AssetGenerate() {
   const navigate = useNavigate();
-  const { user, tenant } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -47,7 +47,7 @@ export default function AssetGenerate() {
         cta: cta || undefined,
         locations: [], // TODO: Implement location selection
         background_mode: 'same',
-        base_url: tenant?.website || 'https://example.com',
+        base_url: 'https://example.com', // TODO: Get base_url from tenant settings
       });
 
       toast({
@@ -68,7 +68,7 @@ export default function AssetGenerate() {
   };
 
   const canGoNext = () => {
-    if (step === 1) return assetType !== '';
+    if (step === 1) return true; // Asset type has default value
     if (step === 2) return messageTheme.trim() !== '' && headline.trim() !== '';
     return true;
   };
