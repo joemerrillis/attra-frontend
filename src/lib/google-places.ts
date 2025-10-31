@@ -3,7 +3,6 @@ declare global {
   interface Window {
     google?: any;
   }
-  const google: any;
 }
 
 // Load Google Places Autocomplete
