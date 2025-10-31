@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -14,9 +14,6 @@ import AuthCallback from '@/pages/auth/Callback';
 import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
 import Analytics from '@/pages/Analytics';
-import CampaignsIndex from '@/pages/campaigns/Index';
-import CampaignDetail from '@/pages/campaigns/Detail';
-import NewCampaign from '@/pages/campaigns/New';
 import Locations from '@/pages/Locations';
 import ScanLanding from '@/pages/public/ScanLanding';
 import Upgrade from '@/pages/Upgrade';
@@ -25,6 +22,7 @@ import ContactDetail from '@/pages/contacts/Detail';
 import Settings from '@/pages/Settings';
 import { Map } from '@/pages/Map';
 import { MapSimple } from '@/pages/MapSimple';
+import AssetGenerate from '@/pages/assets/Generate';
 
 function App() {
   return (
@@ -75,34 +73,18 @@ function App() {
               }
             />
 
-            <Route
-              path="/campaigns"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <CampaignsIndex />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            {/* Campaign routes redirected - replaced by asset generation */}
+            <Route path="/campaigns" element={<Navigate to="/map" replace />} />
+            <Route path="/campaigns/new" element={<Navigate to="/assets/generate" replace />} />
+            <Route path="/campaigns/:id" element={<Navigate to="/map" replace />} />
 
+            {/* Asset generation */}
             <Route
-              path="/campaigns/new"
+              path="/assets/generate"
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <NewCampaign />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/campaigns/:id"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <CampaignDetail />
+                    <AssetGenerate />
                   </AppLayout>
                 </ProtectedRoute>
               }

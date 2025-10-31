@@ -1,4 +1,4 @@
-import { Menu, Home, BarChart3, Users, FileText, MapPin, Settings, LogOut } from 'lucide-react';
+import { Menu, Home, BarChart3, Users, MapPin, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -26,7 +26,6 @@ export function MobileHeader() {
     { to: '/dashboard', icon: Home, label: 'Home' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/contacts', icon: Users, label: 'Contacts' },
-    { to: '/campaigns', icon: FileText, label: 'Campaigns' },
     { to: '/locations', icon: MapPin, label: 'Locations' },
     { to: '/settings', icon: Settings, label: 'Settings' },
   ];

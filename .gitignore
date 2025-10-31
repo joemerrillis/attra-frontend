@@ -32,3 +32,5 @@ tests/screenshots/
 
 # Multi-agent communication (ephemeral, not committed)
 communication/
+comm/
+sync-messages.js

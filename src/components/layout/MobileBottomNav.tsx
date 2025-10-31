@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Target, Map, Settings } from 'lucide-react';
+import { Home, Map, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function MobileBottomNav() {
@@ -7,7 +7,6 @@ export function MobileBottomNav() {
 
   const navItems = [
     { to: '/dashboard', icon: Home, label: 'Dashboard' },
-    { to: '/campaigns', icon: Target, label: 'Campaigns' },
     { to: '/map', icon: Map, label: 'Map' },
     { to: '/settings', icon: Settings, label: 'Settings' },
   ];
