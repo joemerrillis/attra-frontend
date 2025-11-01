@@ -1,5 +1,4 @@
 import { DashboardFeed } from '@/components/dashboard/DashboardFeed';
-import { MapView } from '@/components/dashboard/MapView';
 import { RecentActivityFeed } from '@/components/dashboard/RecentActivityFeed';
 import { Button } from '@/components/ui/button';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
@@ -25,7 +24,7 @@ export default function Dashboard() {
   }, [isFreePlan, showUpgradeBanner, trackPromptViewed]);
 
   return (
-    <div className="container py-8 space-y-6 pb-24 md:pb-8">
+    <div className="container py-8 space-y-6 pb-24 md:pb-8 max-w-4xl mx-auto">
       {/* Upgrade Banner for Free Users */}
       {isFreePlan && showUpgradeBanner && (
         <div className="relative rounded-lg border border-primary/50 bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 p-4">
@@ -100,17 +99,9 @@ export default function Dashboard() {
       {/* Contextual Dashboard Feed */}
       <DashboardFeed />
 
-      {/* Desktop Layout: Option C (Map left, Activity right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Map - Takes 2 columns on desktop */}
-        <div className="lg:col-span-2">
-          <MapView />
-        </div>
-
-        {/* Activity Feed - 1 column on desktop, full width on mobile */}
-        <div className="lg:col-span-1">
-          <RecentActivityFeed />
-        </div>
+      {/* Recent Activity Feed - Full Width */}
+      <div className="max-w-3xl mx-auto">
+        <RecentActivityFeed />
       </div>
 
       {/* Mobile FAB */}

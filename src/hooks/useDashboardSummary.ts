@@ -28,7 +28,7 @@ export function useDashboardSummary() {
 
       // Real API call
       const data = await fetchWithAuth<DashboardSummary>(
-        `/api/realtime/tenants/${tenant.id}/dashboard-summary`
+        `/api/realtime/dashboard-summary`
       );
 
       console.log('✅ [useDashboardSummary] Dashboard summary loaded:', data);
