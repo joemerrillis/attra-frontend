@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { assetApi } from '@/lib/asset-api';
 import { locationApi } from '@/lib/location-api';
 import { themeVocabularyApi } from '@/lib/theme-vocabulary-api';
+import { supabase } from '@/lib/supabase';
 import type { AssetType } from '@/types/asset';
 import type { ThemeVocabulary } from '@/types/theme-vocabulary';
 import { FileText, DoorOpen, Triangle, CreditCard, BookOpen, ArrowLeft, ArrowRight, Check, MapPin, Loader2 } from 'lucide-react';
@@ -136,10 +137,65 @@ export default function AssetGenerate() {
   }, [messageTheme, user]);
 
   const handleGenerate = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('❌ [handleGenerate] No user found');
+      return;
+    }
+
+    console.log('🚀 [handleGenerate] Starting asset generation');
+    console.log('👤 [handleGenerate] User ID:', user.id);
+    console.log('🏢 [handleGenerate] Tenant ID:', (user as any)?.app_metadata?.tenant_id);
+
+    // ⭐ NEW: Ensure session is fresh before making API call
+    console.log('🔐 [handleGenerate] Checking session before API call...');
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('❌ [handleGenerate] Session error:', sessionError);
+      toast({
+        title: 'Authentication Error',
+        description: `Session error: ${sessionError.message}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!session) {
+      console.error('❌ [handleGenerate] No session found');
+      toast({
+        title: 'Session Expired',
+        description: 'Your session has expired. Please refresh the page and log in again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    console.log('✅ [handleGenerate] Session is valid');
+    console.log('📅 [handleGenerate] Session expires:', new Date(session.expires_at! * 1000).toISOString());
+
+    // Check if session is about to expire (< 5 minutes remaining)
+    const expiresIn = (session.expires_at! * 1000) - Date.now();
+    const minutesRemaining = Math.floor(expiresIn / 1000 / 60);
+    console.log('⏰ [handleGenerate] Session expires in:', minutesRemaining, 'minutes');
+
+    if (expiresIn < 5 * 60 * 1000) {  // Less than 5 minutes
+      console.warn('⚠️ [handleGenerate] Session expiring soon, refreshing...');
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('❌ [handleGenerate] Failed to refresh session:', refreshError);
+        toast({
+          title: 'Session Refresh Failed',
+          description: 'Please refresh the page and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      console.log('✅ [handleGenerate] Session refreshed');
+    }
 
     setIsGenerating(true);
     try {
+      console.log('📤 [handleGenerate] Calling assetApi.generate...');
       const response = await assetApi.generate({
         asset_type: assetType,
         message_theme: messageTheme,
@@ -150,6 +206,12 @@ export default function AssetGenerate() {
         background_mode: 'same',
         base_url: 'https://example.com', // TODO: Get base_url from tenant settings
       });
+
+      console.log('✅ [handleGenerate] Asset generation response received');
+      console.log('📊 [handleGenerate] Response type:', typeof response);
+      console.log('🔍 [handleGenerate] Response keys:', response ? Object.keys(response) : 'null');
+      console.log('✅ [handleGenerate] Response success:', response?.success);
+      console.log('📦 [handleGenerate] Full response:', response);
 
       // ⭐ AUTO-SAVE: After successful generation, save theme vocabulary
       if (response.success && messageTheme && styleKeywords.length > 0) {
