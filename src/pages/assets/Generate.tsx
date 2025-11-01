@@ -13,7 +13,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { assetApi } from '@/lib/asset-api';
 import { locationApi } from '@/lib/location-api';
+import { themeVocabularyApi } from '@/lib/theme-vocabulary-api';
 import type { AssetType } from '@/types/asset';
+import type { ThemeVocabulary } from '@/types/theme-vocabulary';
 import { FileText, DoorOpen, Triangle, CreditCard, BookOpen, ArrowLeft, ArrowRight, Check, MapPin, Loader2 } from 'lucide-react';
 
 const ASSET_TYPES = [
@@ -22,6 +24,14 @@ const ASSET_TYPES = [
   { value: 'table_tent' as AssetType, label: 'Table Tent', description: 'Folded display', icon: Triangle },
   { value: 'business_card' as AssetType, label: 'Business Card', description: '3.5" x 2" card', icon: CreditCard },
   { value: 'menu_board' as AssetType, label: 'Menu Board', description: 'Menu display', icon: BookOpen },
+];
+
+const SUGGESTED_KEYWORDS = [
+  'vibrant', 'bright', 'fresh', 'warm', 'cozy',
+  'energetic', 'calm', 'bold', 'elegant', 'casual',
+  'modern', 'classic', 'playful', 'sophisticated', 'inviting',
+  'lively', 'social', 'intimate', 'exciting', 'refined',
+  'rustic', 'luxurious', 'minimalist', 'dramatic', 'cheerful'
 ];
 
 const libraries: ("places")[] = ['places'];
@@ -57,6 +67,11 @@ export default function AssetGenerate() {
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const [activeTab, setActiveTab] = useState<'existing' | 'new'>('existing');
 
+  // Theme vocabulary state
+  const [userTheme, setUserTheme] = useState<ThemeVocabulary | null>(null);
+  const [styleKeywords, setStyleKeywords] = useState<string[]>([]);
+  const [mood, setMood] = useState<string>('');
+
   // Google Maps
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
@@ -86,6 +101,40 @@ export default function AssetGenerate() {
     fetchLocations();
   }, [toast]);
 
+  // Load theme vocabulary when messageTheme changes
+  useEffect(() => {
+    const loadTheme = async () => {
+      const tenantId = (user as any)?.app_metadata?.tenant_id;
+      if (messageTheme && tenantId) {
+        try {
+          const theme = await themeVocabularyApi.getTheme(
+            tenantId,
+            messageTheme
+          );
+
+          if (theme) {
+            // Theme exists - auto-populate
+            setUserTheme(theme);
+            setStyleKeywords(theme.keywords);
+            setMood(theme.mood || '');
+          } else {
+            // New theme - empty fields
+            setUserTheme(null);
+            setStyleKeywords([]);
+            setMood('');
+          }
+        } catch (error) {
+          console.error('Error loading theme:', error);
+          setUserTheme(null);
+          setStyleKeywords([]);
+          setMood('');
+        }
+      }
+    };
+
+    loadTheme();
+  }, [messageTheme, user]);
+
   const handleGenerate = async () => {
     if (!user) return;
 
@@ -101,6 +150,26 @@ export default function AssetGenerate() {
         background_mode: 'same',
         base_url: 'https://example.com', // TODO: Get base_url from tenant settings
       });
+
+      // ⭐ AUTO-SAVE: After successful generation, save theme vocabulary
+      if (response.success && messageTheme && styleKeywords.length > 0) {
+        try {
+          const tenantId = (user as any)?.app_metadata?.tenant_id;
+          if (tenantId) {
+            await themeVocabularyApi.saveTheme(
+              tenantId,
+              messageTheme,
+              styleKeywords,
+              mood || undefined
+            );
+
+            console.log(`[Auto-Save] Saved theme "${messageTheme}" with keywords:`, styleKeywords);
+          }
+        } catch (saveError) {
+          // Don't block user flow if save fails
+          console.error('[Auto-Save] Failed to save theme:', saveError);
+        }
+      }
 
       toast({
         title: 'Assets generating!',
@@ -411,6 +480,115 @@ export default function AssetGenerate() {
               />
               <p className="text-sm text-muted-foreground">For your reference</p>
             </div>
+
+            {/* Theme Vocabulary - Always Visible */}
+            {messageTheme && (
+              <div className="space-y-4 mb-6">
+                {/* Status Card */}
+                {userTheme ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl">✅</div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-green-900">
+                          We remember "{messageTheme}"!
+                        </h4>
+                        {userTheme.mood && (
+                          <p className="text-sm text-green-700 mt-1 italic">
+                            {userTheme.mood}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl">🎨</div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-blue-900">
+                          Let's define "{messageTheme}"
+                        </h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Tell us what this flyer should feel like and look like
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Keywords Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    What does this flyer <span className="underline">look like</span>? (Pick 3-5 adjectives)
+                  </label>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {SUGGESTED_KEYWORDS.map(keyword => (
+                      <button
+                        key={keyword}
+                        type="button"
+                        onClick={() => {
+                          if (styleKeywords.includes(keyword)) {
+                            setStyleKeywords(styleKeywords.filter(k => k !== keyword));
+                          } else if (styleKeywords.length < 5) {
+                            setStyleKeywords([...styleKeywords, keyword]);
+                          }
+                        }}
+                        disabled={!styleKeywords.includes(keyword) && styleKeywords.length >= 5}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                          styleKeywords.includes(keyword)
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed'
+                        }`}
+                      >
+                        {keyword}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Selected Display */}
+                  {styleKeywords.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm font-medium text-blue-900 mb-2">
+                        Selected ({styleKeywords.length}/5):
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {styleKeywords.map(kw => (
+                          <span
+                            key={kw}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-full text-sm"
+                          >
+                            {kw}
+                            <button
+                              type="button"
+                              onClick={() => setStyleKeywords(styleKeywords.filter(k => k !== kw))}
+                              className="hover:text-blue-200 ml-1"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Mood Field */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    What does this flyer <span className="underline">feel like</span>? (Optional mood)
+                  </label>
+                  <Input
+                    type="text"
+                    value={mood}
+                    onChange={(e) => setMood(e.target.value)}
+                    placeholder="e.g., sunny and uplifting, cozy and warm, energetic and fun..."
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="headline">Headline *</Label>

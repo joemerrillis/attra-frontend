@@ -60,6 +60,7 @@ export type BackgroundMode = 'personalized' | 'generic' | 'classic';
 export interface BackgroundGenerationRequest {
   prompt_override?: string;
   style_keywords?: string[];
+  message_theme?: string;
   generate_count?: number;
 }
 
@@ -67,6 +68,14 @@ export interface BackgroundGenerationResponse {
   message: string;
   job_id: string;
   estimated_time_seconds: number;
+  keywords_used?: string[];
+  theme_source?: string;
+  theme_info?: {
+    theme_name: string;
+    matched_from: string;
+    keywords: string[];
+    mood?: string;
+  };
 }
 
 export interface BackgroundStatusResponse {
