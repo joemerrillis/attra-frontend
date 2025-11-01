@@ -126,7 +126,7 @@ export default function AssetGenerate() {
   };
 
   const handleSelectAll = () => {
-    setSelectedLocations(locations.map(loc => loc.id));
+    setSelectedLocations(locations.filter(Boolean).map(loc => loc.id));
   };
 
   const handleDeselectAll = () => {
