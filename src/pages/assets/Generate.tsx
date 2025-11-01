@@ -55,6 +55,7 @@ export default function AssetGenerate() {
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const [activeTab, setActiveTab] = useState<'existing' | 'new'>('existing');
 
   // Google Maps
   const { isLoaded } = useLoadScript({
@@ -90,7 +91,7 @@ export default function AssetGenerate() {
 
     setIsGenerating(true);
     try {
-      const response = await assetApi.generate(user.id, {
+      const response = await assetApi.generate({
         asset_type: assetType,
         message_theme: messageTheme,
         headline,
@@ -180,6 +181,7 @@ export default function AssetGenerate() {
 
         setLocations(prev => [...prev, newLocation]);
         setSelectedLocations(prev => [...prev, newLocation.id]);
+        setActiveTab('existing'); // Switch to show the new location
 
         toast({
           title: 'Location added!',
@@ -285,7 +287,7 @@ export default function AssetGenerate() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="existing" className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'existing' | 'new')} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="existing">Existing Locations</TabsTrigger>
                 <TabsTrigger value="new">Add New Location</TabsTrigger>
