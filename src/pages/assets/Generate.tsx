@@ -176,8 +176,7 @@ export default function AssetGenerate() {
       };
 
       try {
-        const response = await locationApi.create(newLocationData);
-        const newLocation = response.location;
+        const newLocation = await locationApi.create(newLocationData);
 
         setLocations(prev => [...prev, newLocation]);
         setSelectedLocations(prev => [...prev, newLocation.id]);
