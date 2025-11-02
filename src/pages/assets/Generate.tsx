@@ -174,17 +174,19 @@ export default function AssetGenerate() {
         const job = await backgroundApi.pollJobStatus(jobId);
 
         if (job.status === 'completed') {
-          // Get the generated background
-          const backgroundId = job.result?.background_id;
-          if (backgroundId) {
-            const background = await backgroundApi.getById(backgroundId);
-            return background;
+          // Use job.result directly - it contains all needed data
+          if (job.result && job.result.background_id) {
+            return {
+              id: job.result.background_id,
+              image_url: job.result.image_url,
+              thumbnail_url: job.result.thumbnail_url,
+            };
           }
-          throw new Error('Background ID not found in job result');
+          throw new Error('Background data not found in job result');
         }
 
         if (job.status === 'failed') {
-          throw new Error(job.error || 'Background generation failed');
+          throw new Error(job.last_error || 'Background generation failed');
         }
 
         // Still processing - wait 1 second and retry
