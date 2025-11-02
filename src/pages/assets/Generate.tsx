@@ -48,7 +48,7 @@ interface Location {
 
 export default function AssetGenerate() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, tenant } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -144,7 +144,7 @@ export default function AssetGenerate() {
 
     console.log('🚀 [handleGenerate] Starting asset generation');
     console.log('👤 [handleGenerate] User ID:', user.id);
-    console.log('🏢 [handleGenerate] Tenant ID:', (user as any)?.app_metadata?.tenant_id);
+    console.log('🏢 [handleGenerate] Tenant ID:', tenant?.id);
 
     // ⭐ NEW: Ensure session is fresh before making API call
     console.log('🔐 [handleGenerate] Checking session before API call...');
