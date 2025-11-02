@@ -37,7 +37,15 @@ export const backgroundApi = {
     mood?: string;
     generate_count?: number;
   }) {
-    return fetchWithAuth('/api/internal/branding/generate-background', {
+    // Get tenant ID from user session
+    const { data: { user } } = await supabase.auth.getUser();
+    const tenantId = user?.app_metadata?.tenant_id || user?.user_metadata?.tenant_id;
+
+    if (!tenantId) {
+      throw new Error('Tenant ID not found in session');
+    }
+
+    return fetchWithAuth(`/api/internal/tenants/${tenantId}/backgrounds/generate`, {
       method: 'POST',
       body: JSON.stringify(params),
     });
@@ -47,7 +55,15 @@ export const backgroundApi = {
    * Check usage (how many backgrounds generated this month)
    */
   async checkUsage() {
-    return fetchWithAuth('/api/internal/branding/backgrounds/usage');
+    // Get tenant ID from user session
+    const { data: { user } } = await supabase.auth.getUser();
+    const tenantId = user?.app_metadata?.tenant_id || user?.user_metadata?.tenant_id;
+
+    if (!tenantId) {
+      throw new Error('Tenant ID not found in session');
+    }
+
+    return fetchWithAuth(`/api/internal/tenants/${tenantId}/backgrounds/usage`);
   },
 
   /**
