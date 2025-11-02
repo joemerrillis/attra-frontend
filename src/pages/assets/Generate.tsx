@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { assetApi } from '@/lib/asset-api';
 import { locationApi } from '@/lib/location-api';
 import { themeVocabularyApi } from '@/lib/theme-vocabulary-api';
+import { backgroundApi } from '@/lib/background-api';
 import { supabase } from '@/lib/supabase';
 import type { AssetType } from '@/types/asset';
 import type { ThemeVocabulary } from '@/types/theme-vocabulary';
@@ -72,6 +73,17 @@ export default function AssetGenerate() {
   const [userTheme, setUserTheme] = useState<ThemeVocabulary | null>(null);
   const [styleKeywords, setStyleKeywords] = useState<string[]>([]);
   const [mood, setMood] = useState<string>('');
+
+  // Background generation state
+  const [isGeneratingBackground, setIsGeneratingBackground] = useState(false);
+  const [generatedBackgroundId, setGeneratedBackgroundId] = useState<string | null>(null);
+  const [generatedBackgroundUrl, setGeneratedBackgroundUrl] = useState<string | null>(null);
+  const [backgroundUsage, setBackgroundUsage] = useState<{
+    limit: number | null;
+    current: number;
+    remaining: number | null;
+    isUnlimited: boolean;
+  } | null>(null);
 
   // Google Maps
   const { isLoaded } = useLoadScript({
@@ -136,6 +148,60 @@ export default function AssetGenerate() {
     loadTheme();
   }, [messageTheme, user]);
 
+  // Fetch background usage on mount
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const usage = await backgroundApi.checkUsage();
+        setBackgroundUsage(usage);
+      } catch (error) {
+        console.error('Failed to fetch background usage:', error);
+      }
+    };
+
+    fetchUsage();
+  }, []);
+
+  /**
+   * Poll job queue until background is complete
+   */
+  const pollForBackground = async (jobId: string): Promise<any> => {
+    const maxAttempts = 60; // 60 seconds max
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      try {
+        const job = await backgroundApi.pollJobStatus(jobId);
+
+        if (job.status === 'completed') {
+          // Get the generated background
+          const backgroundId = job.result?.background_id;
+          if (backgroundId) {
+            const background = await backgroundApi.getById(backgroundId);
+            return background;
+          }
+          throw new Error('Background ID not found in job result');
+        }
+
+        if (job.status === 'failed') {
+          throw new Error(job.error || 'Background generation failed');
+        }
+
+        // Still processing - wait 1 second and retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        attempts++;
+      } catch (error) {
+        if (attempts >= maxAttempts - 1) {
+          throw error; // Final attempt failed
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        attempts++;
+      }
+    }
+
+    throw new Error('Background generation timeout - please try again');
+  };
+
   const handleGenerate = async () => {
     if (!user) {
       console.error('❌ [handleGenerate] No user found');
@@ -194,8 +260,77 @@ export default function AssetGenerate() {
     }
 
     setIsGenerating(true);
+    setIsGeneratingBackground(false);
+
     try {
-      console.log('📤 [handleGenerate] Calling assetApi.generate...');
+      let backgroundIdToUse = null;
+
+      // ✅ STEP 1: Check if background generation needed
+      if (styleKeywords.length > 0 && !generatedBackgroundId) {
+        console.log('[Asset Wizard] Background needed - generating...');
+
+        setIsGeneratingBackground(true);
+
+        try {
+          // Generate background
+          const bgResult = await backgroundApi.generate({
+            message_theme: messageTheme,
+            style_keywords: styleKeywords,
+            mood: mood || undefined,
+            generate_count: 1,
+          });
+
+          // Check for limit error
+          if (bgResult.error && bgResult.code === 'LIMIT_REACHED') {
+            setIsGeneratingBackground(false);
+            setIsGenerating(false);
+
+            // Show upgrade modal
+            toast({
+              title: 'Background Limit Reached',
+              description: bgResult.message || `You've used ${bgResult.current}/${bgResult.limit} backgrounds this month.`,
+              variant: 'destructive',
+            });
+
+            // TODO: Show upgrade modal with bgResult.upgradeUrl
+            return;
+          }
+
+          // Poll for completion
+          const background = await pollForBackground(bgResult.job_ids[0]);
+
+          console.log('[Asset Wizard] Background generated:', background.id);
+
+          // Store background
+          setGeneratedBackgroundId(background.id);
+          setGeneratedBackgroundUrl(background.thumbnail_url);
+          backgroundIdToUse = background.id;
+
+          // Update usage count
+          const usage = await backgroundApi.checkUsage();
+          setBackgroundUsage(usage);
+
+        } catch (bgError) {
+          console.error('[Asset Wizard] Background generation failed:', bgError);
+
+          setIsGeneratingBackground(false);
+          setIsGenerating(false);
+
+          toast({
+            title: 'Background Generation Failed',
+            description: bgError instanceof Error ? bgError.message : 'Failed to generate background',
+            variant: 'destructive',
+          });
+          return;
+        } finally {
+          setIsGeneratingBackground(false);
+        }
+      } else if (generatedBackgroundId) {
+        backgroundIdToUse = generatedBackgroundId;
+      }
+
+      // ✅ STEP 2: Generate assets (existing logic)
+      console.log('[handleGenerate] Starting asset generation');
       const response = await assetApi.generate({
         asset_type: assetType,
         message_theme: messageTheme,
@@ -204,16 +339,13 @@ export default function AssetGenerate() {
         cta: cta || undefined,
         locations: selectedLocations,
         background_mode: 'same',
-        base_url: 'https://example.com', // TODO: Get base_url from tenant settings
+        background_id: backgroundIdToUse,
+        base_url: 'https://example.com', // TODO: Get from tenant settings
       });
 
       console.log('✅ [handleGenerate] Asset generation response received');
-      console.log('📊 [handleGenerate] Response type:', typeof response);
-      console.log('🔍 [handleGenerate] Response keys:', response ? Object.keys(response) : 'null');
-      console.log('✅ [handleGenerate] Response success:', response?.success);
-      console.log('📦 [handleGenerate] Full response:', response);
 
-      // ⭐ AUTO-SAVE: After successful generation, save theme vocabulary
+      // ⭐ AUTO-SAVE: Theme vocabulary (existing code)
       if (response.success && messageTheme && styleKeywords.length > 0) {
         try {
           const tenantId = (user as any)?.app_metadata?.tenant_id;
@@ -224,11 +356,9 @@ export default function AssetGenerate() {
               styleKeywords,
               mood || undefined
             );
-
-            console.log(`[Auto-Save] Saved theme "${messageTheme}" with keywords:`, styleKeywords);
+            console.log(`[Auto-Save] Saved theme "${messageTheme}"`);
           }
         } catch (saveError) {
-          // Don't block user flow if save fails
           console.error('[Auto-Save] Failed to save theme:', saveError);
         }
       }
@@ -526,8 +656,26 @@ export default function AssetGenerate() {
       {step === 3 && (
         <Card>
           <CardHeader>
-            <CardTitle>Create Your Message</CardTitle>
-            <CardDescription>What do you want to say?</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Create Your Message</CardTitle>
+                <CardDescription>What do you want to say?</CardDescription>
+              </div>
+
+              {/* Background Usage Indicator */}
+              {backgroundUsage && !backgroundUsage.isUnlimited && (
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium">
+                    Backgrounds: {backgroundUsage.current}/{backgroundUsage.limit}
+                  </span>
+                  {backgroundUsage.remaining !== null && backgroundUsage.remaining <= 1 && (
+                    <span className="ml-2 text-orange-600 font-semibold">
+                      ({backgroundUsage.remaining} left)
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4 md:space-y-6">
             <div className="space-y-2">
@@ -649,6 +797,30 @@ export default function AssetGenerate() {
                     className="w-full"
                   />
                 </div>
+
+                {/* Show generated background preview */}
+                {generatedBackgroundUrl && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl">✅</div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-green-900">
+                          Background Generated!
+                        </h4>
+                        <p className="text-sm text-green-700 mt-1">
+                          Your "{messageTheme}" background is ready
+                        </p>
+                        {generatedBackgroundUrl && (
+                          <img
+                            src={generatedBackgroundUrl}
+                            alt="Generated background preview"
+                            className="mt-3 rounded-lg border border-green-300 w-full max-w-xs"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -684,6 +856,56 @@ export default function AssetGenerate() {
                 placeholder="Shop Now, Visit Today, Call Us"
                 className="h-12"
               />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3.5: Background Generation Loading */}
+      {isGeneratingBackground && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Generating Background...</CardTitle>
+            <CardDescription>
+              Creating "{messageTheme}" background with your style preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center gap-6 py-8">
+              {/* Spinner */}
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+
+              {/* Theme Info */}
+              <div className="text-center space-y-3">
+                <p className="font-medium text-lg">{messageTheme}</p>
+
+                {styleKeywords.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {styleKeywords.map(kw => (
+                      <span
+                        key={kw}
+                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {mood && (
+                  <p className="italic text-muted-foreground">"{mood}"</p>
+                )}
+              </div>
+
+              {/* Progress Message */}
+              <div className="text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  This usually takes 10-15 seconds...
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Using Flux 1.1 Pro AI to create your unique background
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
