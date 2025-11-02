@@ -6,6 +6,10 @@ import { Plus, Sparkles, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentPlan } from '@/hooks/useCurrentPlan';
 import { useUpgradeAnalytics } from '@/hooks/useUpgradeAnalytics';
+import { useDashboardSummary } from '@/hooks/useDashboardSummary';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect } from 'react';
 
 export default function Dashboard() {
@@ -13,6 +17,7 @@ export default function Dashboard() {
   const { planKey } = useCurrentPlan();
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const { trackPromptViewed, trackPromptClicked, trackBannerDismissed } = useUpgradeAnalytics('dashboard');
+  const { data: summary } = useDashboardSummary();
 
   const isFreePlan = planKey === 'free';
 
@@ -98,6 +103,66 @@ export default function Dashboard() {
 
       {/* Contextual Dashboard Feed */}
       <DashboardFeed />
+
+      {/* Recent Assets */}
+      {summary && summary.recentAssets && summary.recentAssets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Assets</CardTitle>
+            <CardDescription>Your latest flyer generations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {summary.recentAssets.map((asset) => (
+              <div key={asset.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                <div>
+                  <div className="font-medium">{asset.message_theme}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {asset.locations.name}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={
+                      asset.status === 'completed' ? 'default' :
+                      asset.status === 'generating' ? 'secondary' :
+                      asset.status === 'failed' ? 'destructive' :
+                      'outline'
+                    }
+                    className={asset.status === 'generating' ? 'animate-pulse' : ''}
+                  >
+                    {asset.status}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(asset.created_at), { addSuffix: true })}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State for Recent Assets */}
+      {summary && (!summary.recentAssets || summary.recentAssets.length === 0) && summary.assetCount === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Assets</CardTitle>
+            <CardDescription>Your latest flyer generations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Generate your first flyer to get started!</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => navigate('/assets/generate')}
+              >
+                Create Flyer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Activity Feed - Full Width */}
       <div className="max-w-3xl mx-auto">

@@ -3,14 +3,16 @@ import { fetchWithAuth } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface DashboardSummary {
-  campaignCount: number;
   assetCount: number;
   todayScans: number;
-  contactsReady: number;
-  emailsSentToday: number;
-  scansByLocation: Array<{
-    name: string;
-    count: number;
+  recentAssets: Array<{
+    id: string;
+    message_theme: string;
+    status: 'pending' | 'generating' | 'completed' | 'failed';
+    created_at: string;
+    locations: {
+      name: string;
+    };
   }>;
 }
 

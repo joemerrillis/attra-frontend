@@ -1,6 +1,6 @@
 import { useDashboardSummary } from '@/hooks/useDashboardSummary';
 import { ContextCard } from './ContextCard';
-import { Target, TrendingUp, Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { Target, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function DashboardFeed() {
@@ -32,88 +32,47 @@ export function DashboardFeed() {
 
   if (!stats) return null;
 
-  // State-driven logic: Show most urgent card first
-  // Priority order: contacts ready > scans today > no campaigns > all caught up
+  // Simplified state-driven logic (message-theme based architecture)
+  // Priority order: scans today > no assets yet > all good
 
-  // URGENT: Contacts waiting for follow-up
-  if (stats.contactsReady > 0) {
-    return (
-      <div className="space-y-4">
-        <ContextCard
-          priority="urgent"
-          icon={<Mail className="w-5 h-5" />}
-          headline={`●> ${stats.contactsReady} contact${stats.contactsReady > 1 ? 's' : ''} ready to follow up`}
-          subtext="Don't let leads go cold. Reach out now while they're interested."
-          buttonLabel="View Contacts"
-          buttonHref="/contacts?filter=ready"
-        />
-
-        {/* Secondary card: Today's activity */}
-        {stats.todayScans > 0 && (
-          <ContextCard
-            priority="positive"
-            icon={<TrendingUp className="w-5 h-5" />}
-            headline={`●> ${stats.todayScans} scan${stats.todayScans > 1 ? 's' : ''} today`}
-            subtext={stats.scansByLocation.length > 0
-              ? `Most active: ${stats.scansByLocation[0].name} (${stats.scansByLocation[0].count})`
-              : 'Great activity so far!'}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // POSITIVE: Scans happening but no contacts yet
-  if (stats.todayScans > 0 && stats.contactsReady === 0) {
+  // POSITIVE: Scans happening today
+  if (stats.todayScans > 0) {
     return (
       <div className="space-y-4">
         <ContextCard
           priority="positive"
           icon={<TrendingUp className="w-5 h-5" />}
           headline={`●> ${stats.todayScans} scan${stats.todayScans > 1 ? 's' : ''} today!`}
-          subtext={stats.scansByLocation.length > 0
-            ? `Top location: ${stats.scansByLocation[0].name} with ${stats.scansByLocation[0].count} scans`
-            : 'Great activity! Keep it up.'}
-          buttonLabel="View Analytics"
-          buttonHref="/analytics"
+          subtext="Your QR codes are getting attention. Great job!"
         />
-
-        {stats.emailsSentToday > 0 && (
-          <ContextCard
-            priority="success"
-            icon={<CheckCircle className="w-5 h-5" />}
-            headline={`You sent ${stats.emailsSentToday} email${stats.emailsSentToday > 1 ? 's' : ''} today`}
-            subtext="Nice work staying on top of leads!"
-          />
-        )}
       </div>
     );
   }
 
-  // ONBOARDING: No campaigns yet
-  if (stats.campaignCount === 0) {
+  // ONBOARDING: No assets yet
+  if (stats.assetCount === 0) {
     return (
       <ContextCard
         priority="onboarding"
         icon={<Target className="w-5 h-5" />}
-        headline=">● Create your first campaign"
-        subtext="Set up a campaign to start tracking QR code scans and generating leads."
-        buttonLabel="Create Campaign"
-        buttonHref="/campaigns/new"
+        headline=">● Generate your first flyer"
+        subtext="Create a flyer with a QR code to start tracking scans and engaging customers."
+        buttonLabel="Create Flyer"
+        buttonHref="/assets/generate"
       />
     );
   }
 
-  // ONBOARDING: Has campaigns but no scans
-  if (stats.campaignCount > 0 && stats.todayScans === 0 && stats.assetCount > 0) {
+  // ONBOARDING: Has assets but no scans
+  if (stats.assetCount > 0 && stats.todayScans === 0) {
     return (
       <ContextCard
         priority="onboarding"
         icon={<Target className="w-5 h-5" />}
         headline=">● Print and distribute your flyers"
-        subtext={`You have ${stats.assetCount} asset${stats.assetCount > 1 ? 's' : ''} ready. Hang them in high-traffic areas to start seeing scans.`}
+        subtext={`You have ${stats.assetCount} flyer${stats.assetCount > 1 ? 's' : ''} ready. Hang them in high-traffic areas to start seeing scans.`}
         buttonLabel="View Assets"
-        buttonHref="/campaigns"
+        buttonHref="/assets/generate"
       />
     );
   }
@@ -124,16 +83,14 @@ export function DashboardFeed() {
       <ContextCard
         priority="success"
         icon={<CheckCircle className="w-5 h-5" />}
-        headline="You're all caught up!"
-        subtext="No pending contacts to follow up with. Great work."
+        headline="You're all set!"
+        subtext="Your flyers are ready. Check back for scan activity."
       />
 
       {/* Show summary stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Campaigns" value={stats.campaignCount} />
+      <div className="grid grid-cols-2 gap-4">
         <StatCard label="Assets" value={stats.assetCount} />
         <StatCard label="Today's Scans" value={stats.todayScans} />
-        <StatCard label="Emails Sent" value={stats.emailsSentToday} />
       </div>
     </div>
   );
