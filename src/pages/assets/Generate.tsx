@@ -85,7 +85,7 @@ export default function AssetGenerate() {
       setLoadingLocations(true);
       try {
         const response = await locationApi.list();
-        const locs = response.locations || [];
+        const locs = Array.isArray(response) ? response : (response.locations || []);
         setLocations(locs);
       } catch (error) {
         console.error('Failed to fetch locations:', error);
