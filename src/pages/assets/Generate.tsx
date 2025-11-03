@@ -863,19 +863,30 @@ export default function AssetGenerate() {
         </Card>
       )}
 
-      {/* Step 3.5: Background Generation Loading */}
-      {isGeneratingBackground && (
+      {/* Background Generation/Preview */}
+      {(isGeneratingBackground || generatedBackgroundUrl) && styleKeywords.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Generating Background...</CardTitle>
+            <CardTitle>{isGeneratingBackground ? 'Generating Background...' : 'Background Ready'}</CardTitle>
             <CardDescription>
-              Creating "{messageTheme}" background with your style preferences
+              {isGeneratingBackground
+                ? `Creating "${messageTheme}" background with your style preferences`
+                : `Your "${messageTheme}" background`
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center gap-6 py-8">
-              {/* Spinner */}
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+              {/* Show spinner while generating, background image when done */}
+              {isGeneratingBackground ? (
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+              ) : generatedBackgroundUrl ? (
+                <img
+                  src={generatedBackgroundUrl}
+                  alt="Generated background"
+                  className="rounded-lg border-2 border-green-300 max-w-md w-full shadow-lg"
+                />
+              ) : null}
 
               {/* Theme Info */}
               <div className="text-center space-y-3">
@@ -899,15 +910,17 @@ export default function AssetGenerate() {
                 )}
               </div>
 
-              {/* Progress Message */}
-              <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  This usually takes 10-15 seconds...
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Using Flux 1.1 Pro AI to create your unique background
-                </p>
-              </div>
+              {/* Progress Message (only while generating) */}
+              {isGeneratingBackground && (
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    This usually takes 10-15 seconds...
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Using Flux 1.1 Pro AI to create your unique background
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
