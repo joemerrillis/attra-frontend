@@ -33,10 +33,11 @@ interface Asset {
   headline?: string;
   status: 'pending' | 'generating' | 'completed' | 'failed';
   created_at: string;
-  locations: {
+  locations?: {
     id: string;
     name: string;
   };
+  location_id?: string;
   campaign_backgrounds?: {
     public_url: string;
   };
@@ -87,10 +88,10 @@ export default function Assets() {
 
       await assetApi.emailToPrinter({
         to: '', // User will fill this in Gmail draft
-        subject: `Attra Marketing Asset - ${asset.locations.name}`,
+        subject: `Attra Marketing Asset - ${asset.locations?.name || 'Location'}`,
         body: `
           <p>Hi,</p>
-          <p>Your marketing asset for <strong>${asset.locations.name}</strong> is ready to print!</p>
+          <p>Your marketing asset for <strong>${asset.locations?.name || 'your location'}</strong> is ready to print!</p>
           <p><strong>Asset Details:</strong></p>
           <ul>
             <li>Type: ${asset.asset_type}</li>
@@ -165,7 +166,7 @@ export default function Assets() {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `${asset.message_theme}-${asset.locations.name}.png`;
+      link.download = `${asset.message_theme}-${asset.locations?.name || 'asset'}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -329,7 +330,7 @@ export default function Assets() {
               <div className="space-y-2">
                 <h3 className="font-semibold truncate">{asset.message_theme}</h3>
                 <p className="text-sm text-muted-foreground truncate">
-                  {asset.locations.name}
+                  {asset.locations?.name || 'Unknown location'}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(asset.created_at), { addSuffix: true })}
