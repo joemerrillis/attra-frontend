@@ -289,7 +289,7 @@ export default function AssetGenerate() {
           const bgResult = await backgroundApi.generate({
             message_theme: messageTheme,
             style_keywords: styleKeywords,
-            moodFamily: moodFamily || undefined,
+            mood_family: moodFamily || undefined,
             generate_count: 1,
           });
 
