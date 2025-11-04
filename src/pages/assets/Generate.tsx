@@ -96,6 +96,10 @@ export default function AssetGenerate() {
     isUnlimited: boolean;
   } | null>(null);
 
+  // Batch mode state
+  const [batchMode, setBatchMode] = useState<'batch' | 'individual'>('batch');
+  const [generationProgress, setGenerationProgress] = useState<string>('');
+
   // Google Maps
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
@@ -342,24 +346,73 @@ export default function AssetGenerate() {
         backgroundIdToUse = generatedBackgroundId;
       }
 
-      // ✅ STEP 2: Generate assets (existing logic)
+      // ✅ STEP 2: Generate assets
       console.log('[handleGenerate] Starting asset generation');
-      const response = await assetApi.generate({
-        asset_type: assetType,
-        message_theme: messageTheme,
-        headline,
-        subheadline: subheadline || undefined,
-        cta: cta || undefined,
-        locations: selectedLocations,
-        background_mode: 'same',
-        background_id: backgroundIdToUse,
-        base_url: 'https://example.com', // TODO: Get from tenant settings
-      });
 
-      console.log('✅ [handleGenerate] Asset generation response received');
+      // Batch mode: Generate for multiple locations with progress
+      if (batchMode === 'batch' && selectedLocations.length > 1) {
+        console.log(`[Batch Mode] Generating for ${selectedLocations.length} locations`);
 
-      // ⭐ AUTO-SAVE: Theme vocabulary (existing code)
-      if (response.success && messageTheme && styleKeywords.length > 0) {
+        let totalAssets = 0;
+        for (let i = 0; i < selectedLocations.length; i++) {
+          setGenerationProgress(`Generating for location ${i + 1} of ${selectedLocations.length}...`);
+
+          try {
+            const response = await assetApi.generate({
+              asset_type: assetType,
+              message_theme: messageTheme,
+              headline,
+              subheadline: subheadline || undefined,
+              cta: cta || undefined,
+              locations: [selectedLocations[i]], // Single location
+              background_mode: 'same',
+              background_id: backgroundIdToUse,
+              base_url: 'https://example.com',
+            });
+
+            totalAssets += response.assets.length;
+            console.log(`[Batch Mode] Completed location ${i + 1}/${selectedLocations.length}`);
+          } catch (error) {
+            console.error(`[Batch Mode] Failed for location ${i + 1}:`, error);
+            toast({
+              title: `Failed for location ${i + 1}`,
+              description: error instanceof Error ? error.message : 'Generation failed',
+              variant: 'destructive',
+            });
+            // Continue with next location
+          }
+        }
+
+        setGenerationProgress('');
+
+        toast({
+          title: 'Batch generation complete!',
+          description: `Created ${totalAssets} ${assetType}(s) for ${selectedLocations.length} locations`,
+        });
+      } else {
+        // Single location or individual mode - use original logic
+        const response = await assetApi.generate({
+          asset_type: assetType,
+          message_theme: messageTheme,
+          headline,
+          subheadline: subheadline || undefined,
+          cta: cta || undefined,
+          locations: selectedLocations,
+          background_mode: 'same',
+          background_id: backgroundIdToUse,
+          base_url: 'https://example.com',
+        });
+
+        console.log('✅ [handleGenerate] Asset generation response received');
+
+        toast({
+          title: 'Assets generating!',
+          description: `Creating ${response.assets.length} ${assetType}(s)...`,
+        });
+      }
+
+      // ⭐ AUTO-SAVE: Theme vocabulary
+      if (messageTheme && styleKeywords.length > 0) {
         try {
           const tenantId = (user as any)?.app_metadata?.tenant_id;
           if (tenantId) {
@@ -375,11 +428,6 @@ export default function AssetGenerate() {
           console.error('[Auto-Save] Failed to save theme:', saveError);
         }
       }
-
-      toast({
-        title: 'Assets generating!',
-        description: `Creating ${response.assets.length} ${assetType}(s)...`,
-      });
 
       navigate('/map');
     } catch (error) {
@@ -661,19 +709,69 @@ export default function AssetGenerate() {
                 ⚠️ Select at least one location to continue
               </p>
             )}
+
+            {/* Batch Mode Prompt */}
+            {selectedLocations.length > 1 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Generate for {selectedLocations.length} locations
+                </h3>
+                <p className="text-sm text-blue-700 mb-4">
+                  Do you want to use the same design for all locations?
+                </p>
+
+                <RadioGroup value={batchMode} onValueChange={(value) => setBatchMode(value as 'batch' | 'individual')}>
+                  <div className="space-y-3">
+                    <label className="flex items-start space-x-3 cursor-pointer">
+                      <RadioGroupItem value="batch" id="batch" />
+                      <div className="flex-1">
+                        <div className="font-medium text-blue-900">Yes, same design</div>
+                        <div className="text-sm text-blue-600">
+                          Create one design and apply it to all {selectedLocations.length} locations.
+                          Faster and consistent branding.
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 cursor-pointer">
+                      <RadioGroupItem value="individual" id="individual" />
+                      <div className="flex-1">
+                        <div className="font-medium text-blue-900">No, customize each location</div>
+                        <div className="text-sm text-blue-600">
+                          Create unique designs for each location. You'll be prompted to continue after each one.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
       {/* Step 3: Create Message */}
       {step === 3 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Create Your Message</CardTitle>
-                <CardDescription>What do you want to say?</CardDescription>
+        <>
+          {/* Batch Mode Indicator */}
+          {batchMode === 'batch' && selectedLocations.length > 1 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <div className="flex items-center gap-2 text-green-800">
+                <Check className="w-5 h-5" />
+                <span className="font-medium">
+                  This design will be used for all {selectedLocations.length} locations
+                </span>
               </div>
+            </div>
+          )}
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Create Your Message</CardTitle>
+                  <CardDescription>What do you want to say?</CardDescription>
+                </div>
 
               {/* Background Usage Indicator */}
               {backgroundUsage && !backgroundUsage.isUnlimited && (
@@ -955,14 +1053,28 @@ export default function AssetGenerate() {
             </div>
           </CardContent>
         </Card>
+        </>
       )}
 
       {/* Step 4: Review & Generate */}
       {step === 4 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Review & Generate</CardTitle>
-            <CardDescription>Check your details before generating</CardDescription>
+        <>
+          {/* Batch Mode Indicator */}
+          {batchMode === 'batch' && selectedLocations.length > 1 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <div className="flex items-center gap-2 text-green-800">
+                <Check className="w-5 h-5" />
+                <span className="font-medium">
+                  This design will be used for all {selectedLocations.length} locations
+                </span>
+              </div>
+            </div>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Review & Generate</CardTitle>
+              <CardDescription>Check your details before generating</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
@@ -1005,6 +1117,15 @@ export default function AssetGenerate() {
               )}
             </div>
 
+            {/* Progress UI for batch generation */}
+            {isGenerating && batchMode === 'batch' && selectedLocations.length > 1 && generationProgress && (
+              <div className="text-center py-6 space-y-3">
+                <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+                <p className="text-lg font-medium">{generationProgress}</p>
+                <p className="text-sm text-muted-foreground">Please don't close this window</p>
+              </div>
+            )}
+
             <Button
               onClick={handleGenerate}
               disabled={isGenerating}
@@ -1015,6 +1136,7 @@ export default function AssetGenerate() {
             </Button>
           </CardContent>
         </Card>
+        </>
       )}
 
       {/* Navigation Buttons */}
