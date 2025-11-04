@@ -990,6 +990,7 @@ export default function AssetGenerate() {
             </div>
           </CardContent>
         </Card>
+        </>
       )}
 
       {/* Background Generation/Preview */}
@@ -1053,7 +1054,6 @@ export default function AssetGenerate() {
             </div>
           </CardContent>
         </Card>
-        </>
       )}
 
       {/* Step 4: Review & Generate */}
