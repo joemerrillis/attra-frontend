@@ -34,7 +34,7 @@ export const backgroundApi = {
   async generate(params: {
     message_theme: string;
     style_keywords: string[];
-    mood?: string;
+    moodFamily?: string;
     generate_count?: number;
   }) {
     // Get tenant ID from user session

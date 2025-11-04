@@ -36,6 +36,17 @@ const SUGGESTED_KEYWORDS = [
   'rustic', 'luxurious', 'minimalist', 'dramatic', 'cheerful'
 ];
 
+const MOOD_FAMILIES = [
+  'Bright and Inviting',
+  'Energetic and Dynamic',
+  'Cool and Modern',
+  'Elegant and Minimal',
+  'Playful and Bold',
+  'Warm and Local',
+  'Focused and Dramatic',
+  'Calm and Trustworthy'
+] as const;
+
 const libraries: ("places")[] = ['places'];
 
 interface Location {
@@ -72,7 +83,7 @@ export default function AssetGenerate() {
   // Theme vocabulary state
   const [userTheme, setUserTheme] = useState<ThemeVocabulary | null>(null);
   const [styleKeywords, setStyleKeywords] = useState<string[]>([]);
-  const [mood, setMood] = useState<string>('');
+  const [moodFamily, setMoodFamily] = useState<string>('');
 
   // Background generation state
   const [isGeneratingBackground, setIsGeneratingBackground] = useState(false);
@@ -129,18 +140,18 @@ export default function AssetGenerate() {
             // Theme exists - auto-populate
             setUserTheme(theme);
             setStyleKeywords(theme.keywords);
-            setMood(theme.mood || '');
+            setMoodFamily((theme as any).moodFamily || theme.mood || '');
           } else {
             // New theme - empty fields
             setUserTheme(null);
             setStyleKeywords([]);
-            setMood('');
+            setMoodFamily('');
           }
         } catch (error) {
           console.error('Error loading theme:', error);
           setUserTheme(null);
           setStyleKeywords([]);
-          setMood('');
+          setMoodFamily('');
         }
       }
     };
@@ -278,7 +289,7 @@ export default function AssetGenerate() {
           const bgResult = await backgroundApi.generate({
             message_theme: messageTheme,
             style_keywords: styleKeywords,
-            mood: mood || undefined,
+            moodFamily: moodFamily || undefined,
             generate_count: 1,
           });
 
@@ -356,7 +367,7 @@ export default function AssetGenerate() {
               tenantId,
               messageTheme,
               styleKeywords,
-              mood || undefined
+              moodFamily || undefined
             );
             console.log(`[Auto-Save] Saved theme "${messageTheme}"`);
           }
@@ -705,9 +716,9 @@ export default function AssetGenerate() {
                         <h4 className="font-semibold text-green-900">
                           We remember "{messageTheme}"!
                         </h4>
-                        {userTheme.mood && (
+                        {((userTheme as any).moodFamily || userTheme.mood) && (
                           <p className="text-sm text-green-700 mt-1 italic">
-                            {userTheme.mood}
+                            {(userTheme as any).moodFamily || userTheme.mood}
                           </p>
                         )}
                       </div>
@@ -786,18 +797,38 @@ export default function AssetGenerate() {
                   )}
                 </div>
 
-                {/* Mood Field */}
+                {/* Mood Family Selector */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    What does this flyer <span className="underline">feel like</span>? (Optional mood)
+                    What does this flyer <span className="underline">feel like</span>? (Optional mood family)
                   </label>
-                  <Input
-                    type="text"
-                    value={mood}
-                    onChange={(e) => setMood(e.target.value)}
-                    placeholder="e.g., sunny and uplifting, cozy and warm, energetic and fun..."
-                    className="w-full"
-                  />
+                  <RadioGroup value={moodFamily} onValueChange={setMoodFamily}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {MOOD_FAMILIES.map((family) => (
+                        <label
+                          key={family}
+                          className={`flex items-center space-x-3 border-2 rounded-lg p-3 cursor-pointer transition-all ${
+                            moodFamily === family
+                              ? 'border-accent bg-accent/5'
+                              : 'border-border hover:border-accent/50'
+                          }`}
+                        >
+                          <RadioGroupItem value={family} id={family} />
+                          <span className="text-sm font-medium">{family}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                  {moodFamily && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMoodFamily('')}
+                      className="mt-2 text-muted-foreground hover:text-foreground"
+                    >
+                      Clear selection
+                    </Button>
+                  )}
                 </div>
 
                 {/* Show generated background preview */}
@@ -905,8 +936,8 @@ export default function AssetGenerate() {
                   </div>
                 )}
 
-                {mood && (
-                  <p className="italic text-muted-foreground">"{mood}"</p>
+                {moodFamily && (
+                  <p className="italic text-muted-foreground">"{moodFamily}"</p>
                 )}
               </div>
 
