@@ -72,7 +72,7 @@ export function DashboardFeed() {
         headline=">● Print and distribute your flyers"
         subtext={`You have ${stats.assetCount} flyer${stats.assetCount > 1 ? 's' : ''} ready. Hang them in high-traffic areas to start seeing scans.`}
         buttonLabel="View Assets"
-        buttonHref="/assets/generate"
+        buttonHref="/assets"
       />
     );
   }

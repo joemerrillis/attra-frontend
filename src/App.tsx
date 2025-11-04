@@ -23,6 +23,7 @@ import Settings from '@/pages/Settings';
 import { Map } from '@/pages/Map';
 import { MapSimple } from '@/pages/MapSimple';
 import AssetGenerate from '@/pages/assets/Generate';
+import Assets from '@/pages/assets/Assets';
 
 function App() {
   return (
@@ -78,7 +79,17 @@ function App() {
             <Route path="/campaigns/new" element={<Navigate to="/assets/generate" replace />} />
             <Route path="/campaigns/:id" element={<Navigate to="/map" replace />} />
 
-            {/* Asset generation */}
+            {/* Asset routes */}
+            <Route
+              path="/assets"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Assets />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/assets/generate"
               element={

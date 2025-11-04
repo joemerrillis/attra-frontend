@@ -76,4 +76,21 @@ export const assetApi = {
   async getStatus(assetId: string) {
     return fetchWithAuth(`/api/internal/assets/${assetId}`);
   },
+
+  async list() {
+    return fetchWithAuth('/api/internal/assets');
+  },
+
+  async delete(assetId: string) {
+    return fetchWithAuth(`/api/internal/assets/${assetId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async emailToPrinter(data: { to: string; subject: string; body: string }) {
+    return fetchWithAuth('/api/internal/gmail/draft', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
 };
