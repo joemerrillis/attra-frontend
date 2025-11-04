@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -69,9 +68,10 @@ export default function AssetGenerate() {
   const [assetType, setAssetType] = useState<AssetType>('flyer');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [messageTheme, setMessageTheme] = useState('');
-  const [headline, setHeadline] = useState('');
-  const [subheadline, setSubheadline] = useState('');
-  const [cta, setCta] = useState('');
+  // Phase 1: Text fields removed from UI (will be added back in Phase 2 interactive editor)
+  const [headline] = useState(''); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [subheadline] = useState(''); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [cta] = useState(''); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Location state
   const [locations, setLocations] = useState<Location[]>([]);
@@ -219,6 +219,72 @@ export default function AssetGenerate() {
     throw new Error('Background generation timeout - please try again');
   };
 
+  /**
+   * Generate background for Step 3
+   */
+  const handleGenerateBackground = async () => {
+    if (!messageTheme || styleKeywords.length === 0) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please enter a message theme and select style keywords',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGeneratingBackground(true);
+
+    try {
+      // Generate background
+      const bgResult = await backgroundApi.generate({
+        message_theme: messageTheme,
+        style_keywords: styleKeywords,
+        mood_family: moodFamily || undefined,
+        generate_count: 1,
+      });
+
+      // Check for limit error
+      if (bgResult.error && bgResult.code === 'LIMIT_REACHED') {
+        setIsGeneratingBackground(false);
+
+        toast({
+          title: 'Background Limit Reached',
+          description: bgResult.message || `You've used ${bgResult.current}/${bgResult.limit} backgrounds this month.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Poll for completion
+      const background = await pollForBackground(bgResult.job_ids[0]);
+
+      console.log('[handleGenerateBackground] Background generated:', background.id);
+
+      // Store background
+      setGeneratedBackgroundId(background.id);
+      setGeneratedBackgroundUrl(background.thumbnail_url);
+
+      // Update usage count
+      const usage = await backgroundApi.checkUsage();
+      setBackgroundUsage(usage);
+
+      toast({
+        title: 'Background Generated!',
+        description: 'Your background is ready. Click Next to continue.',
+      });
+    } catch (bgError) {
+      console.error('[handleGenerateBackground] Background generation failed:', bgError);
+
+      toast({
+        title: 'Background Generation Failed',
+        description: bgError instanceof Error ? bgError.message : 'Failed to generate background',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingBackground(false);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!user) {
       console.error('❌ [handleGenerate] No user found');
@@ -277,77 +343,28 @@ export default function AssetGenerate() {
     }
 
     setIsGenerating(true);
-    setIsGeneratingBackground(false);
 
     try {
-      let backgroundIdToUse = null;
+      // Background should already be generated in Step 3
+      const backgroundIdToUse = generatedBackgroundId;
 
-      // ✅ STEP 1: Check if background generation needed
-      if (styleKeywords.length > 0 && !generatedBackgroundId) {
-        console.log('[Asset Wizard] Background needed - generating...');
-
-        setIsGeneratingBackground(true);
-
-        try {
-          // Generate background
-          const bgResult = await backgroundApi.generate({
-            message_theme: messageTheme,
-            style_keywords: styleKeywords,
-            mood_family: moodFamily || undefined,
-            generate_count: 1,
-          });
-
-          // Check for limit error
-          if (bgResult.error && bgResult.code === 'LIMIT_REACHED') {
-            setIsGeneratingBackground(false);
-            setIsGenerating(false);
-
-            // Show upgrade modal
-            toast({
-              title: 'Background Limit Reached',
-              description: bgResult.message || `You've used ${bgResult.current}/${bgResult.limit} backgrounds this month.`,
-              variant: 'destructive',
-            });
-
-            // TODO: Show upgrade modal with bgResult.upgradeUrl
-            return;
-          }
-
-          // Poll for completion
-          const background = await pollForBackground(bgResult.job_ids[0]);
-
-          console.log('[Asset Wizard] Background generated:', background.id);
-
-          // Store background
-          setGeneratedBackgroundId(background.id);
-          setGeneratedBackgroundUrl(background.thumbnail_url);
-          backgroundIdToUse = background.id;
-
-          // Update usage count
-          const usage = await backgroundApi.checkUsage();
-          setBackgroundUsage(usage);
-
-        } catch (bgError) {
-          console.error('[Asset Wizard] Background generation failed:', bgError);
-
-          setIsGeneratingBackground(false);
-          setIsGenerating(false);
-
-          toast({
-            title: 'Background Generation Failed',
-            description: bgError instanceof Error ? bgError.message : 'Failed to generate background',
-            variant: 'destructive',
-          });
-          return;
-        } finally {
-          setIsGeneratingBackground(false);
-        }
-      } else if (generatedBackgroundId) {
-        backgroundIdToUse = generatedBackgroundId;
+      if (!backgroundIdToUse) {
+        toast({
+          title: 'Missing Background',
+          description: 'Please generate a background first',
+          variant: 'destructive',
+        });
+        setIsGenerating(false);
+        return;
       }
 
-      // ✅ STEP 2: Generate assets
-      console.log('[handleGenerate] Starting asset generation');
+      // Phase 1: Use placeholder text (Phase 2 will add interactive text editor)
+      const headlineText = headline || messageTheme; // Use theme as placeholder
+      const subheadlineText = subheadline || undefined;
+      const ctaText = cta || undefined;
+
+      // Generate assets
+      console.log('[handleGenerate] Starting asset generation with background:', backgroundIdToUse);
 
       // Batch mode: Generate for multiple locations with progress
       if (batchMode === 'batch' && selectedLocations.length > 1) {
@@ -361,9 +378,9 @@ export default function AssetGenerate() {
             const response = await assetApi.generate({
               asset_type: assetType,
               message_theme: messageTheme,
-              headline,
-              subheadline: subheadline || undefined,
-              cta: cta || undefined,
+              headline: headlineText,
+              subheadline: subheadlineText,
+              cta: ctaText,
               locations: [selectedLocations[i]], // Single location
               background_mode: 'same',
               background_id: backgroundIdToUse,
@@ -394,9 +411,9 @@ export default function AssetGenerate() {
         const response = await assetApi.generate({
           asset_type: assetType,
           message_theme: messageTheme,
-          headline,
-          subheadline: subheadline || undefined,
-          cta: cta || undefined,
+          headline: headlineText,
+          subheadline: subheadlineText,
+          cta: ctaText,
           locations: selectedLocations,
           background_mode: 'same',
           background_id: backgroundIdToUse,
@@ -444,7 +461,7 @@ export default function AssetGenerate() {
   const canGoNext = () => {
     if (step === 1) return true; // Asset type has default value
     if (step === 2) return selectedLocations.length > 0;
-    if (step === 3) return messageTheme.trim() !== '' && headline.trim() !== '';
+    if (step === 3) return generatedBackgroundId !== null; // Must have generated background
     return true;
   };
 
@@ -750,7 +767,7 @@ export default function AssetGenerate() {
         </Card>
       )}
 
-      {/* Step 3: Create Message */}
+      {/* Step 3: Generate Background */}
       {step === 3 && (
         <>
           {/* Batch Mode Indicator */}
@@ -769,8 +786,8 @@ export default function AssetGenerate() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Create Your Message</CardTitle>
-                  <CardDescription>What do you want to say?</CardDescription>
+                  <CardTitle>Generate Background</CardTitle>
+                  <CardDescription>Define your visual style</CardDescription>
                 </div>
 
               {/* Background Usage Indicator */}
@@ -929,134 +946,78 @@ export default function AssetGenerate() {
                   )}
                 </div>
 
+                {/* Background Generation Section */}
+                {!generatedBackgroundUrl && (
+                  <div className="mt-6">
+                    <Button
+                      onClick={handleGenerateBackground}
+                      disabled={isGeneratingBackground || styleKeywords.length === 0}
+                      className="w-full h-14 text-lg"
+                      size="lg"
+                    >
+                      {isGeneratingBackground ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Generating Background...
+                        </>
+                      ) : (
+                        'Generate Background'
+                      )}
+                    </Button>
+                    {isGeneratingBackground && (
+                      <p className="text-sm text-muted-foreground text-center mt-3">
+                        This usually takes 5-10 seconds...
+                      </p>
+                    )}
+                    {styleKeywords.length === 0 && (
+                      <p className="text-sm text-amber-600 text-center mt-2">
+                        Please select at least one style keyword first
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Show generated background preview */}
                 {generatedBackgroundUrl && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="text-2xl">✅</div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-green-900">
-                          Background Generated!
-                        </h4>
-                        <p className="text-sm text-green-700 mt-1">
-                          Your "{messageTheme}" background is ready
-                        </p>
-                        {generatedBackgroundUrl && (
-                          <img
-                            src={generatedBackgroundUrl}
-                            alt="Generated background preview"
-                            className="mt-3 rounded-lg border border-green-300 w-full max-w-xs"
-                          />
-                        )}
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="text-2xl">✅</div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-green-900">
+                            Background Generated!
+                          </h4>
+                          <p className="text-sm text-green-700 mt-1">
+                            Your "{messageTheme}" background is ready
+                          </p>
+                        </div>
                       </div>
+                      <img
+                        src={generatedBackgroundUrl}
+                        alt="Generated background preview"
+                        className="rounded-lg border border-green-300 w-full"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setGeneratedBackgroundId(null);
+                          setGeneratedBackgroundUrl(null);
+                        }}
+                        className="w-full"
+                      >
+                        Not quite right? Generate Again
+                      </Button>
                     </div>
                   </div>
                 )}
               </div>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="headline">Headline *</Label>
-              <Textarea
-                id="headline"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                placeholder="50% Off Everything"
-                className="min-h-[80px] text-lg"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="subheadline">Subheadline (optional)</Label>
-              <Textarea
-                id="subheadline"
-                value={subheadline}
-                onChange={(e) => setSubheadline(e.target.value)}
-                placeholder="September 15 - October 10"
-                className="min-h-[60px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cta">Call to Action (optional)</Label>
-              <Input
-                id="cta"
-                value={cta}
-                onChange={(e) => setCta(e.target.value)}
-                placeholder="Shop Now, Visit Today, Call Us"
-                className="h-12"
-              />
-            </div>
           </CardContent>
         </Card>
         </>
       )}
 
-      {/* Background Generation/Preview */}
-      {(isGeneratingBackground || generatedBackgroundUrl) && styleKeywords.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{isGeneratingBackground ? 'Generating Background...' : 'Background Ready'}</CardTitle>
-            <CardDescription>
-              {isGeneratingBackground
-                ? `Creating "${messageTheme}" background with your style preferences`
-                : `Your "${messageTheme}" background`
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center gap-6 py-8">
-              {/* Show spinner while generating, background image when done */}
-              {isGeneratingBackground ? (
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
-              ) : generatedBackgroundUrl ? (
-                <img
-                  src={generatedBackgroundUrl}
-                  alt="Generated background"
-                  className="rounded-lg border-2 border-green-300 max-w-md w-full shadow-lg"
-                />
-              ) : null}
-
-              {/* Theme Info */}
-              <div className="text-center space-y-3">
-                <p className="font-medium text-lg">{messageTheme}</p>
-
-                {styleKeywords.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {styleKeywords.map(kw => (
-                      <span
-                        key={kw}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
-                      >
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {moodFamily && (
-                  <p className="italic text-muted-foreground">"{moodFamily}"</p>
-                )}
-              </div>
-
-              {/* Progress Message (only while generating) */}
-              {isGeneratingBackground && (
-                <div className="text-center space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    This usually takes 10-15 seconds...
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Using Flux 1.1 Pro AI to create your unique background
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 4: Review & Generate */}
+      {/* Step 4: Generate Asset (Temporary for Phase 1 - will become interactive editor in Phase 2) */}
       {step === 4 && (
         <>
           {/* Batch Mode Indicator */}
@@ -1073,69 +1034,58 @@ export default function AssetGenerate() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Review & Generate</CardTitle>
-              <CardDescription>Check your details before generating</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Asset Type</p>
-                <p className="font-medium">{ASSET_TYPES.find(t => t.value === assetType)?.label}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Locations</p>
-                <p className="font-medium">
-                  {selectedLocations.length} location{selectedLocations.length !== 1 ? 's' : ''}
-                </p>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {locations
-                    .filter(loc => selectedLocations.includes(loc.id))
-                    .map(loc => loc?.name)
-                    .filter(Boolean)
-                    .join(', ')}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Theme</p>
-                <p className="font-medium">{messageTheme}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Headline</p>
-                <p className="font-medium">{headline}</p>
-              </div>
-              {subheadline && (
+              <CardTitle>Generate Asset</CardTitle>
+              <CardDescription>Your background is ready - generate your {ASSET_TYPES.find(t => t.value === assetType)?.label.toLowerCase()}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Background Preview */}
+              {generatedBackgroundUrl && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Subheadline</p>
-                  <p className="font-medium">{subheadline}</p>
+                  <p className="text-sm font-medium mb-2">Your Background:</p>
+                  <img
+                    src={generatedBackgroundUrl}
+                    alt="Generated background"
+                    className="rounded-lg border-2 w-full max-w-md mx-auto"
+                  />
                 </div>
               )}
-              {cta && (
+
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">Call to Action</p>
-                  <p className="font-medium">{cta}</p>
+                  <p className="text-sm text-muted-foreground">Locations</p>
+                  <p className="font-medium">
+                    {selectedLocations.length} location{selectedLocations.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Theme</p>
+                  <p className="font-medium">{messageTheme}</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground text-center">
+                Note: Text editing will be available in the next update
+              </p>
+
+              {/* Progress UI for batch generation */}
+              {isGenerating && batchMode === 'batch' && selectedLocations.length > 1 && generationProgress && (
+                <div className="text-center py-6 space-y-3">
+                  <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+                  <p className="text-lg font-medium">{generationProgress}</p>
+                  <p className="text-sm text-muted-foreground">Please don't close this window</p>
                 </div>
               )}
-            </div>
 
-            {/* Progress UI for batch generation */}
-            {isGenerating && batchMode === 'batch' && selectedLocations.length > 1 && generationProgress && (
-              <div className="text-center py-6 space-y-3">
-                <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-                <p className="text-lg font-medium">{generationProgress}</p>
-                <p className="text-sm text-muted-foreground">Please don't close this window</p>
-              </div>
-            )}
-
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="w-full min-h-[44px]"
-              size="lg"
-            >
-              {isGenerating ? 'Generating...' : `Generate ${ASSET_TYPES.find(t => t.value === assetType)?.label}`}
-            </Button>
-          </CardContent>
-        </Card>
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="w-full min-h-[44px]"
+                size="lg"
+              >
+                {isGenerating ? 'Generating...' : `Generate ${ASSET_TYPES.find(t => t.value === assetType)?.label}`}
+              </Button>
+            </CardContent>
+          </Card>
         </>
       )}
 
