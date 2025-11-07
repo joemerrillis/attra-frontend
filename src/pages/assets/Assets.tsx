@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { assetApi } from '@/lib/asset-api';
-import { Mail, Link2, Download, Trash2, MoreVertical, Plus } from 'lucide-react';
+import { Mail, Link2, Download, Trash2, MoreVertical, Plus, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Asset {
@@ -295,7 +295,7 @@ export default function Assets() {
       {/* Assets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {assets.map((asset) => (
-          <Card key={asset.id} className="overflow-hidden">
+          <Card key={asset.id} className="overflow-hidden group">
             {/* Asset Preview */}
             {asset.campaign_backgrounds?.public_url ? (
               <div className="relative aspect-[2/3] bg-muted">
@@ -305,7 +305,7 @@ export default function Assets() {
                   className="object-cover w-full h-full"
                 />
                 {/* Status Badge Overlay */}
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 left-2">
                   <Badge
                     variant={
                       asset.status === 'completed' ? 'default' :
@@ -318,6 +318,18 @@ export default function Assets() {
                     {asset.status}
                   </Badge>
                 </div>
+
+                {/* Delete Button - Hover Revealed */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteAssetId(asset.id);
+                  }}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-full p-2"
+                  aria-label="Delete asset"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             ) : (
               <div className="aspect-[2/3] bg-muted flex items-center justify-center">
