@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,10 +73,17 @@ interface Location {
 
 export default function AssetGenerate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, tenant } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Parse navigation context from URL query params
+  const navigationContext = {
+    from: searchParams.get('from') || 'dashboard',  // 'dashboard' | 'map'
+    locationId: searchParams.get('locationId'),      // For map returns
+  };
 
   // Form state
   const [assetType, setAssetType] = useState<AssetType>('flyer');
@@ -300,6 +308,54 @@ export default function AssetGenerate() {
     }
   };
 
+  // Check if this is the user's first asset
+  const checkIfFirstAsset = async (): Promise<boolean> => {
+    try {
+      const assets = await assetApi.list();
+      return assets.assets?.length === 1;  // Just generated the first one
+    } catch (error) {
+      console.error('[checkIfFirstAsset] Error checking first asset:', error);
+      return false;
+    }
+  };
+
+  // Trigger confetti celebration for first asset
+  const triggerFirstAssetCelebration = () => {
+    const duration = 3000;
+    const end = Date.now() + duration;
+    const colors = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B'];
+
+    // Continuous confetti from both sides
+    (function frame() {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.6 },
+        colors: colors,
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.6 },
+        colors: colors,
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    })();
+
+    // Big burst at the start
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: colors,
+    });
+  };
+
   // Normalize text positions from preview pixels to asset pixels
   const normalizeTextPositions = (
     positions: TextPositions,
@@ -513,7 +569,41 @@ export default function AssetGenerate() {
         }
       }
 
-      navigate('/map');
+      // Check if this is the user's first asset
+      const isFirstAsset = await checkIfFirstAsset();
+
+      if (isFirstAsset) {
+        // Trigger celebration
+        triggerFirstAssetCelebration();
+
+        // Wait a moment for confetti to be visible, then show toast
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast({
+          title: '🎊 Congratulations on your first asset!',
+          description: 'Your asset is ready to view.',
+        });
+      }
+
+      // Context-aware navigation
+      if (navigationContext.from === 'map') {
+        // Return to map
+        navigate('/dashboard/map');
+        if (!isFirstAsset) {
+          toast({
+            title: '✅ Asset generated!',
+            description: 'Check the map for your new asset.',
+          });
+        }
+      } else {
+        // Return to dashboard/assets view
+        navigate('/dashboard/assets');
+        if (!isFirstAsset) {
+          toast({
+            title: '🎉 Asset generated!',
+            description: 'View your asset below.',
+          });
+        }
+      }
     } catch (error) {
       toast({
         title: 'Generation failed',
