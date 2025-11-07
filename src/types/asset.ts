@@ -5,6 +5,20 @@ export type AssetType =
   | 'business_card'
   | 'menu_board';
 
+export interface TextPosition {
+  x: number;         // Pixels from left
+  y: number;         // Pixels from top
+  width: number;     // Width in pixels
+  fontSize: number;  // Font size in px
+  fontWeight: 'normal' | 'bold';
+}
+
+export interface TextPositions {
+  headline: TextPosition;
+  subheadline: TextPosition;
+  cta: TextPosition;
+}
+
 export interface AssetGenerationRequest {
   asset_type: AssetType;
   message_theme: string;
@@ -16,6 +30,7 @@ export interface AssetGenerationRequest {
   background_id?: string;
   location_backgrounds?: Record<string, string>;
   base_url: string;
+  text_positions?: TextPositions;  // Optional custom text positions
 }
 
 export interface AssetGenerationResponse {

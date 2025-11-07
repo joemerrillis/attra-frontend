@@ -15,7 +15,7 @@ import { locationApi } from '@/lib/location-api';
 import { themeVocabularyApi } from '@/lib/theme-vocabulary-api';
 import { backgroundApi } from '@/lib/background-api';
 import { supabase } from '@/lib/supabase';
-import type { AssetType } from '@/types/asset';
+import type { AssetType, TextPositions } from '@/types/asset';
 import type { ThemeVocabulary } from '@/types/theme-vocabulary';
 import { FileText, DoorOpen, Triangle, CreditCard, BookOpen, ArrowLeft, ArrowRight, Check, MapPin, Loader2 } from 'lucide-react';
 import { InteractiveEditor } from '@/components/InteractiveEditor';
@@ -85,6 +85,8 @@ export default function AssetGenerate() {
   const [headline, setHeadline] = useState('Your Headline Here');
   const [subheadline, setSubheadline] = useState('');
   const [cta, setCta] = useState('Scan to Learn More');
+  // Phase 3: Text positions for drag/resize
+  const [textPositions, setTextPositions] = useState<TextPositions | null>(null);
 
   // Location state
   const [locations, setLocations] = useState<Location[]>([]);
@@ -111,7 +113,7 @@ export default function AssetGenerate() {
 
   // Batch mode state
   const [batchMode, setBatchMode] = useState<'batch' | 'individual'>('batch');
-  const [generationProgress, setGenerationProgress] = useState<string>('');
+  const [_generationProgress, setGenerationProgress] = useState<string>('');
 
   // Google Maps
   const { isLoaded } = useLoadScript({
@@ -298,6 +300,42 @@ export default function AssetGenerate() {
     }
   };
 
+  // Normalize text positions from preview pixels to asset pixels
+  const normalizeTextPositions = (
+    positions: TextPositions,
+    previewWidth: number,
+    previewHeight: number,
+    assetWidth: number,
+    assetHeight: number
+  ): TextPositions => {
+    const scaleX = assetWidth / previewWidth;
+    const scaleY = assetHeight / previewHeight;
+
+    return {
+      headline: {
+        x: Math.round(positions.headline.x * scaleX),
+        y: Math.round(positions.headline.y * scaleY),
+        width: Math.round(positions.headline.width * scaleX),
+        fontSize: Math.round(positions.headline.fontSize * scaleX),
+        fontWeight: positions.headline.fontWeight,
+      },
+      subheadline: {
+        x: Math.round(positions.subheadline.x * scaleX),
+        y: Math.round(positions.subheadline.y * scaleY),
+        width: Math.round(positions.subheadline.width * scaleX),
+        fontSize: Math.round(positions.subheadline.fontSize * scaleX),
+        fontWeight: positions.subheadline.fontWeight,
+      },
+      cta: {
+        x: Math.round(positions.cta.x * scaleX),
+        y: Math.round(positions.cta.y * scaleY),
+        width: Math.round(positions.cta.width * scaleX),
+        fontSize: Math.round(positions.cta.fontSize * scaleX),
+        fontWeight: positions.cta.fontWeight,
+      },
+    };
+  };
+
   const handleGenerate = async () => {
     if (!user) {
       console.error('❌ [handleGenerate] No user found');
@@ -376,8 +414,22 @@ export default function AssetGenerate() {
       const subheadlineText = subheadline || undefined;
       const ctaText = cta || undefined;
 
+      // Phase 3: Normalize text positions if provided
+      const normalizedTextPositions = textPositions
+        ? normalizeTextPositions(
+            textPositions,
+            600,  // Preview width
+            900,  // Preview height (2:3 aspect ratio)
+            2430, // Asset width for flyers (will vary by asset type in future)
+            3600  // Asset height for flyers
+          )
+        : undefined;
+
       // Generate assets
       console.log('[handleGenerate] Starting asset generation with background:', backgroundIdToUse);
+      if (normalizedTextPositions) {
+        console.log('[handleGenerate] Using custom text positions:', normalizedTextPositions);
+      }
 
       // Batch mode: Generate for multiple locations with progress
       if (batchMode === 'batch' && selectedLocations.length > 1) {
@@ -398,6 +450,7 @@ export default function AssetGenerate() {
               background_mode: 'same',
               background_id: backgroundIdToUse,
               base_url: 'https://example.com',
+              text_positions: normalizedTextPositions,
             });
 
             totalAssets += response.assets.length;
@@ -431,6 +484,7 @@ export default function AssetGenerate() {
           background_mode: 'same',
           background_id: backgroundIdToUse,
           base_url: 'https://example.com',
+          text_positions: normalizedTextPositions,
         });
 
         console.log('✅ [handleGenerate] Asset generation response received');
@@ -1039,6 +1093,7 @@ export default function AssetGenerate() {
             setHeadline(data.headline);
             setSubheadline(data.subheadline);
             setCta(data.cta);
+            setTextPositions(data.textPositions);
             handleGenerate();
           }}
           isGenerating={isGenerating}
