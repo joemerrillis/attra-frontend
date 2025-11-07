@@ -1,37 +1,4 @@
-import { supabase } from './supabase';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  // Get access token from Supabase session
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-
-  if (!token) {
-    throw new Error('Missing Authorization header');
-  }
-
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
-  }
-
-  // Handle empty responses (e.g., 204 No Content for DELETE)
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return response.json();
-  }
-  return {}; // Return empty object for non-JSON responses
-}
+import { fetchWithAuth } from './api-client';
 
 interface CreateLocationRequest {
   name: string;

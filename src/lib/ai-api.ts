@@ -1,31 +1,7 @@
-import { supabase } from './supabase';
+import { fetchWithAuth } from './api-client';
 
 type GenerateCopyRequest = any;
 type GenerateCopyResponse = any;
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  // Get access token from Supabase session
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'AI request failed' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
-  }
-
-  return response.json();
-}
 
 export const aiApi = {
   async generateCopy(data: GenerateCopyRequest): Promise<GenerateCopyResponse> {

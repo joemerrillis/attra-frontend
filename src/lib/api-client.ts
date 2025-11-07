@@ -51,6 +51,13 @@ export async function fetchWithAuth<T = any>(
   }
 
   console.log('✅ [fetchWithAuth] Request successful');
+
+  // Handle 204 No Content - no response body
+  if (response.status === 204) {
+    console.log('📭 [fetchWithAuth] 204 No Content - returning null');
+    return null as T;
+  }
+
   return response.json();
 }
 

@@ -9,7 +9,7 @@
  * - Check generation status
  */
 
-import { supabase } from './supabase';
+import { fetchWithAuth } from './api-client';
 import type {
   Background,
   BackgroundsListResponse,
@@ -17,33 +17,6 @@ import type {
   BackgroundGenerationResponse,
   BackgroundStatusResponse,
 } from '@/types/background';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-
-  if (!token) {
-    throw new Error('No authentication token');
-  }
-
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
-  }
-
-  return response.json();
-}
 
 export const backgroundsApi = {
   /**
