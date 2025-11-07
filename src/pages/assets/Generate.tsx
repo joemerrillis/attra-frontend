@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import type { AssetType } from '@/types/asset';
 import type { ThemeVocabulary } from '@/types/theme-vocabulary';
 import { FileText, DoorOpen, Triangle, CreditCard, BookOpen, ArrowLeft, ArrowRight, Check, MapPin, Loader2 } from 'lucide-react';
+import { InteractiveEditor } from '@/components/InteractiveEditor';
 
 const ASSET_TYPES = [
   { value: 'flyer' as AssetType, label: 'Flyer', description: '8.5" x 11" flyer', icon: FileText },
@@ -80,10 +81,10 @@ export default function AssetGenerate() {
   const [assetType, setAssetType] = useState<AssetType>('flyer');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [messageTheme, setMessageTheme] = useState('');
-  // Phase 1: Text fields removed from UI (will be added back in Phase 2 interactive editor)
-  const [headline] = useState(''); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [subheadline] = useState(''); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [cta] = useState(''); // eslint-disable-line @typescript-eslint/no-unused-vars
+  // Phase 2: Text fields for interactive editor
+  const [headline, setHeadline] = useState('Your Headline Here');
+  const [subheadline, setSubheadline] = useState('');
+  const [cta, setCta] = useState('Scan to Learn More');
 
   // Location state
   const [locations, setLocations] = useState<Location[]>([]);
@@ -1029,76 +1030,19 @@ export default function AssetGenerate() {
         </>
       )}
 
-      {/* Step 4: Generate Asset (Temporary for Phase 1 - will become interactive editor in Phase 2) */}
-      {step === 4 && (
-        <>
-          {/* Batch Mode Indicator */}
-          {batchMode === 'batch' && selectedLocations.length > 1 && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <div className="flex items-center gap-2 text-green-800">
-                <Check className="w-5 h-5" />
-                <span className="font-medium">
-                  This design will be used for all {selectedLocations.length} locations
-                </span>
-              </div>
-            </div>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Generate Asset</CardTitle>
-              <CardDescription>Your background is ready - generate your {ASSET_TYPES.find(t => t.value === assetType)?.label.toLowerCase()}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Background Preview */}
-              {generatedBackgroundUrl && (
-                <div>
-                  <p className="text-sm font-medium mb-2">Your Background:</p>
-                  <img
-                    src={generatedBackgroundUrl}
-                    alt="Generated background"
-                    className="rounded-lg border-2 w-full max-w-md mx-auto"
-                  />
-                </div>
-              )}
-
-              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                <div>
-                  <p className="text-sm text-muted-foreground">Locations</p>
-                  <p className="font-medium">
-                    {selectedLocations.length} location{selectedLocations.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Theme</p>
-                  <p className="font-medium">{messageTheme}</p>
-                </div>
-              </div>
-
-              <p className="text-sm text-muted-foreground text-center">
-                Note: Text editing will be available in the next update
-              </p>
-
-              {/* Progress UI for batch generation */}
-              {isGenerating && batchMode === 'batch' && selectedLocations.length > 1 && generationProgress && (
-                <div className="text-center py-6 space-y-3">
-                  <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-                  <p className="text-lg font-medium">{generationProgress}</p>
-                  <p className="text-sm text-muted-foreground">Please don't close this window</p>
-                </div>
-              )}
-
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="w-full min-h-[44px]"
-                size="lg"
-              >
-                {isGenerating ? 'Generating...' : `Generate ${ASSET_TYPES.find(t => t.value === assetType)?.label}`}
-              </Button>
-            </CardContent>
-          </Card>
-        </>
+      {/* Step 4: Interactive Text Editor (Phase 2) */}
+      {step === 4 && generatedBackgroundUrl && (
+        <InteractiveEditor
+          backgroundUrl={generatedBackgroundUrl}
+          onBack={() => setStep(3)}
+          onGenerate={(data) => {
+            setHeadline(data.headline);
+            setSubheadline(data.subheadline);
+            setCta(data.cta);
+            handleGenerate();
+          }}
+          isGenerating={isGenerating}
+        />
       )}
 
       {/* Navigation Buttons */}
