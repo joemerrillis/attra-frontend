@@ -46,6 +46,18 @@ const MOOD_FAMILIES = [
   'Calm and Trustworthy'
 ] as const;
 
+// Map display labels to database keys
+const MOOD_FAMILY_TO_KEY: Record<string, string> = {
+  'Bright and Inviting': 'bright_inviting',
+  'Energetic and Dynamic': 'energetic_dynamic',
+  'Cool and Modern': 'cool_modern',
+  'Elegant and Minimal': 'elegant_minimal',
+  'Playful and Bold': 'playful_bold',
+  'Warm and Local': 'warm_local',
+  'Focused and Dramatic': 'focused_dramatic',
+  'Calm and Trustworthy': 'calm_trustworthy'
+};
+
 const libraries: ("places")[] = ['places'];
 
 interface Location {
@@ -239,7 +251,7 @@ export default function AssetGenerate() {
       const bgResult = await backgroundApi.generate({
         message_theme: messageTheme,
         style_keywords: styleKeywords,
-        mood_family: moodFamily || undefined,
+        mood_family: moodFamily ? MOOD_FAMILY_TO_KEY[moodFamily] : undefined,
         generate_count: 1,
       });
 
