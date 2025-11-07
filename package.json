@@ -12,11 +12,9 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "playwright:install": "playwright install chromium",
-    "watch:tasks": "node task-watcher.js"
+    "playwright:install": "playwright install chromium"
   },
   "dependencies": {
-    "@attra/channels": "file:../packages/channels",
     "@hookform/resolvers": "^3.3.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -37,7 +35,6 @@
     "@supabase/supabase-js": "^2.38.0",
     "@tanstack/react-query": "^5.12.0",
     "canvas-confetti": "^1.9.4",
-    "chokidar": "^4.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
@@ -69,7 +66,6 @@
     "@typescript-eslint/parser": "^6.10.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
-    "dotenv": "^17.2.3",
     "eslint": "^8.53.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
