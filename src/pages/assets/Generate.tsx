@@ -402,7 +402,12 @@ export default function AssetGenerate() {
     };
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (overrideData?: {
+    headline?: string;
+    subheadline?: string;
+    cta?: string;
+    textPositions?: TextPositions;
+  }) => {
     if (!user) {
       console.error('❌ [handleGenerate] No user found');
       return;
@@ -475,15 +480,16 @@ export default function AssetGenerate() {
         return;
       }
 
-      // Phase 1: Use placeholder text (Phase 2 will add interactive text editor)
-      const headlineText = headline || messageTheme; // Use theme as placeholder
-      const subheadlineText = subheadline || undefined;
-      const ctaText = cta || undefined;
+      // Use override data if provided (from InteractiveEditor), otherwise use state
+      const headlineText = overrideData?.headline ?? headline ?? messageTheme;
+      const subheadlineText = overrideData?.subheadline ?? subheadline;
+      const ctaText = overrideData?.cta ?? cta;
 
-      // Phase 3: Normalize text positions if provided
-      const normalizedTextPositions = textPositions
+      // Use override text positions if provided (from InteractiveEditor), otherwise use state
+      const positionsToUse = overrideData?.textPositions ?? textPositions;
+      const normalizedTextPositions = positionsToUse
         ? normalizeTextPositions(
-            textPositions,
+            positionsToUse,
             600,  // Preview width
             900,  // Preview height (2:3 aspect ratio)
             2430, // Asset width for flyers (will vary by asset type in future)
@@ -1195,7 +1201,7 @@ export default function AssetGenerate() {
             setSubheadline(data.subheadline);
             setCta(data.cta);
             setTextPositions(data.textPositions);
-            handleGenerate();
+            handleGenerate(data);
           }}
           isGenerating={isGenerating}
         />
