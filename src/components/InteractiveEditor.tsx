@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface InteractiveEditorProps {
   backgroundUrl: string;
+  compositionMap: any | null;
   onBack: () => void;
   onGenerate: (data: {
     headline: string;
@@ -52,6 +53,7 @@ const defaultTextPositions: TextPositions = {
 
 export function InteractiveEditor({
   backgroundUrl,
+  compositionMap,
   onBack,
   onGenerate,
   isGenerating = false,
@@ -62,16 +64,93 @@ export function InteractiveEditor({
   const [textPositions, setTextPositions] = useState<TextPositions>(defaultTextPositions);
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
   const [resizingElement, setResizingElement] = useState<string | null>(null);
+  const [textColors, setTextColors] = useState({
+    headline: '#000000',
+    subheadline: '#000000',
+    cta: '#000000',
+  });
+  const [autoTextColor, setAutoTextColor] = useState(true);
   const { toast } = useToast();
+
+  /**
+   * Check if two zones overlap
+   */
+  const zonesOverlap = (zone1: any, zone2: any): boolean => {
+    return !(
+      zone1.x + zone1.width < zone2.x ||
+      zone2.x + zone2.width < zone1.x ||
+      zone1.y + zone1.height < zone2.y ||
+      zone2.y + zone2.height < zone1.y
+    );
+  };
+
+  /**
+   * Calculate total overlap area between text box and zones
+   */
+  const calculateOverlapArea = (textBox: any, zones: any[]): number => {
+    return zones.reduce((total, zone) => {
+      if (!zonesOverlap(textBox, zone)) return total;
+
+      const overlapX = Math.max(0, Math.min(textBox.x + textBox.width, zone.x + zone.width) - Math.max(textBox.x, zone.x));
+      const overlapY = Math.max(0, Math.min(textBox.y + textBox.height, zone.y + zone.height) - Math.max(textBox.y, zone.y));
+
+      return total + (overlapX * overlapY);
+    }, 0);
+  };
+
+  /**
+   * Calculate optimal text color based on background brightness at position
+   * Uses composition_map bright_zones and dark_zones from Sharp analysis
+   */
+  const getOptimalTextColor = (
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): string => {
+    if (!compositionMap || !autoTextColor) {
+      return '#000000'; // Default to black if no analysis or manual mode
+    }
+
+    const { bright_zones, dark_zones } = compositionMap;
+    const textBox = { x, y, width, height };
+
+    // Calculate overlap with dark and bright zones
+    const darkOverlapArea = calculateOverlapArea(textBox, dark_zones || []);
+    const brightOverlapArea = calculateOverlapArea(textBox, bright_zones || []);
+
+    // If text overlaps more with dark zones, use white text
+    // If text overlaps more with bright zones, use black text
+    return darkOverlapArea > brightOverlapArea ? '#FFFFFF' : '#000000';
+  };
 
   const updateTextPosition = (
     field: 'headline' | 'subheadline' | 'cta',
     updates: Partial<TextPositions[typeof field]>
   ) => {
-    setTextPositions((prev) => ({
-      ...prev,
-      [field]: { ...prev[field], ...updates },
-    }));
+    setTextPositions((prev) => {
+      const newPosition = { ...prev[field], ...updates };
+
+      // Update text color based on new position (if auto mode)
+      if (autoTextColor) {
+        const optimalColor = getOptimalTextColor(
+          newPosition.x,
+          newPosition.y,
+          newPosition.width,
+          80  // Approximate height for color calculation
+        );
+
+        setTextColors(colors => ({
+          ...colors,
+          [field]: optimalColor,
+        }));
+      }
+
+      return {
+        ...prev,
+        [field]: newPosition,
+      };
+    });
   };
 
   const resetToDefaults = () => {
@@ -85,6 +164,32 @@ export function InteractiveEditor({
   const handleGenerate = () => {
     onGenerate({ headline, subheadline, cta, textPositions });
   };
+
+  // Initialize text colors based on composition map
+  useEffect(() => {
+    if (compositionMap && autoTextColor) {
+      setTextColors({
+        headline: getOptimalTextColor(
+          defaultTextPositions.headline.x,
+          defaultTextPositions.headline.y,
+          defaultTextPositions.headline.width,
+          80
+        ),
+        subheadline: getOptimalTextColor(
+          defaultTextPositions.subheadline.x,
+          defaultTextPositions.subheadline.y,
+          defaultTextPositions.subheadline.width,
+          60
+        ),
+        cta: getOptimalTextColor(
+          defaultTextPositions.cta.x,
+          defaultTextPositions.cta.y,
+          defaultTextPositions.cta.width,
+          60
+        ),
+      });
+    }
+  }, [compositionMap, autoTextColor]);
 
   return (
     <div className="space-y-6">
@@ -181,7 +286,7 @@ export function InteractiveEditor({
                     style={{
                       fontSize: `${textPositions.headline.fontSize}px`,
                       fontWeight: textPositions.headline.fontWeight,
-                      color: '#000000',
+                      color: textColors.headline,
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
@@ -189,6 +294,9 @@ export function InteractiveEditor({
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
+                      textShadow: textColors.headline === '#FFFFFF'
+                        ? '2px 2px 4px rgba(0,0,0,0.8)'
+                        : 'none',
                     }}
                   >
                     {headline}
@@ -257,7 +365,7 @@ export function InteractiveEditor({
                     style={{
                       fontSize: `${textPositions.subheadline.fontSize}px`,
                       fontWeight: textPositions.subheadline.fontWeight,
-                      color: '#000000',
+                      color: textColors.subheadline,
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
@@ -265,6 +373,9 @@ export function InteractiveEditor({
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
+                      textShadow: textColors.subheadline === '#FFFFFF'
+                        ? '2px 2px 4px rgba(0,0,0,0.8)'
+                        : 'none',
                     }}
                   >
                     {subheadline}
@@ -382,7 +493,7 @@ export function InteractiveEditor({
                     style={{
                       fontSize: `${textPositions.cta.fontSize}px`,
                       fontWeight: textPositions.cta.fontWeight,
-                      color: '#000000',
+                      color: textColors.cta,
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
@@ -390,6 +501,9 @@ export function InteractiveEditor({
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
+                      textShadow: textColors.cta === '#FFFFFF'
+                        ? '2px 2px 4px rgba(0,0,0,0.8)'
+                        : 'none',
                     }}
                   >
                     {cta}
@@ -461,6 +575,49 @@ export function InteractiveEditor({
                 <div className="text-xs text-muted-foreground text-right">
                   {cta.length}/50
                 </div>
+              </div>
+
+              {/* Text Color Control */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Text Color</Label>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setAutoTextColor(!autoTextColor)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-colors ${
+                      autoTextColor
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 bg-white'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded ${
+                      autoTextColor ? 'bg-blue-500' : 'bg-gray-300'
+                    }`} />
+                    <span className="text-sm">Auto (based on background)</span>
+                  </button>
+                </div>
+
+                {/* Manual color pickers */}
+                {!autoTextColor && (
+                  <div className="space-y-2 pt-2">
+                    {['headline', 'subheadline', 'cta'].map(field => (
+                      <div key={field} className="flex items-center gap-2">
+                        <Label className="text-xs w-24 capitalize">{field}:</Label>
+                        <button
+                          onClick={() => setTextColors({ ...textColors, [field]: '#000000' })}
+                          className={`w-8 h-8 rounded border-2 bg-black ${
+                            textColors[field as keyof typeof textColors] === '#000000' ? 'border-blue-500' : 'border-gray-300'
+                          }`}
+                        />
+                        <button
+                          onClick={() => setTextColors({ ...textColors, [field]: '#FFFFFF' })}
+                          className={`w-8 h-8 rounded border-2 bg-white ${
+                            textColors[field as keyof typeof textColors] === '#FFFFFF' ? 'border-blue-500' : 'border-gray-300'
+                          }`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Instructions */}

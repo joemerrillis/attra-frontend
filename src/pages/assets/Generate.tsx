@@ -112,6 +112,7 @@ export default function AssetGenerate() {
   const [isGeneratingBackground, setIsGeneratingBackground] = useState(false);
   const [generatedBackgroundId, setGeneratedBackgroundId] = useState<string | null>(null);
   const [generatedBackgroundUrl, setGeneratedBackgroundUrl] = useState<string | null>(null);
+  const [compositionMap, setCompositionMap] = useState<any | null>(null);
   const [backgroundUsage, setBackgroundUsage] = useState<{
     limit: number | null;
     current: number;
@@ -212,12 +213,15 @@ export default function AssetGenerate() {
         const job = await backgroundApi.pollJobStatus(jobId);
 
         if (job.status === 'completed') {
-          // Use job.result directly - it contains all needed data
           if (job.result && job.result.background_id) {
+            // Fetch full background data including composition_map
+            const background = await backgroundApi.getById(job.result.background_id);
+
             return {
-              id: job.result.background_id,
-              image_url: job.result.image_url,
-              thumbnail_url: job.result.thumbnail_url,
+              id: background.id,
+              image_url: background.image_url,
+              thumbnail_url: background.thumbnail_url,
+              composition_map: background.composition_map,
             };
           }
           throw new Error('Background data not found in job result');
@@ -286,6 +290,7 @@ export default function AssetGenerate() {
       // Store background
       setGeneratedBackgroundId(background.id);
       setGeneratedBackgroundUrl(background.thumbnail_url);
+      setCompositionMap(background.composition_map);
 
       // Update usage count
       const usage = await backgroundApi.checkUsage();
@@ -1183,6 +1188,7 @@ export default function AssetGenerate() {
       {step === 4 && generatedBackgroundUrl && (
         <InteractiveEditor
           backgroundUrl={generatedBackgroundUrl}
+          compositionMap={compositionMap}
           onBack={() => setStep(3)}
           onGenerate={(data) => {
             setHeadline(data.headline);
