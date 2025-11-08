@@ -595,8 +595,8 @@ export default function AssetGenerate() {
           });
         }
       } else {
-        // Return to dashboard/assets view
-        navigate('/dashboard/assets');
+        // Return to assets view
+        navigate('/assets');
         if (!isFirstAsset) {
           toast({
             title: '🎉 Asset generated!',
