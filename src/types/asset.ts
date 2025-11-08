@@ -9,6 +9,7 @@ export interface TextPosition {
   x: number;         // Pixels from left
   y: number;         // Pixels from top
   width: number;     // Width in pixels
+  height?: number | 'auto';  // Height in pixels or auto-fit to content
   fontSize: number;  // Font size in px
   fontWeight: 'normal' | 'bold';
 }

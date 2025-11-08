@@ -27,6 +27,7 @@ const defaultTextPositions: TextPositions = {
     x: 40,
     y: 198,  // ~22% of 900px
     width: 520,
+    height: 'auto',
     fontSize: 36,
     fontWeight: 'bold',
   },
@@ -34,6 +35,7 @@ const defaultTextPositions: TextPositions = {
     x: 40,
     y: 324,  // ~36% of 900px
     width: 520,
+    height: 'auto',
     fontSize: 22,
     fontWeight: 'normal',
   },
@@ -41,6 +43,7 @@ const defaultTextPositions: TextPositions = {
     x: 40,
     y: 738,  // ~82% of 900px
     width: 520,
+    height: 'auto',
     fontSize: 22,
     fontWeight: 'bold',
   },
@@ -320,7 +323,7 @@ export function InteractiveEditor({
               {headline && (
                 <Rnd
                   position={{ x: textPositions.headline.x, y: textPositions.headline.y }}
-                  size={{ width: textPositions.headline.width, height: 'auto' }}
+                  size={{ width: textPositions.headline.width, height: textPositions.headline.height || 'auto' }}
                   onDragStart={() => setDraggingElement('headline')}
                   onDragStop={(_e, d) => {
                     setDraggingElement(null);
@@ -333,14 +336,15 @@ export function InteractiveEditor({
                       x: position.x,
                       y: position.y,
                       width: ref.offsetWidth,
+                      height: ref.offsetHeight,
                     });
                   }}
                   bounds="parent"
                   enableResizing={{
                     left: true,
                     right: true,
-                    top: false,
-                    bottom: false,
+                    top: true,
+                    bottom: true,
                     topLeft: false,
                     topRight: false,
                     bottomLeft: false,
@@ -365,10 +369,30 @@ export function InteractiveEditor({
                       background: 'rgba(59, 130, 246, 0.2)',
                       borderRight: '3px solid rgba(59, 130, 246, 0.6)',
                     },
+                    top: {
+                      width: '100%',
+                      height: '12px',
+                      top: '-6px',
+                      left: 0,
+                      cursor: 'ns-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderTop: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                    bottom: {
+                      width: '100%',
+                      height: '12px',
+                      bottom: '-6px',
+                      left: 0,
+                      cursor: 'ns-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderBottom: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
                   }}
                   resizeHandleClasses={{
                     left: 'resize-handle-left',
                     right: 'resize-handle-right',
+                    top: 'resize-handle-top',
+                    bottom: 'resize-handle-bottom',
                   }}
                   minWidth={200}
                   className={`draggable-text ${draggingElement === 'headline' ? 'dragging' : ''} ${resizingElement === 'headline' ? 'resizing' : ''}`}
@@ -381,11 +405,16 @@ export function InteractiveEditor({
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       cursor: draggingElement === 'headline' ? 'grabbing' : 'grab',
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
                       whiteSpace: 'pre-line',
+                      overflow: 'hidden',
                       textShadow: textColors.headline === '#FFFFFF'
                         ? '2px 2px 4px rgba(0,0,0,0.8)'
                         : 'none',
@@ -400,7 +429,7 @@ export function InteractiveEditor({
               {subheadline && (
                 <Rnd
                   position={{ x: textPositions.subheadline.x, y: textPositions.subheadline.y }}
-                  size={{ width: textPositions.subheadline.width, height: 'auto' }}
+                  size={{ width: textPositions.subheadline.width, height: textPositions.subheadline.height || 'auto' }}
                   onDragStart={() => setDraggingElement('subheadline')}
                   onDragStop={(_e, d) => {
                     setDraggingElement(null);
@@ -413,14 +442,15 @@ export function InteractiveEditor({
                       x: position.x,
                       y: position.y,
                       width: ref.offsetWidth,
+                      height: ref.offsetHeight,
                     });
                   }}
                   bounds="parent"
                   enableResizing={{
                     left: true,
                     right: true,
-                    top: false,
-                    bottom: false,
+                    top: true,
+                    bottom: true,
                     topLeft: false,
                     topRight: false,
                     bottomLeft: false,
@@ -445,10 +475,30 @@ export function InteractiveEditor({
                       background: 'rgba(59, 130, 246, 0.2)',
                       borderRight: '3px solid rgba(59, 130, 246, 0.6)',
                     },
+                    top: {
+                      width: '100%',
+                      height: '12px',
+                      top: '-6px',
+                      left: 0,
+                      cursor: 'ns-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderTop: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                    bottom: {
+                      width: '100%',
+                      height: '12px',
+                      bottom: '-6px',
+                      left: 0,
+                      cursor: 'ns-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderBottom: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
                   }}
                   resizeHandleClasses={{
                     left: 'resize-handle-left',
                     right: 'resize-handle-right',
+                    top: 'resize-handle-top',
+                    bottom: 'resize-handle-bottom',
                   }}
                   minWidth={200}
                   className={`draggable-text ${draggingElement === 'subheadline' ? 'dragging' : ''} ${resizingElement === 'subheadline' ? 'resizing' : ''}`}
@@ -461,11 +511,16 @@ export function InteractiveEditor({
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       cursor: draggingElement === 'subheadline' ? 'grabbing' : 'grab',
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
                       whiteSpace: 'pre-line',
+                      overflow: 'hidden',
                       textShadow: textColors.subheadline === '#FFFFFF'
                         ? '2px 2px 4px rgba(0,0,0,0.8)'
                         : 'none',
@@ -529,7 +584,7 @@ export function InteractiveEditor({
               {cta && (
                 <Rnd
                   position={{ x: textPositions.cta.x, y: textPositions.cta.y }}
-                  size={{ width: textPositions.cta.width, height: 'auto' }}
+                  size={{ width: textPositions.cta.width, height: textPositions.cta.height || 'auto' }}
                   onDragStart={() => setDraggingElement('cta')}
                   onDragStop={(_e, d) => {
                     setDraggingElement(null);
@@ -542,14 +597,15 @@ export function InteractiveEditor({
                       x: position.x,
                       y: position.y,
                       width: ref.offsetWidth,
+                      height: ref.offsetHeight,
                     });
                   }}
                   bounds="parent"
                   enableResizing={{
                     left: true,
                     right: true,
-                    top: false,
-                    bottom: false,
+                    top: true,
+                    bottom: true,
                     topLeft: false,
                     topRight: false,
                     bottomLeft: false,
@@ -574,10 +630,30 @@ export function InteractiveEditor({
                       background: 'rgba(59, 130, 246, 0.2)',
                       borderRight: '3px solid rgba(59, 130, 246, 0.6)',
                     },
+                    top: {
+                      width: '100%',
+                      height: '12px',
+                      top: '-6px',
+                      left: 0,
+                      cursor: 'ns-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderTop: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                    bottom: {
+                      width: '100%',
+                      height: '12px',
+                      bottom: '-6px',
+                      left: 0,
+                      cursor: 'ns-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderBottom: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
                   }}
                   resizeHandleClasses={{
                     left: 'resize-handle-left',
                     right: 'resize-handle-right',
+                    top: 'resize-handle-top',
+                    bottom: 'resize-handle-bottom',
                   }}
                   minWidth={200}
                   className={`draggable-text ${draggingElement === 'cta' ? 'dragging' : ''} ${resizingElement === 'cta' ? 'resizing' : ''}`}
@@ -590,11 +666,16 @@ export function InteractiveEditor({
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       cursor: draggingElement === 'cta' ? 'grabbing' : 'grab',
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
                       whiteSpace: 'pre-line',
+                      overflow: 'hidden',
                       textShadow: textColors.cta === '#FFFFFF'
                         ? '2px 2px 4px rgba(0,0,0,0.8)'
                         : 'none',
@@ -775,18 +856,24 @@ export function InteractiveEditor({
 
         /* Resize handle styles */
         .resize-handle-left,
-        .resize-handle-right {
+        .resize-handle-right,
+        .resize-handle-top,
+        .resize-handle-bottom {
           opacity: 0;
           transition: opacity 0.2s;
         }
 
         .draggable-text:hover .resize-handle-left,
-        .draggable-text:hover .resize-handle-right {
+        .draggable-text:hover .resize-handle-right,
+        .draggable-text:hover .resize-handle-top,
+        .draggable-text:hover .resize-handle-bottom {
           opacity: 1;
         }
 
         .react-draggable-dragging .resize-handle-left,
-        .react-draggable-dragging .resize-handle-right {
+        .react-draggable-dragging .resize-handle-right,
+        .react-draggable-dragging .resize-handle-top,
+        .react-draggable-dragging .resize-handle-bottom {
           opacity: 1;
           background: rgba(59, 130, 246, 0.4) !important;
         }
