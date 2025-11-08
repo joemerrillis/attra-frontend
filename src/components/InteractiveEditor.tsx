@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
@@ -385,6 +385,7 @@ export function InteractiveEditor({
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
+                      whiteSpace: 'pre-line',
                       textShadow: textColors.headline === '#FFFFFF'
                         ? '2px 2px 4px rgba(0,0,0,0.8)'
                         : 'none',
@@ -464,6 +465,7 @@ export function InteractiveEditor({
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
+                      whiteSpace: 'pre-line',
                       textShadow: textColors.subheadline === '#FFFFFF'
                         ? '2px 2px 4px rgba(0,0,0,0.8)'
                         : 'none',
@@ -592,6 +594,7 @@ export function InteractiveEditor({
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
+                      whiteSpace: 'pre-line',
                       textShadow: textColors.cta === '#FFFFFF'
                         ? '2px 2px 4px rgba(0,0,0,0.8)'
                         : 'none',
@@ -616,14 +619,14 @@ export function InteractiveEditor({
                 <Label htmlFor="headline" className="text-sm font-medium">
                   Headline *
                 </Label>
-                <Input
+                <Textarea
                   id="headline"
-                  type="text"
                   value={headline}
                   onChange={(e) => setHeadline(e.target.value)}
                   placeholder="Your Headline Here"
-                  className="text-lg h-12"
+                  className="text-lg min-h-[3rem] resize-none"
                   maxLength={100}
+                  rows={2}
                 />
                 <div className="text-xs text-muted-foreground text-right">
                   {headline.length}/100
@@ -635,14 +638,14 @@ export function InteractiveEditor({
                 <Label htmlFor="subheadline" className="text-sm font-medium">
                   Subheadline (optional)
                 </Label>
-                <Input
+                <Textarea
                   id="subheadline"
-                  type="text"
                   value={subheadline}
                   onChange={(e) => setSubheadline(e.target.value)}
                   placeholder="Add a subheadline"
-                  className="text-lg h-12"
+                  className="text-lg min-h-[3rem] resize-none"
                   maxLength={150}
+                  rows={2}
                 />
                 <div className="text-xs text-muted-foreground text-right">
                   {subheadline.length}/150
@@ -654,14 +657,14 @@ export function InteractiveEditor({
                 <Label htmlFor="cta" className="text-sm font-medium">
                   Call to Action
                 </Label>
-                <Input
+                <Textarea
                   id="cta"
-                  type="text"
                   value={cta}
                   onChange={(e) => setCta(e.target.value)}
                   placeholder="Scan to Learn More"
-                  className="text-lg h-12"
+                  className="text-lg min-h-[3rem] resize-none"
                   maxLength={50}
+                  rows={1}
                 />
                 <div className="text-xs text-muted-foreground text-right">
                   {cta.length}/50
