@@ -389,6 +389,11 @@ export default function AssetGenerate() {
         fontSize: Math.round(positions.cta.fontSize * scaleX),
         fontWeight: positions.cta.fontWeight,
       },
+      qrCode: {
+        x: Math.round(positions.qrCode.x * scaleX),
+        y: Math.round(positions.qrCode.y * scaleY),
+        size: Math.round(positions.qrCode.size * scaleX),
+      },
     };
   };
 

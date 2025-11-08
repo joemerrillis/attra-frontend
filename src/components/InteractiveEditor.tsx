@@ -43,6 +43,11 @@ const defaultTextPositions: TextPositions = {
     fontSize: 22,
     fontWeight: 'bold',
   },
+  qrCode: {
+    x: 200,   // Center: (600-200)/2 = 200
+    y: 350,   // Center: (900-200)/2 = 350
+    size: 200,
+  },
 };
 
 export function InteractiveEditor({
@@ -267,13 +272,44 @@ export function InteractiveEditor({
                 </Rnd>
               )}
 
-              {/* QR Code Placeholder (Fixed, Not Draggable) */}
-              <div
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                style={{
-                  width: 'clamp(200px, 40%, 300px)',
-                  aspectRatio: '1/1',
+              {/* Draggable QR Code */}
+              <Rnd
+                position={{ x: textPositions.qrCode.x, y: textPositions.qrCode.y }}
+                size={{ width: textPositions.qrCode.size, height: textPositions.qrCode.size }}
+                onDragStart={() => setDraggingElement('qrCode')}
+                onDragStop={(_e, d) => {
+                  setDraggingElement(null);
+                  setTextPositions((prev) => ({
+                    ...prev,
+                    qrCode: { ...prev.qrCode, x: d.x, y: d.y },
+                  }));
                 }}
+                onResizeStart={() => setResizingElement('qrCode')}
+                onResizeStop={(_e, _direction, ref, _delta, position) => {
+                  setResizingElement(null);
+                  const newSize = ref.offsetWidth;
+                  setTextPositions((prev) => ({
+                    ...prev,
+                    qrCode: { x: position.x, y: position.y, size: newSize },
+                  }));
+                }}
+                bounds="parent"
+                lockAspectRatio={true}
+                enableResizing={{
+                  top: true,
+                  right: true,
+                  bottom: true,
+                  left: true,
+                  topRight: true,
+                  bottomRight: true,
+                  bottomLeft: true,
+                  topLeft: true,
+                }}
+                minWidth={150}
+                minHeight={150}
+                maxWidth={400}
+                maxHeight={400}
+                className={`draggable-qr ${draggingElement === 'qrCode' ? 'dragging' : ''} ${resizingElement === 'qrCode' ? 'resizing' : ''}`}
               >
                 <div className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center border-4 border-gray-200">
                   <div className="w-[85%] h-[85%] bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center">
@@ -283,7 +319,7 @@ export function InteractiveEditor({
                     </div>
                   </div>
                 </div>
-              </div>
+              </Rnd>
 
               {/* Draggable CTA */}
               {cta && (
@@ -430,7 +466,7 @@ export function InteractiveEditor({
               {/* Instructions */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                 <p className="text-sm text-blue-900">
-                  💡 Tip: Drag text boxes to reposition. Resize horizontally to fit your message.
+                  💡 Tip: Drag text boxes and QR code to reposition. Resize text horizontally or QR from any corner.
                 </p>
               </div>
             </div>
@@ -465,18 +501,22 @@ export function InteractiveEditor({
         </Button>
       </div>
 
-      {/* Styles for draggable text */}
+      {/* Styles for draggable elements */}
       <style>{`
-        .draggable-text {
+        .draggable-text,
+        .draggable-qr {
           border: 2px dashed transparent;
           transition: border-color 0.2s;
         }
 
-        .draggable-text:hover {
+        .draggable-text:hover,
+        .draggable-qr:hover {
           border-color: rgba(59, 130, 246, 0.5);
+          cursor: move;
         }
 
-        .draggable-text.dragging {
+        .draggable-text.dragging,
+        .draggable-qr.dragging {
           border-color: rgba(59, 130, 246, 0.8);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
           opacity: 0.9;
@@ -500,7 +540,8 @@ export function InteractiveEditor({
           background: rgba(59, 130, 246, 0.4) !important;
         }
 
-        .draggable-text.resizing {
+        .draggable-text.resizing,
+        .draggable-qr.resizing {
           border-color: rgba(59, 130, 246, 1);
           border-style: solid;
           box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);

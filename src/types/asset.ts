@@ -13,10 +13,17 @@ export interface TextPosition {
   fontWeight: 'normal' | 'bold';
 }
 
+export interface QRCodePosition {
+  x: number;         // Pixels from left
+  y: number;         // Pixels from top
+  size: number;      // Size in pixels (QR is square)
+}
+
 export interface TextPositions {
   headline: TextPosition;
   subheadline: TextPosition;
   cta: TextPosition;
+  qrCode: QRCodePosition;
 }
 
 export interface AssetGenerationRequest {
