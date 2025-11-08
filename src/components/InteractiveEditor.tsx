@@ -41,7 +41,7 @@ const defaultTextPositions: TextPositions = {
   },
   cta: {
     x: 40,
-    y: 738,  // ~82% of 900px
+    y: 650,  // ~72% of 900px - visible with room for padding
     width: 520,
     height: 'auto',
     fontSize: 22,
