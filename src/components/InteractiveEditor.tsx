@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Rnd } from 'react-rnd';
+import Moveable from 'react-moveable';
+import { flushSync } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -78,6 +80,14 @@ export function InteractiveEditor({
     dark_zones: any[];
   } | null>(null);
   const { toast } = useToast();
+
+  // Refs for Moveable POC (QR code only)
+  const qrCodeRef = useRef<HTMLDivElement>(null);
+  const qrCodeMoveableRef = useRef<Moveable>(null);
+
+  // Guideline positions for 600x900 preview (1/4, 1/3, 1/2, 2/3, 3/4)
+  const VERTICAL_GUIDELINES = [150, 200, 300, 400, 450];   // For 600px width
+  const HORIZONTAL_GUIDELINES = [225, 300, 450, 600, 675]; // For 900px height
 
   /**
    * Check if two zones overlap
@@ -531,54 +541,79 @@ export function InteractiveEditor({
                 </Rnd>
               )}
 
-              {/* Draggable QR Code */}
-              <Rnd
-                position={{ x: textPositions.qrCode.x, y: textPositions.qrCode.y }}
-                size={{ width: textPositions.qrCode.size, height: textPositions.qrCode.size }}
-                onDragStart={() => setDraggingElement('qrCode')}
-                onDragStop={(_e, d) => {
-                  setDraggingElement(null);
-                  setTextPositions((prev) => ({
-                    ...prev,
-                    qrCode: { ...prev.qrCode, x: d.x, y: d.y },
-                  }));
-                }}
-                onResizeStart={() => setResizingElement('qrCode')}
-                onResizeStop={(_e, _direction, ref, _delta, position) => {
-                  setResizingElement(null);
-                  const newSize = ref.offsetWidth;
-                  setTextPositions((prev) => ({
-                    ...prev,
-                    qrCode: { x: position.x, y: position.y, size: newSize },
-                  }));
-                }}
-                bounds="parent"
-                lockAspectRatio={true}
-                enableResizing={{
-                  top: true,
-                  right: true,
-                  bottom: true,
-                  left: true,
-                  topRight: true,
-                  bottomRight: true,
-                  bottomLeft: true,
-                  topLeft: true,
-                }}
-                minWidth={150}
-                minHeight={150}
-                maxWidth={400}
-                maxHeight={400}
-                className={`draggable-qr ${draggingElement === 'qrCode' ? 'dragging' : ''} ${resizingElement === 'qrCode' ? 'resizing' : ''}`}
-              >
-                <div className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center border-4 border-gray-200">
-                  <div className="w-[85%] h-[85%] bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <div className="text-2xl mb-2">QR</div>
-                      <div className="text-xs">Generated<br />in final asset</div>
+              {/* Draggable QR Code - Migrated to react-moveable for POC */}
+              <>
+                <div
+                  ref={qrCodeRef}
+                  className={`draggable-qr ${draggingElement === 'qrCode' ? 'dragging' : ''} ${resizingElement === 'qrCode' ? 'resizing' : ''}`}
+                  style={{
+                    position: 'absolute',
+                    left: `${textPositions.qrCode.x}px`,
+                    top: `${textPositions.qrCode.y}px`,
+                    width: `${textPositions.qrCode.size}px`,
+                    height: `${textPositions.qrCode.size}px`,
+                  }}
+                >
+                  <div className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center border-4 border-gray-200">
+                    <div className="w-[85%] h-[85%] bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-2xl mb-2">QR</div>
+                        <div className="text-xs">Generated<br />in final asset</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </Rnd>
+                <Moveable
+                  ref={qrCodeMoveableRef}
+                  target={qrCodeRef}
+                  draggable={true}
+                  resizable={true}
+                  keepRatio={true}
+                  snappable={true}
+                  snapThreshold={5}
+                  verticalGuidelines={VERTICAL_GUIDELINES}
+                  horizontalGuidelines={HORIZONTAL_GUIDELINES}
+                  isDisplaySnapDigit={true}
+                  bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                  renderDirections={['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w']}
+                  flushSync={flushSync}
+                  onDragStart={() => setDraggingElement('qrCode')}
+                  onDrag={(e) => {
+                    if (e.target instanceof HTMLElement) {
+                      e.target.style.left = `${e.left}px`;
+                      e.target.style.top = `${e.top}px`;
+                    }
+                  }}
+                  onDragEnd={(e) => {
+                    setDraggingElement(null);
+                    setTextPositions((prev) => ({
+                      ...prev,
+                      qrCode: { ...prev.qrCode, x: e.lastEvent!.left, y: e.lastEvent!.top },
+                    }));
+                  }}
+                  onResizeStart={() => setResizingElement('qrCode')}
+                  onResize={(e) => {
+                    if (e.target instanceof HTMLElement) {
+                      e.target.style.width = `${e.width}px`;
+                      e.target.style.height = `${e.height}px`;
+                      e.target.style.left = `${e.drag.left}px`;
+                      e.target.style.top = `${e.drag.top}px`;
+                    }
+                  }}
+                  onResizeEnd={(e) => {
+                    setResizingElement(null);
+                    const newSize = e.lastEvent!.width;
+                    setTextPositions((prev) => ({
+                      ...prev,
+                      qrCode: {
+                        x: e.lastEvent!.drag.left,
+                        y: e.lastEvent!.drag.top,
+                        size: newSize
+                      },
+                    }));
+                  }}
+                />
+              </>
 
               {/* Draggable CTA */}
               {cta && (
