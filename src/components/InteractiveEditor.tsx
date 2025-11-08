@@ -70,6 +70,10 @@ export function InteractiveEditor({
     cta: '#000000',
   });
   const [autoTextColor, setAutoTextColor] = useState(true);
+  const [transformedZones, setTransformedZones] = useState<{
+    bright_zones: any[];
+    dark_zones: any[];
+  } | null>(null);
   const { toast } = useToast();
 
   /**
@@ -99,8 +103,59 @@ export function InteractiveEditor({
   };
 
   /**
+   * Transform composition_map zones from image coordinates to preview coordinates
+   * @param zones Array of zones with x, y, width, height in image space
+   * @param imageWidth Native image width (e.g., 1024)
+   * @param imageHeight Native image height (e.g., 1024)
+   * @param previewWidth Preview container width (600)
+   * @param previewHeight Preview container height (900)
+   * @returns Array of zones in preview coordinate space
+   */
+  const transformZonesToPreview = (
+    zones: any[],
+    imageWidth: number,
+    imageHeight: number,
+    previewWidth: number,
+    previewHeight: number
+  ): any[] => {
+    if (!zones || zones.length === 0) return [];
+
+    const scaleX = previewWidth / imageWidth;
+    const scaleY = previewHeight / imageHeight;
+
+    return zones.map(zone => ({
+      x: zone.x * scaleX,
+      y: zone.y * scaleY,
+      width: zone.width * scaleX,
+      height: zone.height * scaleY,
+    }));
+  };
+
+  /**
+   * Calculate optimal text color from pre-transformed zones
+   */
+  const getOptimalTextColorFromZones = (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    brightZones: any[],
+    darkZones: any[]
+  ): string => {
+    const textBox = { x, y, width, height };
+
+    // Calculate overlap with dark and bright zones (already in preview coordinates)
+    const darkOverlapArea = calculateOverlapArea(textBox, darkZones);
+    const brightOverlapArea = calculateOverlapArea(textBox, brightZones);
+
+    // If text overlaps more with dark zones, use white text
+    // If text overlaps more with bright zones, use black text
+    return darkOverlapArea > brightOverlapArea ? '#FFFFFF' : '#000000';
+  };
+
+  /**
    * Calculate optimal text color based on background brightness at position
-   * Uses composition_map bright_zones and dark_zones from Sharp analysis
+   * Uses transformed composition_map zones in preview coordinate space
    */
   const getOptimalTextColor = (
     x: number,
@@ -108,20 +163,18 @@ export function InteractiveEditor({
     width: number,
     height: number
   ): string => {
-    if (!compositionMap || !autoTextColor) {
+    if (!transformedZones || !autoTextColor) {
       return '#000000'; // Default to black if no analysis or manual mode
     }
 
-    const { bright_zones, dark_zones } = compositionMap;
-    const textBox = { x, y, width, height };
-
-    // Calculate overlap with dark and bright zones
-    const darkOverlapArea = calculateOverlapArea(textBox, dark_zones || []);
-    const brightOverlapArea = calculateOverlapArea(textBox, bright_zones || []);
-
-    // If text overlaps more with dark zones, use white text
-    // If text overlaps more with bright zones, use black text
-    return darkOverlapArea > brightOverlapArea ? '#FFFFFF' : '#000000';
+    return getOptimalTextColorFromZones(
+      x,
+      y,
+      width,
+      height,
+      transformedZones.bright_zones,
+      transformedZones.dark_zones
+    );
   };
 
   const updateTextPosition = (
@@ -131,8 +184,8 @@ export function InteractiveEditor({
     setTextPositions((prev) => {
       const newPosition = { ...prev[field], ...updates };
 
-      // Update text color based on new position (if auto mode)
-      if (autoTextColor) {
+      // Update text color based on new position (if auto mode and zones available)
+      if (autoTextColor && transformedZones) {
         const optimalColor = getOptimalTextColor(
           newPosition.x,
           newPosition.y,
@@ -165,31 +218,69 @@ export function InteractiveEditor({
     onGenerate({ headline, subheadline, cta, textPositions });
   };
 
-  // Initialize text colors based on composition map
+  // Transform composition map zones and initialize text colors
   useEffect(() => {
-    if (compositionMap && autoTextColor) {
-      setTextColors({
-        headline: getOptimalTextColor(
-          defaultTextPositions.headline.x,
-          defaultTextPositions.headline.y,
-          defaultTextPositions.headline.width,
-          80
-        ),
-        subheadline: getOptimalTextColor(
-          defaultTextPositions.subheadline.x,
-          defaultTextPositions.subheadline.y,
-          defaultTextPositions.subheadline.width,
-          60
-        ),
-        cta: getOptimalTextColor(
-          defaultTextPositions.cta.x,
-          defaultTextPositions.cta.y,
-          defaultTextPositions.cta.width,
-          60
-        ),
+    if (compositionMap) {
+      // Get image dimensions from composition_map metadata
+      // Backend Sharp analysis uses the native image dimensions
+      const imageWidth = compositionMap.metadata?.width || 1024;
+      const imageHeight = compositionMap.metadata?.height || 1024;
+      const previewWidth = 600;
+      const previewHeight = 900;
+
+      // Transform zones to preview coordinates
+      const transformedBrightZones = transformZonesToPreview(
+        compositionMap.bright_zones || [],
+        imageWidth,
+        imageHeight,
+        previewWidth,
+        previewHeight
+      );
+
+      const transformedDarkZones = transformZonesToPreview(
+        compositionMap.dark_zones || [],
+        imageWidth,
+        imageHeight,
+        previewWidth,
+        previewHeight
+      );
+
+      setTransformedZones({
+        bright_zones: transformedBrightZones,
+        dark_zones: transformedDarkZones,
       });
+
+      // Initialize text colors with transformed zones
+      if (autoTextColor) {
+        setTextColors({
+          headline: getOptimalTextColorFromZones(
+            defaultTextPositions.headline.x,
+            defaultTextPositions.headline.y,
+            defaultTextPositions.headline.width,
+            80,
+            transformedBrightZones,
+            transformedDarkZones
+          ),
+          subheadline: getOptimalTextColorFromZones(
+            defaultTextPositions.subheadline.x,
+            defaultTextPositions.subheadline.y,
+            defaultTextPositions.subheadline.width,
+            60,
+            transformedBrightZones,
+            transformedDarkZones
+          ),
+          cta: getOptimalTextColorFromZones(
+            defaultTextPositions.cta.x,
+            defaultTextPositions.cta.y,
+            defaultTextPositions.cta.width,
+            60,
+            transformedBrightZones,
+            transformedDarkZones
+          ),
+        });
+      }
     }
-  }, [compositionMap, autoTextColor]);
+  }, [compositionMap]);
 
   return (
     <div className="space-y-6">
