@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { Rnd } from 'react-rnd';
 import Moveable from 'react-moveable';
 import { flushSync } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -81,8 +80,15 @@ export function InteractiveEditor({
   } | null>(null);
   const { toast } = useToast();
 
-  // Refs for Moveable POC (QR code only)
+  // Refs for Moveable components
+  const headlineRef = useRef<HTMLDivElement>(null);
+  const subheadlineRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
   const qrCodeRef = useRef<HTMLDivElement>(null);
+
+  const headlineMoveableRef = useRef<Moveable>(null);
+  const subheadlineMoveableRef = useRef<Moveable>(null);
+  const ctaMoveableRef = useRef<Moveable>(null);
   const qrCodeMoveableRef = useRef<Moveable>(null);
 
   // Guideline positions for 600x900 preview (1/4, 1/3, 1/2, 2/3, 3/4)
@@ -331,91 +337,21 @@ export function InteractiveEditor({
 
               {/* Draggable Headline */}
               {headline && (
-                <Rnd
-                  position={{ x: textPositions.headline.x, y: textPositions.headline.y }}
-                  size={{ width: textPositions.headline.width, height: textPositions.headline.height || 'auto' }}
-                  onDragStart={() => setDraggingElement('headline')}
-                  onDragStop={(_e, d) => {
-                    setDraggingElement(null);
-                    updateTextPosition('headline', { x: d.x, y: d.y });
-                  }}
-                  onResizeStart={() => setResizingElement('headline')}
-                  onResizeStop={(_e, _direction, ref, _delta, position) => {
-                    setResizingElement(null);
-                    updateTextPosition('headline', {
-                      x: position.x,
-                      y: position.y,
-                      width: ref.offsetWidth,
-                      height: ref.offsetHeight,
-                    });
-                  }}
-                  bounds="parent"
-                  enableResizing={{
-                    left: true,
-                    right: true,
-                    top: true,
-                    bottom: true,
-                    topLeft: false,
-                    topRight: false,
-                    bottomLeft: false,
-                    bottomRight: false,
-                  }}
-                  resizeHandleStyles={{
-                    left: {
-                      width: '12px',
-                      height: '100%',
-                      left: '-6px',
-                      top: 0,
-                      cursor: 'ew-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderLeft: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    right: {
-                      width: '12px',
-                      height: '100%',
-                      right: '-6px',
-                      top: 0,
-                      cursor: 'ew-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderRight: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    top: {
-                      width: '100%',
-                      height: '12px',
-                      top: '-6px',
-                      left: 0,
-                      cursor: 'ns-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderTop: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    bottom: {
-                      width: '100%',
-                      height: '12px',
-                      bottom: '-6px',
-                      left: 0,
-                      cursor: 'ns-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderBottom: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                  }}
-                  resizeHandleClasses={{
-                    left: 'resize-handle-left',
-                    right: 'resize-handle-right',
-                    top: 'resize-handle-top',
-                    bottom: 'resize-handle-bottom',
-                  }}
-                  minWidth={200}
-                  className={`draggable-text ${draggingElement === 'headline' ? 'dragging' : ''} ${resizingElement === 'headline' ? 'resizing' : ''}`}
-                >
+                <>
                   <div
+                    ref={headlineRef}
+                    className={`draggable-text ${draggingElement === 'headline' ? 'dragging' : ''} ${resizingElement === 'headline' ? 'resizing' : ''}`}
                     style={{
+                      position: 'absolute',
+                      left: `${textPositions.headline.x}px`,
+                      top: `${textPositions.headline.y}px`,
+                      width: `${textPositions.headline.width}px`,
+                      height: textPositions.headline.height === 'auto' ? 'auto' : `${textPositions.headline.height}px`,
                       fontSize: `${textPositions.headline.fontSize}px`,
                       fontWeight: textPositions.headline.fontWeight,
                       color: textColors.headline,
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
-                      width: '100%',
-                      height: '100%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -432,96 +368,69 @@ export function InteractiveEditor({
                   >
                     {headline}
                   </div>
-                </Rnd>
+                  <Moveable
+                    ref={headlineMoveableRef}
+                    target={headlineRef}
+                    draggable={true}
+                    resizable={true}
+                    snappable={true}
+                    snapThreshold={5}
+                    verticalGuidelines={VERTICAL_GUIDELINES}
+                    horizontalGuidelines={HORIZONTAL_GUIDELINES}
+                    isDisplaySnapDigit={true}
+                    bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                    renderDirections={['w', 'e', 'n', 's']}
+                    flushSync={flushSync}
+                    onDragStart={() => setDraggingElement('headline')}
+                    onDrag={(e) => {
+                      if (e.target instanceof HTMLElement) {
+                        e.target.style.left = `${e.left}px`;
+                        e.target.style.top = `${e.top}px`;
+                      }
+                    }}
+                    onDragEnd={(e) => {
+                      setDraggingElement(null);
+                      updateTextPosition('headline', { x: e.lastEvent!.left, y: e.lastEvent!.top });
+                    }}
+                    onResizeStart={() => setResizingElement('headline')}
+                    onResize={(e) => {
+                      if (e.target instanceof HTMLElement) {
+                        e.target.style.width = `${e.width}px`;
+                        e.target.style.height = `${e.height}px`;
+                        e.target.style.left = `${e.drag.left}px`;
+                        e.target.style.top = `${e.drag.top}px`;
+                      }
+                    }}
+                    onResizeEnd={(e) => {
+                      setResizingElement(null);
+                      updateTextPosition('headline', {
+                        x: e.lastEvent!.drag.left,
+                        y: e.lastEvent!.drag.top,
+                        width: e.lastEvent!.width,
+                        height: e.lastEvent!.height,
+                      });
+                    }}
+                  />
+                </>
               )}
 
               {/* Draggable Subheadline */}
               {subheadline && (
-                <Rnd
-                  position={{ x: textPositions.subheadline.x, y: textPositions.subheadline.y }}
-                  size={{ width: textPositions.subheadline.width, height: textPositions.subheadline.height || 'auto' }}
-                  onDragStart={() => setDraggingElement('subheadline')}
-                  onDragStop={(_e, d) => {
-                    setDraggingElement(null);
-                    updateTextPosition('subheadline', { x: d.x, y: d.y });
-                  }}
-                  onResizeStart={() => setResizingElement('subheadline')}
-                  onResizeStop={(_e, _direction, ref, _delta, position) => {
-                    setResizingElement(null);
-                    updateTextPosition('subheadline', {
-                      x: position.x,
-                      y: position.y,
-                      width: ref.offsetWidth,
-                      height: ref.offsetHeight,
-                    });
-                  }}
-                  bounds="parent"
-                  enableResizing={{
-                    left: true,
-                    right: true,
-                    top: true,
-                    bottom: true,
-                    topLeft: false,
-                    topRight: false,
-                    bottomLeft: false,
-                    bottomRight: false,
-                  }}
-                  resizeHandleStyles={{
-                    left: {
-                      width: '12px',
-                      height: '100%',
-                      left: '-6px',
-                      top: 0,
-                      cursor: 'ew-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderLeft: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    right: {
-                      width: '12px',
-                      height: '100%',
-                      right: '-6px',
-                      top: 0,
-                      cursor: 'ew-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderRight: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    top: {
-                      width: '100%',
-                      height: '12px',
-                      top: '-6px',
-                      left: 0,
-                      cursor: 'ns-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderTop: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    bottom: {
-                      width: '100%',
-                      height: '12px',
-                      bottom: '-6px',
-                      left: 0,
-                      cursor: 'ns-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderBottom: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                  }}
-                  resizeHandleClasses={{
-                    left: 'resize-handle-left',
-                    right: 'resize-handle-right',
-                    top: 'resize-handle-top',
-                    bottom: 'resize-handle-bottom',
-                  }}
-                  minWidth={200}
-                  className={`draggable-text ${draggingElement === 'subheadline' ? 'dragging' : ''} ${resizingElement === 'subheadline' ? 'resizing' : ''}`}
-                >
+                <>
                   <div
+                    ref={subheadlineRef}
+                    className={`draggable-text ${draggingElement === 'subheadline' ? 'dragging' : ''} ${resizingElement === 'subheadline' ? 'resizing' : ''}`}
                     style={{
+                      position: 'absolute',
+                      left: `${textPositions.subheadline.x}px`,
+                      top: `${textPositions.subheadline.y}px`,
+                      width: `${textPositions.subheadline.width}px`,
+                      height: textPositions.subheadline.height === 'auto' ? 'auto' : `${textPositions.subheadline.height}px`,
                       fontSize: `${textPositions.subheadline.fontSize}px`,
                       fontWeight: textPositions.subheadline.fontWeight,
                       color: textColors.subheadline,
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
-                      width: '100%',
-                      height: '100%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -538,7 +447,50 @@ export function InteractiveEditor({
                   >
                     {subheadline}
                   </div>
-                </Rnd>
+                  <Moveable
+                    ref={subheadlineMoveableRef}
+                    target={subheadlineRef}
+                    draggable={true}
+                    resizable={true}
+                    snappable={true}
+                    snapThreshold={5}
+                    verticalGuidelines={VERTICAL_GUIDELINES}
+                    horizontalGuidelines={HORIZONTAL_GUIDELINES}
+                    isDisplaySnapDigit={true}
+                    bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                    renderDirections={['w', 'e', 'n', 's']}
+                    flushSync={flushSync}
+                    onDragStart={() => setDraggingElement('subheadline')}
+                    onDrag={(e) => {
+                      if (e.target instanceof HTMLElement) {
+                        e.target.style.left = `${e.left}px`;
+                        e.target.style.top = `${e.top}px`;
+                      }
+                    }}
+                    onDragEnd={(e) => {
+                      setDraggingElement(null);
+                      updateTextPosition('subheadline', { x: e.lastEvent!.left, y: e.lastEvent!.top });
+                    }}
+                    onResizeStart={() => setResizingElement('subheadline')}
+                    onResize={(e) => {
+                      if (e.target instanceof HTMLElement) {
+                        e.target.style.width = `${e.width}px`;
+                        e.target.style.height = `${e.height}px`;
+                        e.target.style.left = `${e.drag.left}px`;
+                        e.target.style.top = `${e.drag.top}px`;
+                      }
+                    }}
+                    onResizeEnd={(e) => {
+                      setResizingElement(null);
+                      updateTextPosition('subheadline', {
+                        x: e.lastEvent!.drag.left,
+                        y: e.lastEvent!.drag.top,
+                        width: e.lastEvent!.width,
+                        height: e.lastEvent!.height,
+                      });
+                    }}
+                  />
+                </>
               )}
 
               {/* Draggable QR Code - Migrated to react-moveable for POC */}
@@ -617,91 +569,21 @@ export function InteractiveEditor({
 
               {/* Draggable CTA */}
               {cta && (
-                <Rnd
-                  position={{ x: textPositions.cta.x, y: textPositions.cta.y }}
-                  size={{ width: textPositions.cta.width, height: textPositions.cta.height || 'auto' }}
-                  onDragStart={() => setDraggingElement('cta')}
-                  onDragStop={(_e, d) => {
-                    setDraggingElement(null);
-                    updateTextPosition('cta', { x: d.x, y: d.y });
-                  }}
-                  onResizeStart={() => setResizingElement('cta')}
-                  onResizeStop={(_e, _direction, ref, _delta, position) => {
-                    setResizingElement(null);
-                    updateTextPosition('cta', {
-                      x: position.x,
-                      y: position.y,
-                      width: ref.offsetWidth,
-                      height: ref.offsetHeight,
-                    });
-                  }}
-                  bounds="parent"
-                  enableResizing={{
-                    left: true,
-                    right: true,
-                    top: true,
-                    bottom: true,
-                    topLeft: false,
-                    topRight: false,
-                    bottomLeft: false,
-                    bottomRight: false,
-                  }}
-                  resizeHandleStyles={{
-                    left: {
-                      width: '12px',
-                      height: '100%',
-                      left: '-6px',
-                      top: 0,
-                      cursor: 'ew-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderLeft: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    right: {
-                      width: '12px',
-                      height: '100%',
-                      right: '-6px',
-                      top: 0,
-                      cursor: 'ew-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderRight: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    top: {
-                      width: '100%',
-                      height: '12px',
-                      top: '-6px',
-                      left: 0,
-                      cursor: 'ns-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderTop: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                    bottom: {
-                      width: '100%',
-                      height: '12px',
-                      bottom: '-6px',
-                      left: 0,
-                      cursor: 'ns-resize',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      borderBottom: '3px solid rgba(59, 130, 246, 0.6)',
-                    },
-                  }}
-                  resizeHandleClasses={{
-                    left: 'resize-handle-left',
-                    right: 'resize-handle-right',
-                    top: 'resize-handle-top',
-                    bottom: 'resize-handle-bottom',
-                  }}
-                  minWidth={200}
-                  className={`draggable-text ${draggingElement === 'cta' ? 'dragging' : ''} ${resizingElement === 'cta' ? 'resizing' : ''}`}
-                >
+                <>
                   <div
+                    ref={ctaRef}
+                    className={`draggable-text ${draggingElement === 'cta' ? 'dragging' : ''} ${resizingElement === 'cta' ? 'resizing' : ''}`}
                     style={{
+                      position: 'absolute',
+                      left: `${textPositions.cta.x}px`,
+                      top: `${textPositions.cta.y}px`,
+                      width: `${textPositions.cta.width}px`,
+                      height: textPositions.cta.height === 'auto' ? 'auto' : `${textPositions.cta.height}px`,
                       fontSize: `${textPositions.cta.fontSize}px`,
                       fontWeight: textPositions.cta.fontWeight,
                       color: textColors.cta,
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
-                      width: '100%',
-                      height: '100%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -718,7 +600,50 @@ export function InteractiveEditor({
                   >
                     {cta}
                   </div>
-                </Rnd>
+                  <Moveable
+                    ref={ctaMoveableRef}
+                    target={ctaRef}
+                    draggable={true}
+                    resizable={true}
+                    snappable={true}
+                    snapThreshold={5}
+                    verticalGuidelines={VERTICAL_GUIDELINES}
+                    horizontalGuidelines={HORIZONTAL_GUIDELINES}
+                    isDisplaySnapDigit={true}
+                    bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                    renderDirections={['w', 'e', 'n', 's']}
+                    flushSync={flushSync}
+                    onDragStart={() => setDraggingElement('cta')}
+                    onDrag={(e) => {
+                      if (e.target instanceof HTMLElement) {
+                        e.target.style.left = `${e.left}px`;
+                        e.target.style.top = `${e.top}px`;
+                      }
+                    }}
+                    onDragEnd={(e) => {
+                      setDraggingElement(null);
+                      updateTextPosition('cta', { x: e.lastEvent!.left, y: e.lastEvent!.top });
+                    }}
+                    onResizeStart={() => setResizingElement('cta')}
+                    onResize={(e) => {
+                      if (e.target instanceof HTMLElement) {
+                        e.target.style.width = `${e.width}px`;
+                        e.target.style.height = `${e.height}px`;
+                        e.target.style.left = `${e.drag.left}px`;
+                        e.target.style.top = `${e.drag.top}px`;
+                      }
+                    }}
+                    onResizeEnd={(e) => {
+                      setResizingElement(null);
+                      updateTextPosition('cta', {
+                        x: e.lastEvent!.drag.left,
+                        y: e.lastEvent!.drag.top,
+                        width: e.lastEvent!.width,
+                        height: e.lastEvent!.height,
+                      });
+                    }}
+                  />
+                </>
               )}
             </div>
           </Card>
