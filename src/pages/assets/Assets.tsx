@@ -33,14 +33,12 @@ interface Asset {
   headline?: string;
   status: 'pending' | 'generating' | 'completed' | 'failed';
   created_at: string;
+  file_url?: string;
   locations?: {
     id: string;
     name: string;
   };
   location_id?: string;
-  campaign_backgrounds?: {
-    public_url: string;
-  };
   qr_codes?: {
     short_url: string;
   };
@@ -81,7 +79,7 @@ export default function Assets() {
   // Email to printer action
   const handleEmailToPrinter = async (asset: Asset) => {
     try {
-      const imageUrl = asset.campaign_backgrounds?.public_url;
+      const imageUrl = asset.file_url;
       if (!imageUrl) {
         throw new Error('No image URL available for this asset');
       }
@@ -132,7 +130,7 @@ export default function Assets() {
 
   // Copy link action
   const handleCopyLink = (asset: Asset) => {
-    const url = asset.campaign_backgrounds?.public_url;
+    const url = asset.file_url;
     if (url) {
       navigator.clipboard.writeText(url);
       toast({
@@ -150,7 +148,7 @@ export default function Assets() {
 
   // Download action
   const handleDownload = async (asset: Asset) => {
-    const url = asset.campaign_backgrounds?.public_url;
+    const url = asset.file_url;
     if (!url) {
       toast({
         title: 'No file available',
@@ -297,10 +295,10 @@ export default function Assets() {
         {assets.map((asset) => (
           <Card key={asset.id} className="overflow-hidden group">
             {/* Asset Preview */}
-            {asset.campaign_backgrounds?.public_url ? (
+            {asset.file_url ? (
               <div className="relative aspect-[2/3] bg-muted">
                 <img
-                  src={asset.campaign_backgrounds.public_url}
+                  src={asset.file_url}
                   alt={asset.message_theme}
                   className="object-cover w-full h-full"
                 />
