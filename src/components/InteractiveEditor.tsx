@@ -56,6 +56,7 @@ export function InteractiveEditor({
   const [cta, setCta] = useState('Scan to Learn More');
   const [textPositions, setTextPositions] = useState<TextPositions>(defaultTextPositions);
   const [draggingElement, setDraggingElement] = useState<string | null>(null);
+  const [resizingElement, setResizingElement] = useState<string | null>(null);
   const { toast } = useToast();
 
   const updateTextPosition = (
@@ -124,7 +125,9 @@ export function InteractiveEditor({
                     setDraggingElement(null);
                     updateTextPosition('headline', { x: d.x, y: d.y });
                   }}
+                  onResizeStart={() => setResizingElement('headline')}
                   onResizeStop={(_e, _direction, ref, _delta, position) => {
+                    setResizingElement(null);
                     updateTextPosition('headline', {
                       x: position.x,
                       y: position.y,
@@ -142,8 +145,32 @@ export function InteractiveEditor({
                     bottomLeft: false,
                     bottomRight: false,
                   }}
+                  resizeHandleStyles={{
+                    left: {
+                      width: '12px',
+                      height: '100%',
+                      left: '-6px',
+                      top: 0,
+                      cursor: 'ew-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderLeft: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                    right: {
+                      width: '12px',
+                      height: '100%',
+                      right: '-6px',
+                      top: 0,
+                      cursor: 'ew-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderRight: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                  }}
+                  resizeHandleClasses={{
+                    left: 'resize-handle-left',
+                    right: 'resize-handle-right',
+                  }}
                   minWidth={200}
-                  className={`draggable-text ${draggingElement === 'headline' ? 'dragging' : ''}`}
+                  className={`draggable-text ${draggingElement === 'headline' ? 'dragging' : ''} ${resizingElement === 'headline' ? 'resizing' : ''}`}
                 >
                   <div
                     style={{
@@ -153,7 +180,7 @@ export function InteractiveEditor({
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
-                      cursor: 'move',
+                      cursor: draggingElement === 'headline' ? 'grabbing' : 'grab',
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
@@ -174,7 +201,9 @@ export function InteractiveEditor({
                     setDraggingElement(null);
                     updateTextPosition('subheadline', { x: d.x, y: d.y });
                   }}
+                  onResizeStart={() => setResizingElement('subheadline')}
                   onResizeStop={(_e, _direction, ref, _delta, position) => {
+                    setResizingElement(null);
                     updateTextPosition('subheadline', {
                       x: position.x,
                       y: position.y,
@@ -192,8 +221,32 @@ export function InteractiveEditor({
                     bottomLeft: false,
                     bottomRight: false,
                   }}
+                  resizeHandleStyles={{
+                    left: {
+                      width: '12px',
+                      height: '100%',
+                      left: '-6px',
+                      top: 0,
+                      cursor: 'ew-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderLeft: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                    right: {
+                      width: '12px',
+                      height: '100%',
+                      right: '-6px',
+                      top: 0,
+                      cursor: 'ew-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderRight: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                  }}
+                  resizeHandleClasses={{
+                    left: 'resize-handle-left',
+                    right: 'resize-handle-right',
+                  }}
                   minWidth={200}
-                  className={`draggable-text ${draggingElement === 'subheadline' ? 'dragging' : ''}`}
+                  className={`draggable-text ${draggingElement === 'subheadline' ? 'dragging' : ''} ${resizingElement === 'subheadline' ? 'resizing' : ''}`}
                 >
                   <div
                     style={{
@@ -203,7 +256,7 @@ export function InteractiveEditor({
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
-                      cursor: 'move',
+                      cursor: draggingElement === 'subheadline' ? 'grabbing' : 'grab',
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
@@ -242,7 +295,9 @@ export function InteractiveEditor({
                     setDraggingElement(null);
                     updateTextPosition('cta', { x: d.x, y: d.y });
                   }}
+                  onResizeStart={() => setResizingElement('cta')}
                   onResizeStop={(_e, _direction, ref, _delta, position) => {
+                    setResizingElement(null);
                     updateTextPosition('cta', {
                       x: position.x,
                       y: position.y,
@@ -260,8 +315,32 @@ export function InteractiveEditor({
                     bottomLeft: false,
                     bottomRight: false,
                   }}
+                  resizeHandleStyles={{
+                    left: {
+                      width: '12px',
+                      height: '100%',
+                      left: '-6px',
+                      top: 0,
+                      cursor: 'ew-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderLeft: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                    right: {
+                      width: '12px',
+                      height: '100%',
+                      right: '-6px',
+                      top: 0,
+                      cursor: 'ew-resize',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      borderRight: '3px solid rgba(59, 130, 246, 0.6)',
+                    },
+                  }}
+                  resizeHandleClasses={{
+                    left: 'resize-handle-left',
+                    right: 'resize-handle-right',
+                  }}
                   minWidth={200}
-                  className={`draggable-text ${draggingElement === 'cta' ? 'dragging' : ''}`}
+                  className={`draggable-text ${draggingElement === 'cta' ? 'dragging' : ''} ${resizingElement === 'cta' ? 'resizing' : ''}`}
                 >
                   <div
                     style={{
@@ -271,7 +350,7 @@ export function InteractiveEditor({
                       fontFamily: 'Arial, sans-serif',
                       textAlign: 'center',
                       width: '100%',
-                      cursor: 'move',
+                      cursor: draggingElement === 'cta' ? 'grabbing' : 'grab',
                       userSelect: 'none',
                       padding: '8px',
                       wordWrap: 'break-word',
@@ -401,6 +480,30 @@ export function InteractiveEditor({
           border-color: rgba(59, 130, 246, 0.8);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
           opacity: 0.9;
+        }
+
+        /* Resize handle styles */
+        .resize-handle-left,
+        .resize-handle-right {
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+
+        .draggable-text:hover .resize-handle-left,
+        .draggable-text:hover .resize-handle-right {
+          opacity: 1;
+        }
+
+        .react-draggable-dragging .resize-handle-left,
+        .react-draggable-dragging .resize-handle-right {
+          opacity: 1;
+          background: rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .draggable-text.resizing {
+          border-color: rgba(59, 130, 246, 1);
+          border-style: solid;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
         }
       `}</style>
     </div>
