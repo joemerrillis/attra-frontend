@@ -323,17 +323,27 @@ export function InteractiveEditor({
                 Reset
               </Button>
             </div>
+            {/* Outer container constrains layout space */}
             <div
-              className="relative bg-muted mx-auto"
+              className="mx-auto"
               style={{
-                width: `${ASSET_DIMENSIONS.width}px`,
-                height: `${ASSET_DIMENSIONS.height}px`,
-                maxWidth: '600px',
-                transform: `scale(${DISPLAY_SCALE})`,
-                transformOrigin: 'top left',
+                width: '600px',
+                height: `${ASSET_DIMENSIONS.height * DISPLAY_SCALE}px`, // 3300 * 0.235 = 776px
                 overflow: 'hidden',
+                position: 'relative',
               }}
             >
+              {/* Inner container is actual asset size, scaled down */}
+              <div
+                className="relative bg-muted"
+                style={{
+                  width: `${ASSET_DIMENSIONS.width}px`,
+                  height: `${ASSET_DIMENSIONS.height}px`,
+                  transform: `scale(${DISPLAY_SCALE})`,
+                  transformOrigin: 'top left',
+                  overflow: 'hidden',
+                }}
+              >
               {/* Background Image */}
               <img
                 src={backgroundUrl}
@@ -651,6 +661,7 @@ export function InteractiveEditor({
                   />
                 </>
               )}
+              </div>
             </div>
           </Card>
         </div>
