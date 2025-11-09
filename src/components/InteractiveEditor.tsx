@@ -22,36 +22,40 @@ interface InteractiveEditorProps {
   isGenerating?: boolean;
 }
 
-// Default positions for 600px width x 900px height preview
+// Asset dimensions match actual output size (8.5"x11" at 300 DPI)
+const ASSET_DIMENSIONS = { width: 2550, height: 3300 };
+const DISPLAY_SCALE = 600 / 2550; // Scale down to ~600px for UI display
+
+// Default positions in asset coordinates (2550x3300)
 const defaultTextPositions: TextPositions = {
   headline: {
-    x: 40,
-    y: 198,  // ~22% of 900px
-    width: 520,
+    x: 170,      // 40 * 4.25
+    y: 726,      // 198 * 3.667
+    width: 2210, // 520 * 4.25
     height: 'auto',
-    fontSize: 36,
+    fontSize: 153, // 36 * 4.25
     fontWeight: 'bold',
   },
   subheadline: {
-    x: 40,
-    y: 324,  // ~36% of 900px
-    width: 520,
+    x: 170,      // 40 * 4.25
+    y: 1188,     // 324 * 3.667
+    width: 2210, // 520 * 4.25
     height: 'auto',
-    fontSize: 22,
+    fontSize: 93, // 22 * 4.25 (rounded)
     fontWeight: 'normal',
   },
   cta: {
-    x: 40,
-    y: 650,  // ~72% of 900px - visible with room for padding
-    width: 520,
+    x: 170,      // 40 * 4.25
+    y: 2383,     // 650 * 3.667
+    width: 2210, // 520 * 4.25
     height: 'auto',
-    fontSize: 22,
+    fontSize: 93, // 22 * 4.25 (rounded)
     fontWeight: 'bold',
   },
   qrCode: {
-    x: 200,   // Center: (600-200)/2 = 200
-    y: 350,   // Center: (900-200)/2 = 350
-    size: 200,
+    x: 850,   // 200 * 4.25
+    y: 1283,  // 350 * 3.667
+    size: 850, // 200 * 4.25
   },
 };
 
@@ -91,9 +95,9 @@ export function InteractiveEditor({
   const ctaMoveableRef = useRef<Moveable>(null);
   const qrCodeMoveableRef = useRef<Moveable>(null);
 
-  // Guideline positions for 600x900 preview (1/4, 1/3, 1/2, 2/3, 3/4)
-  const VERTICAL_GUIDELINES = [150, 200, 300, 400, 450];   // For 600px width
-  const HORIZONTAL_GUIDELINES = [225, 300, 450, 600, 675]; // For 900px height
+  // Guideline positions in asset coordinates (2550x3300) at 1/4, 1/3, 1/2, 2/3, 3/4
+  const VERTICAL_GUIDELINES = [638, 850, 1275, 1700, 1913];      // For 2550px width
+  const HORIZONTAL_GUIDELINES = [825, 1100, 1650, 2200, 2475];   // For 3300px height
 
   /**
    * Check if two zones overlap
@@ -322,9 +326,11 @@ export function InteractiveEditor({
             <div
               className="relative bg-muted mx-auto"
               style={{
-                width: '100%',
+                width: `${ASSET_DIMENSIONS.width}px`,
+                height: `${ASSET_DIMENSIONS.height}px`,
                 maxWidth: '600px',
-                aspectRatio: '2/3',
+                transform: `scale(${DISPLAY_SCALE})`,
+                transformOrigin: 'top left',
                 overflow: 'hidden',
               }}
             >
@@ -374,7 +380,7 @@ export function InteractiveEditor({
                     draggable={true}
                     resizable={true}
                     snappable={true}
-                    snapThreshold={5}
+                    snapThreshold={21}
                     verticalGuidelines={VERTICAL_GUIDELINES}
                     horizontalGuidelines={HORIZONTAL_GUIDELINES}
                     isDisplaySnapDigit={true}
@@ -453,7 +459,7 @@ export function InteractiveEditor({
                     draggable={true}
                     resizable={true}
                     snappable={true}
-                    snapThreshold={5}
+                    snapThreshold={21}
                     verticalGuidelines={VERTICAL_GUIDELINES}
                     horizontalGuidelines={HORIZONTAL_GUIDELINES}
                     isDisplaySnapDigit={true}
@@ -522,7 +528,7 @@ export function InteractiveEditor({
                   resizable={true}
                   keepRatio={true}
                   snappable={true}
-                  snapThreshold={5}
+                  snapThreshold={21}
                   verticalGuidelines={VERTICAL_GUIDELINES}
                   horizontalGuidelines={HORIZONTAL_GUIDELINES}
                   isDisplaySnapDigit={true}
@@ -606,7 +612,7 @@ export function InteractiveEditor({
                     draggable={true}
                     resizable={true}
                     snappable={true}
-                    snapThreshold={5}
+                    snapThreshold={21}
                     verticalGuidelines={VERTICAL_GUIDELINES}
                     horizontalGuidelines={HORIZONTAL_GUIDELINES}
                     isDisplaySnapDigit={true}

@@ -361,47 +361,6 @@ export default function AssetGenerate() {
     });
   };
 
-  // Normalize text positions from preview pixels to asset pixels
-  const normalizeTextPositions = (
-    positions: TextPositions,
-    previewWidth: number,
-    previewHeight: number,
-    assetWidth: number,
-    assetHeight: number
-  ): TextPositions => {
-    const scaleX = assetWidth / previewWidth;
-    const scaleY = assetHeight / previewHeight;
-
-    return {
-      headline: {
-        x: Math.round(positions.headline.x * scaleX),
-        y: Math.round(positions.headline.y * scaleY),
-        width: Math.round(positions.headline.width * scaleX),
-        fontSize: Math.round(positions.headline.fontSize * scaleX),
-        fontWeight: positions.headline.fontWeight,
-      },
-      subheadline: {
-        x: Math.round(positions.subheadline.x * scaleX),
-        y: Math.round(positions.subheadline.y * scaleY),
-        width: Math.round(positions.subheadline.width * scaleX),
-        fontSize: Math.round(positions.subheadline.fontSize * scaleX),
-        fontWeight: positions.subheadline.fontWeight,
-      },
-      cta: {
-        x: Math.round(positions.cta.x * scaleX),
-        y: Math.round(positions.cta.y * scaleY),
-        width: Math.round(positions.cta.width * scaleX),
-        fontSize: Math.round(positions.cta.fontSize * scaleX),
-        fontWeight: positions.cta.fontWeight,
-      },
-      qrCode: {
-        x: Math.round(positions.qrCode.x * scaleX),
-        y: Math.round(positions.qrCode.y * scaleY),
-        size: Math.round(positions.qrCode.size * scaleX),
-      },
-    };
-  };
-
   const handleGenerate = async (overrideData?: {
     headline?: string;
     subheadline?: string;
@@ -485,17 +444,8 @@ export default function AssetGenerate() {
       const subheadlineText = overrideData?.subheadline ?? subheadline;
       const ctaText = overrideData?.cta ?? cta;
 
-      // Use override text positions if provided (from InteractiveEditor), otherwise use state
-      const positionsToUse = overrideData?.textPositions ?? textPositions;
-      const normalizedTextPositions = positionsToUse
-        ? normalizeTextPositions(
-            positionsToUse,
-            600,  // Preview width
-            900,  // Preview height (2:3 aspect ratio)
-            2430, // Asset width for flyers (will vary by asset type in future)
-            3600  // Asset height for flyers
-          )
-        : undefined;
+      // Positions are already in asset coordinates (no normalization needed!)
+      const normalizedTextPositions = overrideData?.textPositions ?? textPositions ?? undefined;
 
       // Generate assets
       console.log('[handleGenerate] Starting asset generation with background:', backgroundIdToUse);
