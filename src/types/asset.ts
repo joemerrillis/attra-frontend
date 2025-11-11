@@ -39,6 +39,11 @@ export interface AssetGenerationRequest {
   location_backgrounds?: Record<string, string>;
   base_url: string;
   text_positions?: TextPositions;  // Optional custom text positions
+  text_colors?: {  // Optional custom text colors
+    headline: string;
+    subheadline: string;
+    cta: string;
+  };
 }
 
 export interface AssetGenerationResponse {

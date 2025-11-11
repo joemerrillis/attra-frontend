@@ -366,6 +366,11 @@ export default function AssetGenerate() {
     subheadline?: string;
     cta?: string;
     textPositions?: TextPositions;
+    textColors?: {
+      headline: string;
+      subheadline: string;
+      cta: string;
+    };
   }) => {
     if (!user) {
       console.error('❌ [handleGenerate] No user found');
@@ -446,6 +451,7 @@ export default function AssetGenerate() {
 
       // Positions are already in asset coordinates (no normalization needed!)
       const normalizedTextPositions = overrideData?.textPositions ?? textPositions ?? undefined;
+      const normalizedTextColors = overrideData?.textColors ?? undefined;
 
       // Generate assets
       console.log('[handleGenerate] Starting asset generation with background:', backgroundIdToUse);
@@ -473,6 +479,7 @@ export default function AssetGenerate() {
               background_id: backgroundIdToUse,
               base_url: 'https://example.com',
               text_positions: normalizedTextPositions,
+              text_colors: normalizedTextColors,
             });
 
             totalAssets += response.assets.length;
@@ -507,6 +514,7 @@ export default function AssetGenerate() {
           background_id: backgroundIdToUse,
           base_url: 'https://example.com',
           text_positions: normalizedTextPositions,
+          text_colors: normalizedTextColors,
         });
 
         console.log('✅ [handleGenerate] Asset generation response received');

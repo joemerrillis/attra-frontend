@@ -18,6 +18,11 @@ interface InteractiveEditorProps {
     subheadline: string;
     cta: string;
     textPositions: TextPositions;
+    textColors: {
+      headline: string;
+      subheadline: string;
+      cta: string;
+    };
   }) => void;
   isGenerating?: boolean;
 }
@@ -109,14 +114,28 @@ export function InteractiveEditor({
     width: number,
     height: number | 'auto'
   ): { x: number; y: number } => {
+    // DIAGNOSTIC LOGGING
+    console.log('[clampPosition] Input:', { x, y, width, height });
+    console.log('[clampPosition] Canvas dimensions:', ASSET_DIMENSIONS);
+
     // Round to integers (Cloudinary may reject decimals)
     let clampedX = Math.round(x);
     let clampedY = Math.round(y);
     const roundedWidth = Math.round(width);
 
+    // DIAGNOSTIC LOGGING
+    console.log('[clampPosition] After rounding:', { clampedX, clampedY, roundedWidth });
+
     // Clamp to canvas bounds
-    clampedX = Math.max(0, Math.min(clampedX, ASSET_DIMENSIONS.width - roundedWidth));
-    clampedY = Math.max(0, Math.min(clampedY, ASSET_DIMENSIONS.height - (height === 'auto' ? 100 : Math.round(height))));
+    const maxX = ASSET_DIMENSIONS.width - roundedWidth;
+    const maxY = ASSET_DIMENSIONS.height - (height === 'auto' ? 100 : Math.round(height));
+
+    clampedX = Math.max(0, Math.min(clampedX, maxX));
+    clampedY = Math.max(0, Math.min(clampedY, maxY));
+
+    // DIAGNOSTIC LOGGING
+    console.log('[clampPosition] Clamping bounds:', { maxX, maxY });
+    console.log('[clampPosition] After clamping:', { clampedX, clampedY });
 
     return { x: clampedX, y: clampedY };
   };
@@ -226,8 +245,15 @@ export function InteractiveEditor({
     field: 'headline' | 'subheadline' | 'cta',
     updates: Partial<TextPositions[typeof field]>
   ) => {
+    // DIAGNOSTIC LOGGING
+    console.log(`[updateTextPosition - ${field}] Called with updates:`, updates);
+    console.log(`[updateTextPosition - ${field}] Current state before update:`, textPositions[field]);
+
     setTextPositions((prev) => {
       const newPosition = { ...prev[field], ...updates };
+
+      // DIAGNOSTIC LOGGING
+      console.log(`[updateTextPosition - ${field}] New position after merge:`, newPosition);
 
       // Update text color based on new position (if auto mode and zones available)
       if (autoTextColor && transformedZones) {
@@ -260,7 +286,7 @@ export function InteractiveEditor({
   };
 
   const handleGenerate = () => {
-    onGenerate({ headline, subheadline, cta, textPositions });
+    onGenerate({ headline, subheadline, cta, textPositions, textColors });
   };
 
   // Transform composition map zones and initialize text colors
@@ -427,6 +453,14 @@ export function InteractiveEditor({
                       }
                     }}
                     onDragEnd={(e) => {
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - headline] Raw event data:', {
+                        'e.lastEvent.left': e.lastEvent?.left,
+                        'e.lastEvent.top': e.lastEvent?.top,
+                        'current textPositions.headline': textPositions.headline,
+                        'expected asset coords for center': { x: 1275, y: textPositions.headline.y }
+                      });
+
                       setDraggingElement(null);
                       const clamped = clampPosition(
                         e.lastEvent!.left,
@@ -434,7 +468,14 @@ export function InteractiveEditor({
                         textPositions.headline.width,
                         textPositions.headline.height ?? 'auto'
                       );
+
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - headline] After clamp:', clamped);
+
                       updateTextPosition('headline', { x: clamped.x, y: clamped.y });
+
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - headline] updateTextPosition called with:', { x: clamped.x, y: clamped.y });
                     }}
                     onResizeStart={() => setResizingElement('headline')}
                     onResize={(e) => {
@@ -518,6 +559,14 @@ export function InteractiveEditor({
                       }
                     }}
                     onDragEnd={(e) => {
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - subheadline] Raw event data:', {
+                        'e.lastEvent.left': e.lastEvent?.left,
+                        'e.lastEvent.top': e.lastEvent?.top,
+                        'current textPositions.subheadline': textPositions.subheadline,
+                        'expected asset coords for center': { x: 1275, y: textPositions.subheadline.y }
+                      });
+
                       setDraggingElement(null);
                       const clamped = clampPosition(
                         e.lastEvent!.left,
@@ -525,7 +574,14 @@ export function InteractiveEditor({
                         textPositions.subheadline.width,
                         textPositions.subheadline.height ?? 'auto'
                       );
+
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - subheadline] After clamp:', clamped);
+
                       updateTextPosition('subheadline', { x: clamped.x, y: clamped.y });
+
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - subheadline] updateTextPosition called with:', { x: clamped.x, y: clamped.y });
                     }}
                     onResizeStart={() => setResizingElement('subheadline')}
                     onResize={(e) => {
@@ -695,6 +751,14 @@ export function InteractiveEditor({
                       }
                     }}
                     onDragEnd={(e) => {
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - cta] Raw event data:', {
+                        'e.lastEvent.left': e.lastEvent?.left,
+                        'e.lastEvent.top': e.lastEvent?.top,
+                        'current textPositions.cta': textPositions.cta,
+                        'expected asset coords for center': { x: 1275, y: textPositions.cta.y }
+                      });
+
                       setDraggingElement(null);
                       const clamped = clampPosition(
                         e.lastEvent!.left,
@@ -702,7 +766,14 @@ export function InteractiveEditor({
                         textPositions.cta.width,
                         textPositions.cta.height ?? 'auto'
                       );
+
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - cta] After clamp:', clamped);
+
                       updateTextPosition('cta', { x: clamped.x, y: clamped.y });
+
+                      // DIAGNOSTIC LOGGING
+                      console.log('[onDragEnd - cta] updateTextPosition called with:', { x: clamped.x, y: clamped.y });
                     }}
                     onResizeStart={() => setResizingElement('cta')}
                     onResize={(e) => {
