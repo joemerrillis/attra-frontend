@@ -100,6 +100,28 @@ export function InteractiveEditor({
   const HORIZONTAL_GUIDELINES = [825, 1100, 1650, 2200, 2475];   // For 3300px height
 
   /**
+   * Clamp position to valid canvas bounds and round to integers
+   * Ensures Cloudinary receives valid transformation parameters
+   */
+  const clampPosition = (
+    x: number,
+    y: number,
+    width: number,
+    height: number | 'auto'
+  ): { x: number; y: number } => {
+    // Round to integers (Cloudinary may reject decimals)
+    let clampedX = Math.round(x);
+    let clampedY = Math.round(y);
+    const roundedWidth = Math.round(width);
+
+    // Clamp to canvas bounds
+    clampedX = Math.max(0, Math.min(clampedX, ASSET_DIMENSIONS.width - roundedWidth));
+    clampedY = Math.max(0, Math.min(clampedY, ASSET_DIMENSIONS.height - (height === 'auto' ? 100 : Math.round(height))));
+
+    return { x: clampedX, y: clampedY };
+  };
+
+  /**
    * Check if two zones overlap
    */
   const zonesOverlap = (zone1: any, zone2: any): boolean => {
@@ -406,7 +428,13 @@ export function InteractiveEditor({
                     }}
                     onDragEnd={(e) => {
                       setDraggingElement(null);
-                      updateTextPosition('headline', { x: e.lastEvent!.left, y: e.lastEvent!.top });
+                      const clamped = clampPosition(
+                        e.lastEvent!.left,
+                        e.lastEvent!.top,
+                        textPositions.headline.width,
+                        textPositions.headline.height ?? 'auto'
+                      );
+                      updateTextPosition('headline', { x: clamped.x, y: clamped.y });
                     }}
                     onResizeStart={() => setResizingElement('headline')}
                     onResize={(e) => {
@@ -419,11 +447,17 @@ export function InteractiveEditor({
                     }}
                     onResizeEnd={(e) => {
                       setResizingElement(null);
+                      const clamped = clampPosition(
+                        e.lastEvent!.drag.left,
+                        e.lastEvent!.drag.top,
+                        e.lastEvent!.width,
+                        e.lastEvent!.height
+                      );
                       updateTextPosition('headline', {
-                        x: e.lastEvent!.drag.left,
-                        y: e.lastEvent!.drag.top,
-                        width: e.lastEvent!.width,
-                        height: e.lastEvent!.height,
+                        x: clamped.x,
+                        y: clamped.y,
+                        width: Math.round(e.lastEvent!.width),
+                        height: Math.round(e.lastEvent!.height),
                       });
                     }}
                   />
@@ -485,7 +519,13 @@ export function InteractiveEditor({
                     }}
                     onDragEnd={(e) => {
                       setDraggingElement(null);
-                      updateTextPosition('subheadline', { x: e.lastEvent!.left, y: e.lastEvent!.top });
+                      const clamped = clampPosition(
+                        e.lastEvent!.left,
+                        e.lastEvent!.top,
+                        textPositions.subheadline.width,
+                        textPositions.subheadline.height ?? 'auto'
+                      );
+                      updateTextPosition('subheadline', { x: clamped.x, y: clamped.y });
                     }}
                     onResizeStart={() => setResizingElement('subheadline')}
                     onResize={(e) => {
@@ -498,11 +538,17 @@ export function InteractiveEditor({
                     }}
                     onResizeEnd={(e) => {
                       setResizingElement(null);
+                      const clamped = clampPosition(
+                        e.lastEvent!.drag.left,
+                        e.lastEvent!.drag.top,
+                        e.lastEvent!.width,
+                        e.lastEvent!.height
+                      );
                       updateTextPosition('subheadline', {
-                        x: e.lastEvent!.drag.left,
-                        y: e.lastEvent!.drag.top,
-                        width: e.lastEvent!.width,
-                        height: e.lastEvent!.height,
+                        x: clamped.x,
+                        y: clamped.y,
+                        width: Math.round(e.lastEvent!.width),
+                        height: Math.round(e.lastEvent!.height),
                       });
                     }}
                   />
@@ -554,9 +600,15 @@ export function InteractiveEditor({
                   }}
                   onDragEnd={(e) => {
                     setDraggingElement(null);
+                    const clamped = clampPosition(
+                      e.lastEvent!.left,
+                      e.lastEvent!.top,
+                      textPositions.qrCode.size,
+                      textPositions.qrCode.size
+                    );
                     setTextPositions((prev) => ({
                       ...prev,
-                      qrCode: { ...prev.qrCode, x: e.lastEvent!.left, y: e.lastEvent!.top },
+                      qrCode: { ...prev.qrCode, x: clamped.x, y: clamped.y },
                     }));
                   }}
                   onResizeStart={() => setResizingElement('qrCode')}
@@ -570,12 +622,18 @@ export function InteractiveEditor({
                   }}
                   onResizeEnd={(e) => {
                     setResizingElement(null);
-                    const newSize = e.lastEvent!.width;
+                    const newSize = Math.round(e.lastEvent!.width);
+                    const clamped = clampPosition(
+                      e.lastEvent!.drag.left,
+                      e.lastEvent!.drag.top,
+                      newSize,
+                      newSize
+                    );
                     setTextPositions((prev) => ({
                       ...prev,
                       qrCode: {
-                        x: e.lastEvent!.drag.left,
-                        y: e.lastEvent!.drag.top,
+                        x: clamped.x,
+                        y: clamped.y,
                         size: newSize
                       },
                     }));
@@ -638,7 +696,13 @@ export function InteractiveEditor({
                     }}
                     onDragEnd={(e) => {
                       setDraggingElement(null);
-                      updateTextPosition('cta', { x: e.lastEvent!.left, y: e.lastEvent!.top });
+                      const clamped = clampPosition(
+                        e.lastEvent!.left,
+                        e.lastEvent!.top,
+                        textPositions.cta.width,
+                        textPositions.cta.height ?? 'auto'
+                      );
+                      updateTextPosition('cta', { x: clamped.x, y: clamped.y });
                     }}
                     onResizeStart={() => setResizingElement('cta')}
                     onResize={(e) => {
@@ -651,11 +715,17 @@ export function InteractiveEditor({
                     }}
                     onResizeEnd={(e) => {
                       setResizingElement(null);
+                      const clamped = clampPosition(
+                        e.lastEvent!.drag.left,
+                        e.lastEvent!.drag.top,
+                        e.lastEvent!.width,
+                        e.lastEvent!.height
+                      );
                       updateTextPosition('cta', {
-                        x: e.lastEvent!.drag.left,
-                        y: e.lastEvent!.drag.top,
-                        width: e.lastEvent!.width,
-                        height: e.lastEvent!.height,
+                        x: clamped.x,
+                        y: clamped.y,
+                        width: Math.round(e.lastEvent!.width),
+                        height: Math.round(e.lastEvent!.height),
                       });
                     }}
                   />
