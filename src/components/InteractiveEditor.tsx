@@ -394,7 +394,7 @@ export function InteractiveEditor({
                     verticalGuidelines={VERTICAL_GUIDELINES}
                     horizontalGuidelines={HORIZONTAL_GUIDELINES}
                     isDisplaySnapDigit={true}
-                    bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                    bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
                     renderDirections={['w', 'e', 'n', 's']}
                     flushSync={flushSync}
                     onDragStart={() => setDraggingElement('headline')}
@@ -473,7 +473,7 @@ export function InteractiveEditor({
                     verticalGuidelines={VERTICAL_GUIDELINES}
                     horizontalGuidelines={HORIZONTAL_GUIDELINES}
                     isDisplaySnapDigit={true}
-                    bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                    bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
                     renderDirections={['w', 'e', 'n', 's']}
                     flushSync={flushSync}
                     onDragStart={() => setDraggingElement('subheadline')}
@@ -542,7 +542,7 @@ export function InteractiveEditor({
                   verticalGuidelines={VERTICAL_GUIDELINES}
                   horizontalGuidelines={HORIZONTAL_GUIDELINES}
                   isDisplaySnapDigit={true}
-                  bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                  bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
                   renderDirections={['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w']}
                   flushSync={flushSync}
                   onDragStart={() => setDraggingElement('qrCode')}
@@ -626,7 +626,7 @@ export function InteractiveEditor({
                     verticalGuidelines={VERTICAL_GUIDELINES}
                     horizontalGuidelines={HORIZONTAL_GUIDELINES}
                     isDisplaySnapDigit={true}
-                    bounds={{ left: 0, top: 0, right: 600, bottom: 900 }}
+                    bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
                     renderDirections={['w', 'e', 'n', 's']}
                     flushSync={flushSync}
                     onDragStart={() => setDraggingElement('cta')}
