@@ -1,4 +1,4 @@
-import type { TextElement, QRCodePosition } from '@/types/asset';
+import type { TextElement } from '@/types/asset';
 
 /**
  * Transform client TextElement to API format

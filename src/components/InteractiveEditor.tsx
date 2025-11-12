@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RotateCcw, AlignLeft, AlignCenter, AlignRight, AlignJustify, Bold, Italic, Underline } from 'lucide-react';
 import type { TextElement, QRCodePosition, AssetTypeSpec, AssetType, TextPositions } from '@/types/asset';
 import { useToast } from '@/hooks/use-toast';
 import { DraggableTextBox } from './DraggableTextBox';
+import { LayerOrderingControls } from './LayerOrderingControls';
 import { detectOverlappingElements } from '@/utils/geometryHelpers';
+import { Slider } from '@/components/ui/slider';
 
 interface InteractiveEditorProps {
   assetType?: AssetType;
@@ -24,10 +26,6 @@ interface InteractiveEditorProps {
   }) => void;
   isGenerating?: boolean;
 }
-
-// Asset dimensions match actual output size (8.5"x11" at 300 DPI)
-const ASSET_DIMENSIONS = { width: 2550, height: 3300 };
-const DISPLAY_SCALE = 600 / 2550; // Scale down to ~600px for UI display
 
 // Default positions in asset coordinates (2550x3300)
 const defaultTextPositions: TextPositions = {
@@ -63,7 +61,6 @@ const defaultTextPositions: TextPositions = {
 };
 
 export function InteractiveEditor({
-  assetType = 'flyer',
   assetSpec,
   backgroundUrl,
   compositionMap,
@@ -85,8 +82,8 @@ export function InteractiveEditor({
     size: Math.round(ASSET_DIMENSIONS.width * 0.33)
   });
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const [draggingElementId, setDraggingElementId] = useState<string | null>(null);
-  const [resizingElementId, setResizingElementId] = useState<string | null>(null);
+  const [draggingElementId, setDraggingElementId] = useState<string | 'qrCode' | null>(null);
+  const [resizingElementId, setResizingElementId] = useState<string | 'qrCode' | null>(null);
   const [autoTextColor, setAutoTextColor] = useState(true);
   const [transformedZones, setTransformedZones] = useState<{
     bright_zones: any[];
@@ -224,30 +221,6 @@ export function InteractiveEditor({
     // If text overlaps more with dark zones, use white text
     // If text overlaps more with bright zones, use black text
     return darkOverlapArea > brightOverlapArea ? '#FFFFFF' : '#000000';
-  };
-
-  /**
-   * Calculate optimal text color based on background brightness at position
-   * Uses transformed composition_map zones in preview coordinate space
-   */
-  const getOptimalTextColor = (
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ): string => {
-    if (!transformedZones || !autoTextColor) {
-      return '#000000'; // Default to black if no analysis or manual mode
-    }
-
-    return getOptimalTextColorFromZones(
-      x,
-      y,
-      width,
-      height,
-      transformedZones.bright_zones,
-      transformedZones.dark_zones
-    );
   };
 
   const resetToDefaults = () => {
@@ -544,12 +517,6 @@ export function InteractiveEditor({
   }, [compositionMap, transformedZones, textElements.length]);
 
   // Text element update functions
-  const updateTextElement = (id: string, updates: Partial<TextElement>) => {
-    setTextElements(prev => prev.map(el =>
-      el.tempId === id ? { ...el, ...updates } : el
-    ));
-  };
-
   const updateTextElementPosition = (id: string, position: Partial<TextElement['position']>) => {
     setTextElements(prev => prev.map(el =>
       el.tempId === id
@@ -681,7 +648,6 @@ export function InteractiveEditor({
                   <DraggableTextBox
                     key={element.tempId}
                     textElement={element}
-                    onUpdate={updateTextElement}
                     isDragging={draggingElementId === element.tempId}
                     isResizing={resizingElementId === element.tempId}
                     isSelected={selectedElementId === element.tempId}
@@ -706,7 +672,7 @@ export function InteractiveEditor({
                         x: clamped.x,
                         y: clamped.y,
                         width: Math.round(width),
-                        height: height === 'auto' ? 'auto' : Math.round(height)
+                        height: Math.round(height)
                       });
                     }}
                     bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
@@ -751,7 +717,7 @@ export function InteractiveEditor({
                   bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
                   renderDirections={['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w']}
                   flushSync={flushSync}
-                  onDragStart={() => setDraggingElement('qrCode')}
+                  onDragStart={() => setDraggingElementId('qrCode')}
                   onDrag={(e) => {
                     if (e.target instanceof HTMLElement) {
                       e.target.style.left = `${e.left}px`;
@@ -759,19 +725,20 @@ export function InteractiveEditor({
                     }
                   }}
                   onDragEnd={(e) => {
-                    setDraggingElement(null);
+                    setDraggingElementId(null);
                     const clamped = clampPosition(
                       e.lastEvent!.left,
                       e.lastEvent!.top,
-                      textPositions.qrCode.size,
-                      textPositions.qrCode.size
+                      qrPosition.size,
+                      qrPosition.size
                     );
-                    setTextPositions((prev) => ({
+                    setQRPosition((prev) => ({
                       ...prev,
-                      qrCode: { ...prev.qrCode, x: clamped.x, y: clamped.y },
+                      x: clamped.x,
+                      y: clamped.y
                     }));
                   }}
-                  onResizeStart={() => setResizingElement('qrCode')}
+                  onResizeStart={() => setResizingElementId('qrCode')}
                   onResize={(e) => {
                     if (e.target instanceof HTMLElement) {
                       e.target.style.width = `${e.width}px`;
@@ -781,7 +748,7 @@ export function InteractiveEditor({
                     }
                   }}
                   onResizeEnd={(e) => {
-                    setResizingElement(null);
+                    setResizingElementId(null);
                     const newSize = Math.round(e.lastEvent!.width);
                     const clamped = clampPosition(
                       e.lastEvent!.drag.left,
@@ -789,14 +756,11 @@ export function InteractiveEditor({
                       newSize,
                       newSize
                     );
-                    setTextPositions((prev) => ({
-                      ...prev,
-                      qrCode: {
-                        x: clamped.x,
-                        y: clamped.y,
-                        size: newSize
-                      },
-                    }));
+                    setQRPosition({
+                      x: clamped.x,
+                      y: clamped.y,
+                      size: newSize
+                    });
                   }}
                 />
               </>
@@ -817,7 +781,7 @@ export function InteractiveEditor({
                   {textElements.map((element) => (
                     <div
                       key={element.tempId}
-                      className={`space-y-2 p-3 rounded-lg border-2 ${
+                      className={`space-y-3 p-3 rounded-lg border-2 cursor-pointer ${
                         selectedElementId === element.tempId
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 bg-white'
@@ -840,10 +804,166 @@ export function InteractiveEditor({
                         className="text-lg min-h-[3rem] resize-none"
                         maxLength={element.constraints?.maxLength || 500}
                         rows={2}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <div className="text-xs text-muted-foreground text-right">
                         {element.content.length}/{element.constraints?.maxLength || 500}
                       </div>
+
+                      {/* Show styling controls only for selected element */}
+                      {selectedElementId === element.tempId && (
+                        <div className="space-y-3 pt-2 border-t border-gray-200">
+                          {/* Text Alignment */}
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">Text Alignment</Label>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant={element.styling.textAlign === 'left' ? 'default' : 'outline'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextElementStyling(element.tempId, { textAlign: 'left' });
+                                }}
+                              >
+                                <AlignLeft className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={element.styling.textAlign === 'center' ? 'default' : 'outline'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextElementStyling(element.tempId, { textAlign: 'center' });
+                                }}
+                              >
+                                <AlignCenter className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={element.styling.textAlign === 'right' ? 'default' : 'outline'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextElementStyling(element.tempId, { textAlign: 'right' });
+                                }}
+                              >
+                                <AlignRight className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={element.styling.textAlign === 'justify' ? 'default' : 'outline'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextElementStyling(element.tempId, { textAlign: 'justify' });
+                                }}
+                              >
+                                <AlignJustify className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Font Style */}
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">Font Style</Label>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant={element.styling.fontWeight === 'bold' ? 'default' : 'outline'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextElementStyling(element.tempId, {
+                                    fontWeight: element.styling.fontWeight === 'bold' ? 'normal' : 'bold'
+                                  });
+                                }}
+                              >
+                                <Bold className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={element.styling.italic ? 'default' : 'outline'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextElementStyling(element.tempId, { italic: !element.styling.italic });
+                                }}
+                              >
+                                <Italic className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={element.styling.underline ? 'default' : 'outline'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextElementStyling(element.tempId, { underline: !element.styling.underline });
+                                }}
+                              >
+                                <Underline className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Font Size */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs font-medium">Font Size</Label>
+                              <span className="text-xs text-gray-500">{element.styling.fontSize}px</span>
+                            </div>
+                            <Slider
+                              value={[element.styling.fontSize]}
+                              min={assetSpec?.min_font_size || 20}
+                              max={assetSpec?.max_font_size || 200}
+                              step={1}
+                              onValueChange={([value]) => {
+                                updateTextElementStyling(element.tempId, { fontSize: value });
+                              }}
+                            />
+                          </div>
+
+                          {/* Letter Spacing */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs font-medium">Letter Spacing</Label>
+                              <span className="text-xs text-gray-500">{element.styling.letterSpacing}px</span>
+                            </div>
+                            <Slider
+                              value={[element.styling.letterSpacing]}
+                              min={assetSpec?.min_letter_spacing || -5}
+                              max={assetSpec?.max_letter_spacing || 20}
+                              step={0.5}
+                              onValueChange={([value]) => {
+                                updateTextElementStyling(element.tempId, { letterSpacing: value });
+                              }}
+                            />
+                          </div>
+
+                          {/* Line Spacing */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs font-medium">Line Spacing</Label>
+                              <span className="text-xs text-gray-500">{element.styling.lineSpacing}px</span>
+                            </div>
+                            <Slider
+                              value={[element.styling.lineSpacing]}
+                              min={assetSpec?.min_line_spacing || 0}
+                              max={assetSpec?.max_line_spacing || 30}
+                              step={1}
+                              onValueChange={([value]) => {
+                                updateTextElementStyling(element.tempId, { lineSpacing: value });
+                              }}
+                            />
+                          </div>
+
+                          {/* Layer Ordering */}
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">Layer Order</Label>
+                            <LayerOrderingControls
+                              currentOrder={element.displayOrder}
+                              totalLayers={textElements.length}
+                              onMoveForward={() => moveElementForward(element.tempId)}
+                              onMoveBackward={() => moveElementBackward(element.tempId)}
+                              onMoveToFront={() => moveElementToFront(element.tempId)}
+                              onMoveToBack={() => moveElementToBack(element.tempId)}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </>
@@ -907,7 +1027,7 @@ export function InteractiveEditor({
               {/* Instructions */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                 <p className="text-sm text-blue-900">
-                  💡 Tip: Click a text box to select it, then edit here. Drag to reposition, resize from edges.
+                  💡 Tip: Click a text box to select it, then edit and style it here. Drag to reposition, resize from edges.
                 </p>
               </div>
             </div>
@@ -929,7 +1049,7 @@ export function InteractiveEditor({
         <Button
           onClick={handleGenerate}
           className="min-h-[44px]"
-          disabled={isGenerating || !headline.trim()}
+          disabled={isGenerating || !textElements.some(el => el.type === 'headline' && el.content.trim())}
         >
           {isGenerating ? (
             <>Generating...</>

@@ -5,7 +5,6 @@ import type { TextElement } from '@/types/asset';
 
 interface DraggableTextBoxProps {
   textElement: TextElement;
-  onUpdate: (id: string, updates: Partial<TextElement>) => void;
   isDragging: boolean;
   isResizing: boolean;
   isSelected?: boolean;
@@ -21,7 +20,6 @@ interface DraggableTextBoxProps {
 
 export function DraggableTextBox({
   textElement,
-  onUpdate,
   isDragging,
   isResizing,
   isSelected = false,

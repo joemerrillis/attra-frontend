@@ -90,12 +90,12 @@ export default function AssetGenerate() {
   const [assetType, setAssetType] = useState<AssetType>('flyer');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [messageTheme, setMessageTheme] = useState('');
-  // Phase 2: Text fields for interactive editor
-  const [headline, setHeadline] = useState('Your Headline Here');
-  const [subheadline, setSubheadline] = useState('');
-  const [cta, setCta] = useState('Scan to Learn More');
-  // Phase 3: Text positions for drag/resize
-  const [textPositions, setTextPositions] = useState<TextPositions | null>(null);
+  // Phase 2: Text fields for interactive editor (legacy fallback values)
+  const [headline] = useState('Your Headline Here');
+  const [subheadline] = useState('');
+  const [cta] = useState('Scan to Learn More');
+  // Phase 3: Text positions for drag/resize (legacy fallback)
+  const [textPositions] = useState<TextPositions | null>(null);
 
   // Location state
   const [locations, setLocations] = useState<Location[]>([]);
