@@ -13,6 +13,12 @@ import { DraggableTextBox } from './DraggableTextBox';
 import { LayerOrderingControls } from './LayerOrderingControls';
 import { detectOverlappingElements } from '@/utils/geometryHelpers';
 import { Slider } from '@/components/ui/slider';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface InteractiveEditorProps {
   assetType?: AssetType;
@@ -89,6 +95,8 @@ export function InteractiveEditor({
     bright_zones: any[];
     dark_zones: any[];
   } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileScale, setMobileScale] = useState(DISPLAY_SCALE);
   const { toast } = useToast();
 
   // QR code ref (still needed)
@@ -364,6 +372,27 @@ export function InteractiveEditor({
     });
   };
 
+  // Detect mobile viewport and calculate mobile scale
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileView = window.innerWidth < 1024;
+      setIsMobile(isMobileView);
+
+      if (isMobileView) {
+        // Calculate available width (window width - padding - card padding)
+        // Accounting for container padding and card padding
+        const availableWidth = Math.min(window.innerWidth - 32, 600); // 32px for padding, max 600px
+        const scale = availableWidth / ASSET_DIMENSIONS.width;
+        setMobileScale(scale);
+      } else {
+        setMobileScale(DISPLAY_SCALE);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [ASSET_DIMENSIONS.width, DISPLAY_SCALE]);
+
   // Transform composition map zones and initialize text colors
   useEffect(() => {
     if (compositionMap) {
@@ -601,12 +630,12 @@ export function InteractiveEditor({
         <div className="flex-1 lg:w-[60%]">
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Preview</h3>
+              <h3 className="text-base sm:text-lg font-semibold">Preview</h3>
               <Button
                 onClick={resetToDefaults}
                 variant="outline"
-                size="sm"
-                className="gap-2"
+                size={isMobile ? "default" : "sm"}
+                className="gap-2 min-h-[44px]"
               >
                 <RotateCcw className="w-4 h-4" />
                 Reset
@@ -616,8 +645,9 @@ export function InteractiveEditor({
             <div
               className="mx-auto"
               style={{
-                width: '600px',
-                height: `${ASSET_DIMENSIONS.height * DISPLAY_SCALE}px`, // 3300 * 0.235 = 776px
+                width: isMobile ? '100%' : '600px',
+                maxWidth: '600px',
+                height: isMobile ? 'auto' : `${ASSET_DIMENSIONS.height * DISPLAY_SCALE}px`,
                 overflow: 'hidden',
                 position: 'relative',
               }}
@@ -628,7 +658,7 @@ export function InteractiveEditor({
                 style={{
                   width: `${ASSET_DIMENSIONS.width}px`,
                   height: `${ASSET_DIMENSIONS.height}px`,
-                  transform: `scale(${DISPLAY_SCALE})`,
+                  transform: `scale(${isMobile ? mobileScale : DISPLAY_SCALE})`,
                   transformOrigin: 'top left',
                   overflow: 'hidden',
                 }}
@@ -772,36 +802,36 @@ export function InteractiveEditor({
         {/* Right: Controls Panel */}
         <div className="flex-1 lg:w-[40%]">
           <Card className="p-4 md:p-6">
-            <h3 className="text-lg font-semibold mb-4">Edit Your Text</h3>
+            <h3 className="text-base sm:text-lg font-semibold mb-4">Edit Your Text</h3>
 
             <div className="space-y-4">
               {/* Element Selector */}
               {textElements.length > 0 && (
                 <>
-                  {textElements.map((element) => (
-                    <div
-                      key={element.tempId}
-                      className={`space-y-3 p-3 rounded-lg border-2 cursor-pointer ${
-                        selectedElementId === element.tempId
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white'
-                      }`}
-                      onClick={() => setSelectedElementId(element.tempId)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">
-                          {element.label} {element.constraints?.required && '*'}
-                        </Label>
-                        <span className="text-xs text-gray-500">
-                          Layer {element.displayOrder + 1}
-                        </span>
-                      </div>
-
+                  {isMobile ? (
+                    <Accordion type="single" collapsible className="w-full space-y-2">
+                      {textElements.map((element) => (
+                        <AccordionItem key={element.tempId} value={element.tempId}>
+                          <AccordionTrigger
+                            className="px-3 py-2 hover:no-underline"
+                            onClick={() => setSelectedElementId(element.tempId)}
+                          >
+                            <div className="flex items-center justify-between w-full pr-2">
+                              <span className="text-sm font-medium">
+                                {element.label} {element.constraints?.required && '*'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Layer {element.displayOrder + 1}
+                              </span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-3 pb-3">
+                            <div className="space-y-3">
                       <Textarea
                         value={element.content}
                         onChange={(e) => updateTextElementContent(element.tempId, e.target.value)}
                         placeholder={`Enter ${element.label.toLowerCase()}...`}
-                        className="text-lg min-h-[3rem] resize-none"
+                        className="text-base sm:text-lg min-h-[3rem] resize-none w-full"
                         maxLength={element.constraints?.maxLength || 500}
                         rows={2}
                         onClick={(e) => e.stopPropagation()}
@@ -818,8 +848,9 @@ export function InteractiveEditor({
                             <Label className="text-xs font-medium">Text Alignment</Label>
                             <div className="flex gap-1">
                               <Button
-                                size="sm"
+                                size={isMobile ? "default" : "sm"}
                                 variant={element.styling.textAlign === 'left' ? 'default' : 'outline'}
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateTextElementStyling(element.tempId, { textAlign: 'left' });
@@ -828,8 +859,9 @@ export function InteractiveEditor({
                                 <AlignLeft className="w-4 h-4" />
                               </Button>
                               <Button
-                                size="sm"
+                                size={isMobile ? "default" : "sm"}
                                 variant={element.styling.textAlign === 'center' ? 'default' : 'outline'}
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateTextElementStyling(element.tempId, { textAlign: 'center' });
@@ -838,8 +870,9 @@ export function InteractiveEditor({
                                 <AlignCenter className="w-4 h-4" />
                               </Button>
                               <Button
-                                size="sm"
+                                size={isMobile ? "default" : "sm"}
                                 variant={element.styling.textAlign === 'right' ? 'default' : 'outline'}
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateTextElementStyling(element.tempId, { textAlign: 'right' });
@@ -848,8 +881,9 @@ export function InteractiveEditor({
                                 <AlignRight className="w-4 h-4" />
                               </Button>
                               <Button
-                                size="sm"
+                                size={isMobile ? "default" : "sm"}
                                 variant={element.styling.textAlign === 'justify' ? 'default' : 'outline'}
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateTextElementStyling(element.tempId, { textAlign: 'justify' });
@@ -865,8 +899,9 @@ export function InteractiveEditor({
                             <Label className="text-xs font-medium">Font Style</Label>
                             <div className="flex gap-1">
                               <Button
-                                size="sm"
+                                size={isMobile ? "default" : "sm"}
                                 variant={element.styling.fontWeight === 'bold' ? 'default' : 'outline'}
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateTextElementStyling(element.tempId, {
@@ -877,8 +912,9 @@ export function InteractiveEditor({
                                 <Bold className="w-4 h-4" />
                               </Button>
                               <Button
-                                size="sm"
+                                size={isMobile ? "default" : "sm"}
                                 variant={element.styling.italic ? 'default' : 'outline'}
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateTextElementStyling(element.tempId, { italic: !element.styling.italic });
@@ -887,8 +923,9 @@ export function InteractiveEditor({
                                 <Italic className="w-4 h-4" />
                               </Button>
                               <Button
-                                size="sm"
+                                size={isMobile ? "default" : "sm"}
                                 variant={element.styling.underline ? 'default' : 'outline'}
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateTextElementStyling(element.tempId, { underline: !element.styling.underline });
@@ -964,8 +1001,210 @@ export function InteractiveEditor({
                           </div>
                         </div>
                       )}
-                    </div>
-                  ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  ) : (
+                    <>
+                      {textElements.map((element) => (
+                        <div
+                          key={element.tempId}
+                          className={`space-y-3 p-3 rounded-lg border-2 cursor-pointer ${
+                            selectedElementId === element.tempId
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 bg-white'
+                          }`}
+                          onClick={() => setSelectedElementId(element.tempId)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">
+                              {element.label} {element.constraints?.required && '*'}
+                            </Label>
+                            <span className="text-xs text-gray-500">
+                              Layer {element.displayOrder + 1}
+                            </span>
+                          </div>
+
+                          <Textarea
+                            value={element.content}
+                            onChange={(e) => updateTextElementContent(element.tempId, e.target.value)}
+                            placeholder={`Enter ${element.label.toLowerCase()}...`}
+                            className="text-base sm:text-lg min-h-[3rem] resize-none w-full"
+                            maxLength={element.constraints?.maxLength || 500}
+                            rows={2}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="text-xs text-muted-foreground text-right">
+                            {element.content.length}/{element.constraints?.maxLength || 500}
+                          </div>
+
+                          {/* Show styling controls only for selected element */}
+                          {selectedElementId === element.tempId && (
+                            <div className="space-y-3 pt-2 border-t border-gray-200">
+                              {/* Text Alignment */}
+                              <div className="space-y-2">
+                                <Label className="text-xs font-medium">Text Alignment</Label>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size={isMobile ? "default" : "sm"}
+                                    variant={element.styling.textAlign === 'left' ? 'default' : 'outline'}
+                                    className="min-h-[44px] min-w-[44px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTextElementStyling(element.tempId, { textAlign: 'left' });
+                                    }}
+                                  >
+                                    <AlignLeft className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size={isMobile ? "default" : "sm"}
+                                    variant={element.styling.textAlign === 'center' ? 'default' : 'outline'}
+                                    className="min-h-[44px] min-w-[44px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTextElementStyling(element.tempId, { textAlign: 'center' });
+                                    }}
+                                  >
+                                    <AlignCenter className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size={isMobile ? "default" : "sm"}
+                                    variant={element.styling.textAlign === 'right' ? 'default' : 'outline'}
+                                    className="min-h-[44px] min-w-[44px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTextElementStyling(element.tempId, { textAlign: 'right' });
+                                    }}
+                                  >
+                                    <AlignRight className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size={isMobile ? "default" : "sm"}
+                                    variant={element.styling.textAlign === 'justify' ? 'default' : 'outline'}
+                                    className="min-h-[44px] min-w-[44px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTextElementStyling(element.tempId, { textAlign: 'justify' });
+                                    }}
+                                  >
+                                    <AlignJustify className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Font Style */}
+                              <div className="space-y-2">
+                                <Label className="text-xs font-medium">Font Style</Label>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size={isMobile ? "default" : "sm"}
+                                    variant={element.styling.fontWeight === 'bold' ? 'default' : 'outline'}
+                                    className="min-h-[44px] min-w-[44px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTextElementStyling(element.tempId, {
+                                        fontWeight: element.styling.fontWeight === 'bold' ? 'normal' : 'bold'
+                                      });
+                                    }}
+                                  >
+                                    <Bold className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size={isMobile ? "default" : "sm"}
+                                    variant={element.styling.italic ? 'default' : 'outline'}
+                                    className="min-h-[44px] min-w-[44px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTextElementStyling(element.tempId, { italic: !element.styling.italic });
+                                    }}
+                                  >
+                                    <Italic className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size={isMobile ? "default" : "sm"}
+                                    variant={element.styling.underline ? 'default' : 'outline'}
+                                    className="min-h-[44px] min-w-[44px]"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTextElementStyling(element.tempId, { underline: !element.styling.underline });
+                                    }}
+                                  >
+                                    <Underline className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Font Size */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-xs font-medium">Font Size</Label>
+                                  <span className="text-xs text-gray-500">{element.styling.fontSize}px</span>
+                                </div>
+                                <Slider
+                                  value={[element.styling.fontSize]}
+                                  min={assetSpec?.min_font_size || 20}
+                                  max={assetSpec?.max_font_size || 200}
+                                  step={1}
+                                  onValueChange={([value]) => {
+                                    updateTextElementStyling(element.tempId, { fontSize: value });
+                                  }}
+                                />
+                              </div>
+
+                              {/* Letter Spacing */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-xs font-medium">Letter Spacing</Label>
+                                  <span className="text-xs text-gray-500">{element.styling.letterSpacing}px</span>
+                                </div>
+                                <Slider
+                                  value={[element.styling.letterSpacing]}
+                                  min={assetSpec?.min_letter_spacing || -5}
+                                  max={assetSpec?.max_letter_spacing || 20}
+                                  step={1}
+                                  onValueChange={([value]) => {
+                                    updateTextElementStyling(element.tempId, { letterSpacing: value });
+                                  }}
+                                />
+                              </div>
+
+                              {/* Line Spacing */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-xs font-medium">Line Spacing</Label>
+                                  <span className="text-xs text-gray-500">{element.styling.lineSpacing}px</span>
+                                </div>
+                                <Slider
+                                  value={[element.styling.lineSpacing]}
+                                  min={assetSpec?.min_line_spacing || 0}
+                                  max={assetSpec?.max_line_spacing || 30}
+                                  step={1}
+                                  onValueChange={([value]) => {
+                                    updateTextElementStyling(element.tempId, { lineSpacing: value });
+                                  }}
+                                />
+                              </div>
+
+                              {/* Layer Ordering */}
+                              <div className="space-y-2">
+                                <Label className="text-xs font-medium">Layer Order</Label>
+                                <LayerOrderingControls
+                                  currentOrder={element.displayOrder}
+                                  totalLayers={textElements.length}
+                                  onMoveForward={() => moveElementForward(element.tempId)}
+                                  onMoveBackward={() => moveElementBackward(element.tempId)}
+                                  onMoveToFront={() => moveElementToFront(element.tempId)}
+                                  onMoveToBack={() => moveElementToBack(element.tempId)}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </>
               )}
 
@@ -975,7 +1214,7 @@ export function InteractiveEditor({
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setAutoTextColor(!autoTextColor)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-colors min-h-[44px] ${
                       autoTextColor
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-300 bg-white'
@@ -1000,7 +1239,7 @@ export function InteractiveEditor({
                             updateTextElementStyling(selectedElementId, { color: '#000000' });
                           }
                         }}
-                        className={`w-8 h-8 rounded border-2 bg-black ${
+                        className={`min-w-[44px] min-h-[44px] rounded border-2 bg-black ${
                           textElements.find(el => el.tempId === selectedElementId)?.styling.color === '#000000'
                             ? 'border-blue-500'
                             : 'border-gray-300'
@@ -1013,7 +1252,7 @@ export function InteractiveEditor({
                             updateTextElementStyling(selectedElementId, { color: '#FFFFFF' });
                           }
                         }}
-                        className={`w-8 h-8 rounded border-2 bg-white ${
+                        className={`min-w-[44px] min-h-[44px] rounded border-2 bg-white ${
                           textElements.find(el => el.tempId === selectedElementId)?.styling.color === '#FFFFFF'
                             ? 'border-blue-500'
                             : 'border-gray-300'
