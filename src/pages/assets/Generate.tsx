@@ -18,6 +18,7 @@ import { backgroundApi } from '@/lib/background-api';
 import { supabase } from '@/lib/supabase';
 import type { AssetType, TextPositions } from '@/types/asset';
 import type { ThemeVocabulary } from '@/types/theme-vocabulary';
+import { transformTextElementsForAPI } from '@/utils/apiHelpers';
 import { FileText, DoorOpen, Triangle, CreditCard, BookOpen, ArrowLeft, ArrowRight, Check, MapPin, Loader2 } from 'lucide-react';
 import { InteractiveEditor } from '@/components/InteractiveEditor';
 
@@ -362,6 +363,9 @@ export default function AssetGenerate() {
   };
 
   const handleGenerate = async (overrideData?: {
+    text_elements?: import('@/types/asset').TextElement[];
+    qr_position?: import('@/types/asset').QRCodePosition;
+    // Legacy support
     headline?: string;
     subheadline?: string;
     cta?: string;
@@ -444,12 +448,17 @@ export default function AssetGenerate() {
         return;
       }
 
-      // Use override data if provided (from InteractiveEditor), otherwise use state
+      // Use new text_elements structure if provided, otherwise fall back to legacy
+      const useNewStructure = overrideData?.text_elements && overrideData?.qr_position;
+
+      // New structure data
+      const textElements = overrideData?.text_elements;
+      const qrPosition = overrideData?.qr_position;
+
+      // Legacy structure data (fallback)
       const headlineText = overrideData?.headline ?? headline ?? messageTheme;
       const subheadlineText = overrideData?.subheadline ?? subheadline;
       const ctaText = overrideData?.cta ?? cta;
-
-      // Positions are already in asset coordinates (no normalization needed!)
       const normalizedTextPositions = overrideData?.textPositions ?? textPositions ?? undefined;
       const normalizedTextColors = overrideData?.textColors ?? undefined;
 
@@ -468,19 +477,30 @@ export default function AssetGenerate() {
           setGenerationProgress(`Generating for location ${i + 1} of ${selectedLocations.length}...`);
 
           try {
-            const response = await assetApi.generate({
-              asset_type: assetType,
-              message_theme: messageTheme,
-              headline: headlineText,
-              subheadline: subheadlineText,
-              cta: ctaText,
-              locations: [selectedLocations[i]], // Single location
-              background_mode: 'same',
-              background_id: backgroundIdToUse,
-              base_url: 'https://example.com',
-              text_positions: normalizedTextPositions,
-              text_colors: normalizedTextColors,
-            });
+            const response = useNewStructure
+              ? await assetApi.generate({
+                  asset_type: assetType,
+                  message_theme: messageTheme,
+                  locations: [selectedLocations[i]],
+                  background_mode: 'same',
+                  background_id: backgroundIdToUse,
+                  base_url: 'https://example.com',
+                  text_elements: transformTextElementsForAPI(textElements!),
+                  qr_position: qrPosition!,
+                })
+              : await assetApi.generate({
+                  asset_type: assetType,
+                  message_theme: messageTheme,
+                  headline: headlineText,
+                  subheadline: subheadlineText,
+                  cta: ctaText,
+                  locations: [selectedLocations[i]],
+                  background_mode: 'same',
+                  background_id: backgroundIdToUse,
+                  base_url: 'https://example.com',
+                  text_positions: normalizedTextPositions,
+                  text_colors: normalizedTextColors,
+                });
 
             totalAssets += response.assets.length;
             console.log(`[Batch Mode] Completed location ${i + 1}/${selectedLocations.length}`);
@@ -502,20 +522,31 @@ export default function AssetGenerate() {
           description: `Created ${totalAssets} ${assetType}(s) for ${selectedLocations.length} locations`,
         });
       } else {
-        // Single location or individual mode - use original logic
-        const response = await assetApi.generate({
-          asset_type: assetType,
-          message_theme: messageTheme,
-          headline: headlineText,
-          subheadline: subheadlineText,
-          cta: ctaText,
-          locations: selectedLocations,
-          background_mode: 'same',
-          background_id: backgroundIdToUse,
-          base_url: 'https://example.com',
-          text_positions: normalizedTextPositions,
-          text_colors: normalizedTextColors,
-        });
+        // Single location or individual mode
+        const response = useNewStructure
+          ? await assetApi.generate({
+              asset_type: assetType,
+              message_theme: messageTheme,
+              locations: selectedLocations,
+              background_mode: 'same',
+              background_id: backgroundIdToUse,
+              base_url: 'https://example.com',
+              text_elements: transformTextElementsForAPI(textElements!),
+              qr_position: qrPosition!,
+            })
+          : await assetApi.generate({
+              asset_type: assetType,
+              message_theme: messageTheme,
+              headline: headlineText,
+              subheadline: subheadlineText,
+              cta: ctaText,
+              locations: selectedLocations,
+              background_mode: 'same',
+              background_id: backgroundIdToUse,
+              base_url: 'https://example.com',
+              text_positions: normalizedTextPositions,
+              text_colors: normalizedTextColors,
+            });
 
         console.log('✅ [handleGenerate] Asset generation response received');
 
@@ -1148,17 +1179,14 @@ export default function AssetGenerate() {
         </>
       )}
 
-      {/* Step 4: Interactive Text Editor (Phase 2) */}
+      {/* Step 4: Interactive Text Editor */}
       {step === 4 && generatedBackgroundUrl && (
         <InteractiveEditor
+          assetType={assetType}
           backgroundUrl={generatedBackgroundUrl}
           compositionMap={compositionMap}
           onBack={() => setStep(3)}
           onGenerate={(data) => {
-            setHeadline(data.headline);
-            setSubheadline(data.subheadline);
-            setCta(data.cta);
-            setTextPositions(data.textPositions);
             handleGenerate(data);
           }}
           isGenerating={isGenerating}

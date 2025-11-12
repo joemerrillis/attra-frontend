@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import Moveable from 'react-moveable';
 import { flushSync } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -6,23 +7,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
-import type { TextPositions } from '@/types/asset';
+import type { TextElement, QRCodePosition, AssetTypeSpec, AssetType, TextPositions } from '@/types/asset';
 import { useToast } from '@/hooks/use-toast';
+import { DraggableTextBox } from './DraggableTextBox';
+import { detectOverlappingElements } from '@/utils/geometryHelpers';
 
 interface InteractiveEditorProps {
+  assetType?: AssetType;
+  assetSpec?: AssetTypeSpec;
   backgroundUrl: string;
   compositionMap: any | null;
   onBack: () => void;
   onGenerate: (data: {
-    headline: string;
-    subheadline: string;
-    cta: string;
-    textPositions: TextPositions;
-    textColors: {
-      headline: string;
-      subheadline: string;
-      cta: string;
-    };
+    text_elements: TextElement[];
+    qr_position: QRCodePosition;
   }) => void;
   isGenerating?: boolean;
 }
@@ -65,23 +63,30 @@ const defaultTextPositions: TextPositions = {
 };
 
 export function InteractiveEditor({
+  assetType = 'flyer',
+  assetSpec,
   backgroundUrl,
   compositionMap,
   onBack,
   onGenerate,
   isGenerating = false,
 }: InteractiveEditorProps) {
-  const [headline, setHeadline] = useState('Your Headline Here');
-  const [subheadline, setSubheadline] = useState('');
-  const [cta, setCta] = useState('Scan to Learn More');
-  const [textPositions, setTextPositions] = useState<TextPositions>(defaultTextPositions);
-  const [draggingElement, setDraggingElement] = useState<string | null>(null);
-  const [resizingElement, setResizingElement] = useState<string | null>(null);
-  const [textColors, setTextColors] = useState({
-    headline: '#000000',
-    subheadline: '#000000',
-    cta: '#000000',
+  // Use assetSpec dimensions if available, otherwise fallback to hardcoded flyer dimensions
+  const ASSET_DIMENSIONS = assetSpec
+    ? { width: assetSpec.width, height: assetSpec.height }
+    : { width: 2550, height: 3300 };
+  const DISPLAY_SCALE = 600 / ASSET_DIMENSIONS.width;
+
+  // New dynamic state
+  const [textElements, setTextElements] = useState<TextElement[]>([]);
+  const [qrPosition, setQRPosition] = useState<QRCodePosition>({
+    x: Math.round(ASSET_DIMENSIONS.width * 0.35),
+    y: Math.round(ASSET_DIMENSIONS.height * 0.45),
+    size: Math.round(ASSET_DIMENSIONS.width * 0.33)
   });
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [draggingElementId, setDraggingElementId] = useState<string | null>(null);
+  const [resizingElementId, setResizingElementId] = useState<string | null>(null);
   const [autoTextColor, setAutoTextColor] = useState(true);
   const [transformedZones, setTransformedZones] = useState<{
     bright_zones: any[];
@@ -89,20 +94,24 @@ export function InteractiveEditor({
   } | null>(null);
   const { toast } = useToast();
 
-  // Refs for Moveable components
-  const headlineRef = useRef<HTMLDivElement>(null);
-  const subheadlineRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
+  // QR code ref (still needed)
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
-  const headlineMoveableRef = useRef<Moveable>(null);
-  const subheadlineMoveableRef = useRef<Moveable>(null);
-  const ctaMoveableRef = useRef<Moveable>(null);
-  const qrCodeMoveableRef = useRef<Moveable>(null);
-
-  // Guideline positions in asset coordinates (2550x3300) at 1/4, 1/3, 1/2, 2/3, 3/4
-  const VERTICAL_GUIDELINES = [638, 850, 1275, 1700, 1913];      // For 2550px width
-  const HORIZONTAL_GUIDELINES = [825, 1100, 1650, 2200, 2475];   // For 3300px height
+  // Guideline positions (dynamic based on asset dimensions)
+  const VERTICAL_GUIDELINES = [
+    ASSET_DIMENSIONS.width * 0.25,
+    ASSET_DIMENSIONS.width * 0.333,
+    ASSET_DIMENSIONS.width * 0.5,
+    ASSET_DIMENSIONS.width * 0.667,
+    ASSET_DIMENSIONS.width * 0.75
+  ];
+  const HORIZONTAL_GUIDELINES = [
+    ASSET_DIMENSIONS.height * 0.25,
+    ASSET_DIMENSIONS.height * 0.333,
+    ASSET_DIMENSIONS.height * 0.5,
+    ASSET_DIMENSIONS.height * 0.667,
+    ASSET_DIMENSIONS.height * 0.75
+  ];
 
   /**
    * Clamp position to valid canvas bounds and round to integers
@@ -241,52 +250,145 @@ export function InteractiveEditor({
     );
   };
 
-  const updateTextPosition = (
-    field: 'headline' | 'subheadline' | 'cta',
-    updates: Partial<TextPositions[typeof field]>
-  ) => {
-    // DIAGNOSTIC LOGGING
-    console.log(`[updateTextPosition - ${field}] Called with updates:`, updates);
-    console.log(`[updateTextPosition - ${field}] Current state before update:`, textPositions[field]);
-
-    setTextPositions((prev) => {
-      const newPosition = { ...prev[field], ...updates };
-
-      // DIAGNOSTIC LOGGING
-      console.log(`[updateTextPosition - ${field}] New position after merge:`, newPosition);
-
-      // Update text color based on new position (if auto mode and zones available)
-      if (autoTextColor && transformedZones) {
-        const optimalColor = getOptimalTextColor(
-          newPosition.x,
-          newPosition.y,
-          newPosition.width,
-          80  // Approximate height for color calculation
-        );
-
-        setTextColors(colors => ({
-          ...colors,
-          [field]: optimalColor,
-        }));
-      }
-
-      return {
-        ...prev,
-        [field]: newPosition,
-      };
-    });
-  };
-
   const resetToDefaults = () => {
-    setTextPositions(defaultTextPositions);
+    // Reset text elements to defaults
+    const defaultTextColors = {
+      headline: transformedZones ? getOptimalTextColorFromZones(
+        defaultTextPositions.headline.x,
+        defaultTextPositions.headline.y,
+        defaultTextPositions.headline.width,
+        80,
+        transformedZones.bright_zones,
+        transformedZones.dark_zones
+      ) : '#FFFFFF',
+      subheadline: transformedZones ? getOptimalTextColorFromZones(
+        defaultTextPositions.subheadline.x,
+        defaultTextPositions.subheadline.y,
+        defaultTextPositions.subheadline.width,
+        60,
+        transformedZones.bright_zones,
+        transformedZones.dark_zones
+      ) : '#FFFFFF',
+      cta: transformedZones ? getOptimalTextColorFromZones(
+        defaultTextPositions.cta.x,
+        defaultTextPositions.cta.y,
+        defaultTextPositions.cta.width,
+        60,
+        transformedZones.bright_zones,
+        transformedZones.dark_zones
+      ) : '#FFFFFF',
+    };
+
+    const defaultElements: TextElement[] = [
+      {
+        tempId: uuidv4(),
+        type: 'headline',
+        label: 'Headline',
+        content: textElements.find(el => el.type === 'headline')?.content || 'Your Headline Here',
+        position: {
+          x: defaultTextPositions.headline.x,
+          y: defaultTextPositions.headline.y,
+          width: defaultTextPositions.headline.width,
+          height: 'auto'
+        },
+        styling: {
+          fontSize: defaultTextPositions.headline.fontSize,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: defaultTextColors.headline,
+          italic: false,
+          underline: false,
+          letterSpacing: 0,
+          lineSpacing: 10
+        },
+        constraints: { maxLength: 100, required: true },
+        displayOrder: 0
+      },
+      {
+        tempId: uuidv4(),
+        type: 'subheadline',
+        label: 'Subheadline',
+        content: textElements.find(el => el.type === 'subheadline')?.content || '',
+        position: {
+          x: defaultTextPositions.subheadline.x,
+          y: defaultTextPositions.subheadline.y,
+          width: defaultTextPositions.subheadline.width,
+          height: 'auto'
+        },
+        styling: {
+          fontSize: defaultTextPositions.subheadline.fontSize,
+          fontWeight: 'normal',
+          textAlign: 'center',
+          color: defaultTextColors.subheadline,
+          italic: false,
+          underline: false,
+          letterSpacing: 0,
+          lineSpacing: 10
+        },
+        constraints: { maxLength: 150, required: false },
+        displayOrder: 1
+      },
+      {
+        tempId: uuidv4(),
+        type: 'cta',
+        label: 'Call to Action',
+        content: textElements.find(el => el.type === 'cta')?.content || 'Scan to Learn More',
+        position: {
+          x: defaultTextPositions.cta.x,
+          y: defaultTextPositions.cta.y,
+          width: defaultTextPositions.cta.width,
+          height: 'auto'
+        },
+        styling: {
+          fontSize: defaultTextPositions.cta.fontSize,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: defaultTextColors.cta,
+          italic: false,
+          underline: false,
+          letterSpacing: 0,
+          lineSpacing: 10
+        },
+        constraints: { maxLength: 50, required: true },
+        displayOrder: 2
+      }
+    ];
+
+    setTextElements(defaultElements);
+    setQRPosition({
+      x: Math.round(ASSET_DIMENSIONS.width * 0.35),
+      y: Math.round(ASSET_DIMENSIONS.height * 0.45),
+      size: Math.round(ASSET_DIMENSIONS.width * 0.33)
+    });
+
     toast({
       title: 'Positions Reset',
-      description: 'Text positions restored to defaults',
+      description: 'Text positions and QR code restored to defaults',
     });
   };
 
   const handleGenerate = () => {
-    onGenerate({ headline, subheadline, cta, textPositions, textColors });
+    // Filter out empty text elements
+    const nonEmptyElements = textElements.filter(el => el.content.trim() !== '');
+
+    // Validate required elements
+    const hasHeadline = nonEmptyElements.some(el =>
+      el.type === 'headline' && el.content.trim() !== ''
+    );
+
+    if (!hasHeadline) {
+      toast({
+        title: 'Validation Error',
+        description: 'Headline is required',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    onGenerate({
+      text_elements: nonEmptyElements,
+      qr_position: qrPosition
+    });
   };
 
   // Transform composition map zones and initialize text colors
@@ -320,38 +422,210 @@ export function InteractiveEditor({
         bright_zones: transformedBrightZones,
         dark_zones: transformedDarkZones,
       });
-
-      // Initialize text colors with transformed zones
-      if (autoTextColor) {
-        setTextColors({
-          headline: getOptimalTextColorFromZones(
-            defaultTextPositions.headline.x,
-            defaultTextPositions.headline.y,
-            defaultTextPositions.headline.width,
-            80,
-            transformedBrightZones,
-            transformedDarkZones
-          ),
-          subheadline: getOptimalTextColorFromZones(
-            defaultTextPositions.subheadline.x,
-            defaultTextPositions.subheadline.y,
-            defaultTextPositions.subheadline.width,
-            60,
-            transformedBrightZones,
-            transformedDarkZones
-          ),
-          cta: getOptimalTextColorFromZones(
-            defaultTextPositions.cta.x,
-            defaultTextPositions.cta.y,
-            defaultTextPositions.cta.width,
-            60,
-            transformedBrightZones,
-            transformedDarkZones
-          ),
-        });
-      }
     }
   }, [compositionMap]);
+
+  // Initialize default text elements from compositionMap
+  useEffect(() => {
+    if (!compositionMap || textElements.length > 0) return;
+
+    const defaultTextColors = {
+      headline: transformedZones ? getOptimalTextColorFromZones(
+        defaultTextPositions.headline.x,
+        defaultTextPositions.headline.y,
+        defaultTextPositions.headline.width,
+        80,
+        transformedZones.bright_zones,
+        transformedZones.dark_zones
+      ) : '#FFFFFF',
+      subheadline: transformedZones ? getOptimalTextColorFromZones(
+        defaultTextPositions.subheadline.x,
+        defaultTextPositions.subheadline.y,
+        defaultTextPositions.subheadline.width,
+        60,
+        transformedZones.bright_zones,
+        transformedZones.dark_zones
+      ) : '#FFFFFF',
+      cta: transformedZones ? getOptimalTextColorFromZones(
+        defaultTextPositions.cta.x,
+        defaultTextPositions.cta.y,
+        defaultTextPositions.cta.width,
+        60,
+        transformedZones.bright_zones,
+        transformedZones.dark_zones
+      ) : '#FFFFFF',
+    };
+
+    const defaultElements: TextElement[] = [
+      {
+        tempId: uuidv4(),
+        type: 'headline',
+        label: 'Headline',
+        content: 'Your Headline Here',
+        position: {
+          x: compositionMap?.headline?.x || defaultTextPositions.headline.x,
+          y: compositionMap?.headline?.y || defaultTextPositions.headline.y,
+          width: compositionMap?.headline?.width || defaultTextPositions.headline.width,
+          height: 'auto'
+        },
+        styling: {
+          fontSize: compositionMap?.headline?.fontSize || defaultTextPositions.headline.fontSize,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: defaultTextColors.headline,
+          italic: false,
+          underline: false,
+          letterSpacing: 0,
+          lineSpacing: 10
+        },
+        constraints: {
+          maxLength: 100,
+          required: true
+        },
+        displayOrder: 0
+      },
+      {
+        tempId: uuidv4(),
+        type: 'subheadline',
+        label: 'Subheadline',
+        content: '',
+        position: {
+          x: compositionMap?.subheadline?.x || defaultTextPositions.subheadline.x,
+          y: compositionMap?.subheadline?.y || defaultTextPositions.subheadline.y,
+          width: compositionMap?.subheadline?.width || defaultTextPositions.subheadline.width,
+          height: 'auto'
+        },
+        styling: {
+          fontSize: compositionMap?.subheadline?.fontSize || defaultTextPositions.subheadline.fontSize,
+          fontWeight: 'normal',
+          textAlign: 'center',
+          color: defaultTextColors.subheadline,
+          italic: false,
+          underline: false,
+          letterSpacing: 0,
+          lineSpacing: 10
+        },
+        constraints: {
+          maxLength: 150,
+          required: false
+        },
+        displayOrder: 1
+      },
+      {
+        tempId: uuidv4(),
+        type: 'cta',
+        label: 'Call to Action',
+        content: 'Scan to Learn More',
+        position: {
+          x: compositionMap?.cta?.x || defaultTextPositions.cta.x,
+          y: compositionMap?.cta?.y || defaultTextPositions.cta.y,
+          width: compositionMap?.cta?.width || defaultTextPositions.cta.width,
+          height: 'auto'
+        },
+        styling: {
+          fontSize: compositionMap?.cta?.fontSize || defaultTextPositions.cta.fontSize,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: defaultTextColors.cta,
+          italic: false,
+          underline: false,
+          letterSpacing: 0,
+          lineSpacing: 10
+        },
+        constraints: {
+          maxLength: 50,
+          required: true
+        },
+        displayOrder: 2
+      }
+    ];
+
+    setTextElements(defaultElements);
+  }, [compositionMap, transformedZones, textElements.length]);
+
+  // Text element update functions
+  const updateTextElement = (id: string, updates: Partial<TextElement>) => {
+    setTextElements(prev => prev.map(el =>
+      el.tempId === id ? { ...el, ...updates } : el
+    ));
+  };
+
+  const updateTextElementPosition = (id: string, position: Partial<TextElement['position']>) => {
+    setTextElements(prev => prev.map(el =>
+      el.tempId === id
+        ? { ...el, position: { ...el.position, ...position } }
+        : el
+    ));
+  };
+
+  const updateTextElementStyling = (id: string, styling: Partial<TextElement['styling']>) => {
+    setTextElements(prev => prev.map(el =>
+      el.tempId === id
+        ? { ...el, styling: { ...el.styling, ...styling } }
+        : el
+    ));
+  };
+
+  const updateTextElementContent = (id: string, content: string) => {
+    setTextElements(prev => prev.map(el =>
+      el.tempId === id ? { ...el, content } : el
+    ));
+  };
+
+  const moveElementForward = (id: string) => {
+    setTextElements(prev => {
+      const index = prev.findIndex(el => el.tempId === id);
+      if (index === -1 || index === prev.length - 1) return prev;
+
+      const newElements = [...prev];
+      const currentOrder = newElements[index].displayOrder;
+      const nextElement = newElements.find(el => el.displayOrder === currentOrder + 1);
+
+      if (nextElement) {
+        newElements[index].displayOrder = currentOrder + 1;
+        nextElement.displayOrder = currentOrder;
+      }
+
+      return newElements.sort((a, b) => a.displayOrder - b.displayOrder);
+    });
+  };
+
+  const moveElementBackward = (id: string) => {
+    setTextElements(prev => {
+      const index = prev.findIndex(el => el.tempId === id);
+      if (index === -1 || prev[index].displayOrder === 0) return prev;
+
+      const newElements = [...prev];
+      const currentOrder = newElements[index].displayOrder;
+      const prevElement = newElements.find(el => el.displayOrder === currentOrder - 1);
+
+      if (prevElement) {
+        newElements[index].displayOrder = currentOrder - 1;
+        prevElement.displayOrder = currentOrder;
+      }
+
+      return newElements.sort((a, b) => a.displayOrder - b.displayOrder);
+    });
+  };
+
+  const moveElementToFront = (id: string) => {
+    setTextElements(prev => {
+      const maxOrder = Math.max(...prev.map(el => el.displayOrder));
+      return prev.map(el =>
+        el.tempId === id ? { ...el, displayOrder: maxOrder + 1 } : el
+      ).sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((el, idx) => ({ ...el, displayOrder: idx }));
+    });
+  };
+
+  const moveElementToBack = (id: string) => {
+    setTextElements(prev => {
+      return prev.map(el =>
+        el.tempId === id ? { ...el, displayOrder: -1 } : el
+      ).sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((el, idx) => ({ ...el, displayOrder: idx }));
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -399,229 +673,60 @@ export function InteractiveEditor({
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
-              {/* Draggable Headline */}
-              {headline && (
-                <>
-                  <div
-                    ref={headlineRef}
-                    className={`draggable-text ${draggingElement === 'headline' ? 'dragging' : ''} ${resizingElement === 'headline' ? 'resizing' : ''}`}
-                    style={{
-                      position: 'absolute',
-                      left: `${textPositions.headline.x}px`,
-                      top: `${textPositions.headline.y}px`,
-                      width: `${textPositions.headline.width}px`,
-                      height: textPositions.headline.height === 'auto' ? 'auto' : `${textPositions.headline.height}px`,
-                      fontSize: `${textPositions.headline.fontSize}px`,
-                      fontWeight: textPositions.headline.fontWeight,
-                      color: textColors.headline,
-                      fontFamily: 'Arial, sans-serif',
-                      textAlign: 'center',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: draggingElement === 'headline' ? 'grabbing' : 'grab',
-                      userSelect: 'none',
-                      padding: '8px',
-                      wordWrap: 'break-word',
-                      whiteSpace: 'pre-line',
-                      overflow: 'hidden',
-                      textShadow: textColors.headline === '#FFFFFF'
-                        ? '2px 2px 4px rgba(0,0,0,0.8)'
-                        : 'none',
-                    }}
-                  >
-                    {headline}
-                  </div>
-                  <Moveable
-                    ref={headlineMoveableRef}
-                    target={headlineRef}
-                    draggable={true}
-                    resizable={true}
-                    snappable={true}
-                    snapThreshold={21}
-                    verticalGuidelines={VERTICAL_GUIDELINES}
-                    horizontalGuidelines={HORIZONTAL_GUIDELINES}
-                    isDisplaySnapDigit={true}
-                    bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
-                    renderDirections={['w', 'e', 'n', 's']}
-                    flushSync={flushSync}
-                    onDragStart={() => setDraggingElement('headline')}
-                    onDrag={(e) => {
-                      if (e.target instanceof HTMLElement) {
-                        e.target.style.left = `${e.left}px`;
-                        e.target.style.top = `${e.top}px`;
-                      }
-                    }}
-                    onDragEnd={(e) => {
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - headline] Raw event data:', {
-                        'e.lastEvent.left': e.lastEvent?.left,
-                        'e.lastEvent.top': e.lastEvent?.top,
-                        'current textPositions.headline': textPositions.headline,
-                        'expected asset coords for center': { x: 1275, y: textPositions.headline.y }
-                      });
 
-                      setDraggingElement(null);
-                      const clamped = clampPosition(
-                        e.lastEvent!.left,
-                        e.lastEvent!.top,
-                        textPositions.headline.width,
-                        textPositions.headline.height ?? 'auto'
-                      );
-
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - headline] After clamp:', clamped);
-
-                      updateTextPosition('headline', { x: clamped.x, y: clamped.y });
-
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - headline] updateTextPosition called with:', { x: clamped.x, y: clamped.y });
+              {/* Dynamic Text Elements */}
+              {textElements.map((element) => {
+                const overlappingIds = detectOverlappingElements(textElements, qrPosition);
+                return (
+                  <DraggableTextBox
+                    key={element.tempId}
+                    textElement={element}
+                    onUpdate={updateTextElement}
+                    isDragging={draggingElementId === element.tempId}
+                    isResizing={resizingElementId === element.tempId}
+                    isSelected={selectedElementId === element.tempId}
+                    hasOverlap={overlappingIds.has(element.tempId)}
+                    onDragStart={() => {
+                      setDraggingElementId(element.tempId);
+                      setSelectedElementId(element.tempId);
                     }}
-                    onResizeStart={() => setResizingElement('headline')}
-                    onResize={(e) => {
-                      if (e.target instanceof HTMLElement) {
-                        e.target.style.width = `${e.width}px`;
-                        e.target.style.height = `${e.height}px`;
-                        e.target.style.left = `${e.drag.left}px`;
-                        e.target.style.top = `${e.drag.top}px`;
-                      }
+                    onDragEnd={(left, top) => {
+                      setDraggingElementId(null);
+                      const clamped = clampPosition(left, top, element.position.width, element.position.height);
+                      updateTextElementPosition(element.tempId, { x: clamped.x, y: clamped.y });
                     }}
-                    onResizeEnd={(e) => {
-                      setResizingElement(null);
-                      const clamped = clampPosition(
-                        e.lastEvent!.drag.left,
-                        e.lastEvent!.drag.top,
-                        e.lastEvent!.width,
-                        e.lastEvent!.height
-                      );
-                      updateTextPosition('headline', {
+                    onResizeStart={() => {
+                      setResizingElementId(element.tempId);
+                      setSelectedElementId(element.tempId);
+                    }}
+                    onResizeEnd={(width, height, left, top) => {
+                      setResizingElementId(null);
+                      const clamped = clampPosition(left, top, width, height);
+                      updateTextElementPosition(element.tempId, {
                         x: clamped.x,
                         y: clamped.y,
-                        width: Math.round(e.lastEvent!.width),
-                        height: Math.round(e.lastEvent!.height),
+                        width: Math.round(width),
+                        height: height === 'auto' ? 'auto' : Math.round(height)
                       });
                     }}
-                  />
-                </>
-              )}
-
-              {/* Draggable Subheadline */}
-              {subheadline && (
-                <>
-                  <div
-                    ref={subheadlineRef}
-                    className={`draggable-text ${draggingElement === 'subheadline' ? 'dragging' : ''} ${resizingElement === 'subheadline' ? 'resizing' : ''}`}
-                    style={{
-                      position: 'absolute',
-                      left: `${textPositions.subheadline.x}px`,
-                      top: `${textPositions.subheadline.y}px`,
-                      width: `${textPositions.subheadline.width}px`,
-                      height: textPositions.subheadline.height === 'auto' ? 'auto' : `${textPositions.subheadline.height}px`,
-                      fontSize: `${textPositions.subheadline.fontSize}px`,
-                      fontWeight: textPositions.subheadline.fontWeight,
-                      color: textColors.subheadline,
-                      fontFamily: 'Arial, sans-serif',
-                      textAlign: 'center',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: draggingElement === 'subheadline' ? 'grabbing' : 'grab',
-                      userSelect: 'none',
-                      padding: '8px',
-                      wordWrap: 'break-word',
-                      whiteSpace: 'pre-line',
-                      overflow: 'hidden',
-                      textShadow: textColors.subheadline === '#FFFFFF'
-                        ? '2px 2px 4px rgba(0,0,0,0.8)'
-                        : 'none',
-                    }}
-                  >
-                    {subheadline}
-                  </div>
-                  <Moveable
-                    ref={subheadlineMoveableRef}
-                    target={subheadlineRef}
-                    draggable={true}
-                    resizable={true}
-                    snappable={true}
-                    snapThreshold={21}
+                    bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
                     verticalGuidelines={VERTICAL_GUIDELINES}
                     horizontalGuidelines={HORIZONTAL_GUIDELINES}
-                    isDisplaySnapDigit={true}
-                    bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
-                    renderDirections={['w', 'e', 'n', 's']}
-                    flushSync={flushSync}
-                    onDragStart={() => setDraggingElement('subheadline')}
-                    onDrag={(e) => {
-                      if (e.target instanceof HTMLElement) {
-                        e.target.style.left = `${e.left}px`;
-                        e.target.style.top = `${e.top}px`;
-                      }
-                    }}
-                    onDragEnd={(e) => {
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - subheadline] Raw event data:', {
-                        'e.lastEvent.left': e.lastEvent?.left,
-                        'e.lastEvent.top': e.lastEvent?.top,
-                        'current textPositions.subheadline': textPositions.subheadline,
-                        'expected asset coords for center': { x: 1275, y: textPositions.subheadline.y }
-                      });
-
-                      setDraggingElement(null);
-                      const clamped = clampPosition(
-                        e.lastEvent!.left,
-                        e.lastEvent!.top,
-                        textPositions.subheadline.width,
-                        textPositions.subheadline.height ?? 'auto'
-                      );
-
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - subheadline] After clamp:', clamped);
-
-                      updateTextPosition('subheadline', { x: clamped.x, y: clamped.y });
-
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - subheadline] updateTextPosition called with:', { x: clamped.x, y: clamped.y });
-                    }}
-                    onResizeStart={() => setResizingElement('subheadline')}
-                    onResize={(e) => {
-                      if (e.target instanceof HTMLElement) {
-                        e.target.style.width = `${e.width}px`;
-                        e.target.style.height = `${e.height}px`;
-                        e.target.style.left = `${e.drag.left}px`;
-                        e.target.style.top = `${e.drag.top}px`;
-                      }
-                    }}
-                    onResizeEnd={(e) => {
-                      setResizingElement(null);
-                      const clamped = clampPosition(
-                        e.lastEvent!.drag.left,
-                        e.lastEvent!.drag.top,
-                        e.lastEvent!.width,
-                        e.lastEvent!.height
-                      );
-                      updateTextPosition('subheadline', {
-                        x: clamped.x,
-                        y: clamped.y,
-                        width: Math.round(e.lastEvent!.width),
-                        height: Math.round(e.lastEvent!.height),
-                      });
-                    }}
                   />
-                </>
-              )}
+                );
+              })}
 
-              {/* Draggable QR Code - Migrated to react-moveable for POC */}
+              {/* Draggable QR Code */}
               <>
                 <div
                   ref={qrCodeRef}
-                  className={`draggable-qr ${draggingElement === 'qrCode' ? 'dragging' : ''} ${resizingElement === 'qrCode' ? 'resizing' : ''}`}
+                  className={`draggable-qr ${draggingElementId === 'qrCode' ? 'dragging' : ''} ${resizingElementId === 'qrCode' ? 'resizing' : ''}`}
                   style={{
                     position: 'absolute',
-                    left: `${textPositions.qrCode.x}px`,
-                    top: `${textPositions.qrCode.y}px`,
-                    width: `${textPositions.qrCode.size}px`,
-                    height: `${textPositions.qrCode.size}px`,
+                    left: `${qrPosition.x}px`,
+                    top: `${qrPosition.y}px`,
+                    width: `${qrPosition.size}px`,
+                    height: `${qrPosition.size}px`,
                   }}
                 >
                   <div className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center border-4 border-gray-200">
@@ -634,7 +739,6 @@ export function InteractiveEditor({
                   </div>
                 </div>
                 <Moveable
-                  ref={qrCodeMoveableRef}
                   target={qrCodeRef}
                   draggable={true}
                   resizable={true}
@@ -696,112 +800,6 @@ export function InteractiveEditor({
                   }}
                 />
               </>
-
-              {/* Draggable CTA */}
-              {cta && (
-                <>
-                  <div
-                    ref={ctaRef}
-                    className={`draggable-text ${draggingElement === 'cta' ? 'dragging' : ''} ${resizingElement === 'cta' ? 'resizing' : ''}`}
-                    style={{
-                      position: 'absolute',
-                      left: `${textPositions.cta.x}px`,
-                      top: `${textPositions.cta.y}px`,
-                      width: `${textPositions.cta.width}px`,
-                      height: textPositions.cta.height === 'auto' ? 'auto' : `${textPositions.cta.height}px`,
-                      fontSize: `${textPositions.cta.fontSize}px`,
-                      fontWeight: textPositions.cta.fontWeight,
-                      color: textColors.cta,
-                      fontFamily: 'Arial, sans-serif',
-                      textAlign: 'center',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: draggingElement === 'cta' ? 'grabbing' : 'grab',
-                      userSelect: 'none',
-                      padding: '8px',
-                      wordWrap: 'break-word',
-                      whiteSpace: 'pre-line',
-                      overflow: 'hidden',
-                      textShadow: textColors.cta === '#FFFFFF'
-                        ? '2px 2px 4px rgba(0,0,0,0.8)'
-                        : 'none',
-                    }}
-                  >
-                    {cta}
-                  </div>
-                  <Moveable
-                    ref={ctaMoveableRef}
-                    target={ctaRef}
-                    draggable={true}
-                    resizable={true}
-                    snappable={true}
-                    snapThreshold={21}
-                    verticalGuidelines={VERTICAL_GUIDELINES}
-                    horizontalGuidelines={HORIZONTAL_GUIDELINES}
-                    isDisplaySnapDigit={true}
-                    bounds={{ left: 0, top: 0, right: ASSET_DIMENSIONS.width, bottom: ASSET_DIMENSIONS.height }}
-                    renderDirections={['w', 'e', 'n', 's']}
-                    flushSync={flushSync}
-                    onDragStart={() => setDraggingElement('cta')}
-                    onDrag={(e) => {
-                      if (e.target instanceof HTMLElement) {
-                        e.target.style.left = `${e.left}px`;
-                        e.target.style.top = `${e.top}px`;
-                      }
-                    }}
-                    onDragEnd={(e) => {
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - cta] Raw event data:', {
-                        'e.lastEvent.left': e.lastEvent?.left,
-                        'e.lastEvent.top': e.lastEvent?.top,
-                        'current textPositions.cta': textPositions.cta,
-                        'expected asset coords for center': { x: 1275, y: textPositions.cta.y }
-                      });
-
-                      setDraggingElement(null);
-                      const clamped = clampPosition(
-                        e.lastEvent!.left,
-                        e.lastEvent!.top,
-                        textPositions.cta.width,
-                        textPositions.cta.height ?? 'auto'
-                      );
-
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - cta] After clamp:', clamped);
-
-                      updateTextPosition('cta', { x: clamped.x, y: clamped.y });
-
-                      // DIAGNOSTIC LOGGING
-                      console.log('[onDragEnd - cta] updateTextPosition called with:', { x: clamped.x, y: clamped.y });
-                    }}
-                    onResizeStart={() => setResizingElement('cta')}
-                    onResize={(e) => {
-                      if (e.target instanceof HTMLElement) {
-                        e.target.style.width = `${e.width}px`;
-                        e.target.style.height = `${e.height}px`;
-                        e.target.style.left = `${e.drag.left}px`;
-                        e.target.style.top = `${e.drag.top}px`;
-                      }
-                    }}
-                    onResizeEnd={(e) => {
-                      setResizingElement(null);
-                      const clamped = clampPosition(
-                        e.lastEvent!.drag.left,
-                        e.lastEvent!.drag.top,
-                        e.lastEvent!.width,
-                        e.lastEvent!.height
-                      );
-                      updateTextPosition('cta', {
-                        x: clamped.x,
-                        y: clamped.y,
-                        width: Math.round(e.lastEvent!.width),
-                        height: Math.round(e.lastEvent!.height),
-                      });
-                    }}
-                  />
-                </>
-              )}
               </div>
             </div>
           </Card>
@@ -813,62 +811,43 @@ export function InteractiveEditor({
             <h3 className="text-lg font-semibold mb-4">Edit Your Text</h3>
 
             <div className="space-y-4">
-              {/* Headline */}
-              <div className="space-y-2">
-                <Label htmlFor="headline" className="text-sm font-medium">
-                  Headline *
-                </Label>
-                <Textarea
-                  id="headline"
-                  value={headline}
-                  onChange={(e) => setHeadline(e.target.value)}
-                  placeholder="Your Headline Here"
-                  className="text-lg min-h-[3rem] resize-none"
-                  maxLength={100}
-                  rows={2}
-                />
-                <div className="text-xs text-muted-foreground text-right">
-                  {headline.length}/100
-                </div>
-              </div>
+              {/* Element Selector */}
+              {textElements.length > 0 && (
+                <>
+                  {textElements.map((element) => (
+                    <div
+                      key={element.tempId}
+                      className={`space-y-2 p-3 rounded-lg border-2 ${
+                        selectedElementId === element.tempId
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white'
+                      }`}
+                      onClick={() => setSelectedElementId(element.tempId)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">
+                          {element.label} {element.constraints?.required && '*'}
+                        </Label>
+                        <span className="text-xs text-gray-500">
+                          Layer {element.displayOrder + 1}
+                        </span>
+                      </div>
 
-              {/* Subheadline */}
-              <div className="space-y-2">
-                <Label htmlFor="subheadline" className="text-sm font-medium">
-                  Subheadline (optional)
-                </Label>
-                <Textarea
-                  id="subheadline"
-                  value={subheadline}
-                  onChange={(e) => setSubheadline(e.target.value)}
-                  placeholder="Add a subheadline"
-                  className="text-lg min-h-[3rem] resize-none"
-                  maxLength={150}
-                  rows={2}
-                />
-                <div className="text-xs text-muted-foreground text-right">
-                  {subheadline.length}/150
-                </div>
-              </div>
-
-              {/* Call to Action */}
-              <div className="space-y-2">
-                <Label htmlFor="cta" className="text-sm font-medium">
-                  Call to Action
-                </Label>
-                <Textarea
-                  id="cta"
-                  value={cta}
-                  onChange={(e) => setCta(e.target.value)}
-                  placeholder="Scan to Learn More"
-                  className="text-lg min-h-[3rem] resize-none"
-                  maxLength={50}
-                  rows={1}
-                />
-                <div className="text-xs text-muted-foreground text-right">
-                  {cta.length}/50
-                </div>
-              </div>
+                      <Textarea
+                        value={element.content}
+                        onChange={(e) => updateTextElementContent(element.tempId, e.target.value)}
+                        placeholder={`Enter ${element.label.toLowerCase()}...`}
+                        className="text-lg min-h-[3rem] resize-none"
+                        maxLength={element.constraints?.maxLength || 500}
+                        rows={2}
+                      />
+                      <div className="text-xs text-muted-foreground text-right">
+                        {element.content.length}/{element.constraints?.maxLength || 500}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
 
               {/* Text Color Control */}
               <div className="space-y-2">
@@ -890,25 +869,37 @@ export function InteractiveEditor({
                 </div>
 
                 {/* Manual color pickers */}
-                {!autoTextColor && (
+                {!autoTextColor && selectedElementId && (
                   <div className="space-y-2 pt-2">
-                    {['headline', 'subheadline', 'cta'].map(field => (
-                      <div key={field} className="flex items-center gap-2">
-                        <Label className="text-xs w-24 capitalize">{field}:</Label>
-                        <button
-                          onClick={() => setTextColors({ ...textColors, [field]: '#000000' })}
-                          className={`w-8 h-8 rounded border-2 bg-black ${
-                            textColors[field as keyof typeof textColors] === '#000000' ? 'border-blue-500' : 'border-gray-300'
-                          }`}
-                        />
-                        <button
-                          onClick={() => setTextColors({ ...textColors, [field]: '#FFFFFF' })}
-                          className={`w-8 h-8 rounded border-2 bg-white ${
-                            textColors[field as keyof typeof textColors] === '#FFFFFF' ? 'border-blue-500' : 'border-gray-300'
-                          }`}
-                        />
-                      </div>
-                    ))}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs w-24">Color:</Label>
+                      <button
+                        onClick={() => {
+                          const element = textElements.find(el => el.tempId === selectedElementId);
+                          if (element) {
+                            updateTextElementStyling(selectedElementId, { color: '#000000' });
+                          }
+                        }}
+                        className={`w-8 h-8 rounded border-2 bg-black ${
+                          textElements.find(el => el.tempId === selectedElementId)?.styling.color === '#000000'
+                            ? 'border-blue-500'
+                            : 'border-gray-300'
+                        }`}
+                      />
+                      <button
+                        onClick={() => {
+                          const element = textElements.find(el => el.tempId === selectedElementId);
+                          if (element) {
+                            updateTextElementStyling(selectedElementId, { color: '#FFFFFF' });
+                          }
+                        }}
+                        className={`w-8 h-8 rounded border-2 bg-white ${
+                          textElements.find(el => el.tempId === selectedElementId)?.styling.color === '#FFFFFF'
+                            ? 'border-blue-500'
+                            : 'border-gray-300'
+                        }`}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -916,7 +907,7 @@ export function InteractiveEditor({
               {/* Instructions */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                 <p className="text-sm text-blue-900">
-                  💡 Tip: Drag text boxes and QR code to reposition. Resize text horizontally or QR from any corner.
+                  💡 Tip: Click a text box to select it, then edit here. Drag to reposition, resize from edges.
                 </p>
               </div>
             </div>
