@@ -187,11 +187,13 @@ export default function Assets() {
   if (isLoading) {
     return (
       <div className="container py-8 space-y-6 max-w-7xl mx-auto">
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Assets</h1>
             <p className="text-muted-foreground mt-1">Your marketing materials</p>
           </div>
+
           <Button onClick={() => navigate('/assets/generate')}>
             <Plus className="w-4 h-4 mr-2" />
             Create Asset
@@ -217,6 +219,7 @@ export default function Assets() {
   if (error) {
     return (
       <div className="container py-8 space-y-6 max-w-7xl mx-auto">
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Assets</h1>
@@ -244,6 +247,7 @@ export default function Assets() {
   if (!assets || assets.length === 0) {
     return (
       <div className="container py-8 space-y-6 max-w-7xl mx-auto">
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Assets</h1>
@@ -277,6 +281,7 @@ export default function Assets() {
   return (
     <div className="container py-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Assets</h1>
@@ -284,6 +289,7 @@ export default function Assets() {
             {assets.length} asset{assets.length !== 1 ? 's' : ''}
           </p>
         </div>
+
         <Button onClick={() => navigate('/assets/generate')}>
           <Plus className="w-4 h-4 mr-2" />
           Create Asset
@@ -293,8 +299,10 @@ export default function Assets() {
       {/* Assets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {assets.map((asset) => (
+
           <Card key={asset.id} className="overflow-hidden group">
             {/* Asset Preview */}
+
             {asset.file_url ? (
               <div className="relative aspect-[2/3] bg-muted">
                 <img
@@ -303,6 +311,7 @@ export default function Assets() {
                   className="object-cover w-full h-full"
                 />
                 {/* Status Badge Overlay */}
+
                 <div className="absolute top-2 left-2">
                   <Badge
                     variant={
@@ -329,6 +338,7 @@ export default function Assets() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
+
             ) : (
               <div className="aspect-[2/3] bg-muted flex items-center justify-center">
                 <p className="text-sm text-muted-foreground">No preview available</p>
@@ -338,10 +348,13 @@ export default function Assets() {
             {/* Asset Info */}
             <CardContent className="p-4">
               <div className="space-y-2">
+
                 <h3 className="font-semibold truncate">{asset.message_theme}</h3>
+
                 <p className="text-sm text-muted-foreground truncate">
                   {asset.locations?.name || 'Unknown location'}
                 </p>
+
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(asset.created_at), { addSuffix: true })}
                 </p>
@@ -349,6 +362,7 @@ export default function Assets() {
 
               {/* Actions */}
               <div className="flex items-center gap-2 mt-4">
+
                 <Button
                   size="sm"
                   variant="outline"
@@ -366,7 +380,9 @@ export default function Assets() {
                       <MoreVertical className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
+
                   <DropdownMenuContent align="end">
+
                     <DropdownMenuItem
                       onClick={() => handleCopyLink(asset)}
                       disabled={asset.status !== 'completed'}
@@ -374,6 +390,7 @@ export default function Assets() {
                       <Link2 className="w-4 h-4 mr-2" />
                       Copy Link
                     </DropdownMenuItem>
+
                     <DropdownMenuItem
                       onClick={() => handleDownload(asset)}
                       disabled={asset.status !== 'completed'}
@@ -381,6 +398,7 @@ export default function Assets() {
                       <Download className="w-4 h-4 mr-2" />
                       Download
                     </DropdownMenuItem>
+
                     <DropdownMenuItem
                       onClick={() => setDeleteAssetId(asset.id)}
                       className="text-destructive focus:text-destructive"
@@ -399,6 +417,7 @@ export default function Assets() {
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteAssetId} onOpenChange={() => setDeleteAssetId(null)}>
         <AlertDialogContent>
+
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Asset?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -406,6 +425,7 @@ export default function Assets() {
               and remove it from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
