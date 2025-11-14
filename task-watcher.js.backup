@@ -1,0 +1,29 @@
+import chokidar from 'chokidar';
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+
+const AGENT = 'backend';
+const watcher = chokidar.watch('comm/inbox/*_enhanced.json');
+
+let busy = false;
+
+watcher.on('add', async (taskPath) => {
+  if (busy) return;
+
+  busy = true;
+  console.log(`[${AGENT}] Starting task: ${path.basename(taskPath)}`);
+
+  const inProgressPath = taskPath.replace('_enhanced.json', '_in_progress.json');
+  fs.renameSync(taskPath, inProgressPath);
+
+  const claude = spawn('claude', ['code', '--skill', 'task-execution', '--file', inProgressPath]);
+
+  claude.on('exit', (code) => {
+    console.log(`[${AGENT}] Task finished with code ${code}`);
+    if (fs.existsSync(inProgressPath)) fs.unlinkSync(inProgressPath);
+    busy = false;
+  });
+});
+
+console.log(`[${AGENT}] Task watcher started`);
