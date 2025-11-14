@@ -647,7 +647,7 @@ export function InteractiveEditor({
               style={{
                 width: isMobile ? '100%' : '600px',
                 maxWidth: '600px',
-                height: isMobile ? 'auto' : `${ASSET_DIMENSIONS.height * DISPLAY_SCALE}px`,
+                height: `${ASSET_DIMENSIONS.height * (isMobile ? mobileScale : DISPLAY_SCALE)}px`,
                 overflow: 'hidden',
                 position: 'relative',
               }}
