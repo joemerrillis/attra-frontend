@@ -93,11 +93,11 @@ export default function Dashboard() {
         {/* Desktop CTA - hidden on mobile */}
         <Button
           variant="accent"
-          onClick={() => navigate('/campaigns/new')}
+          onClick={() => navigate('/assets/generate')}
           className="hidden md:inline-flex"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Campaign
+          Create Asset
         </Button>
       </div>
 
@@ -124,9 +124,9 @@ export default function Dashboard() {
                   <Badge
                     variant={
                       asset.status === 'completed' ? 'default' :
-                      asset.status === 'generating' ? 'secondary' :
-                      asset.status === 'failed' ? 'destructive' :
-                      'outline'
+                        asset.status === 'generating' ? 'secondary' :
+                          asset.status === 'failed' ? 'destructive' :
+                            'outline'
                     }
                     className={asset.status === 'generating' ? 'animate-pulse' : ''}
                   >
@@ -171,8 +171,8 @@ export default function Dashboard() {
 
       {/* Mobile FAB */}
       <FloatingActionButton
-        to="/campaigns/new"
-        label="Create Campaign"
+        to="/assets/generate"
+        label="Create Asset"
       />
     </div>
   );

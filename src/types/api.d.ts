@@ -4,165 +4,6 @@
  */
 
 export interface paths {
-    "/api/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Register a new user with email and password */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: email */
-                        email: string;
-                        password: string;
-                        full_name?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message?: string;
-                            user?: {
-                                id?: string;
-                                email?: string;
-                                full_name?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Login with email and password to get JWT token */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: email */
-                        email: string;
-                        password: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            access_token?: string;
-                            refresh_token?: string;
-                            expires_at?: number;
-                            expires_in?: number;
-                            user?: {
-                                id?: string;
-                                email?: string;
-                                full_name?: string;
-                                tenant_id?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/create-tenant": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Create a new tenant and associate with current user */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        name: string;
-                        slug: string;
-                        vertical_key?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message?: string;
-                            tenant?: {
-                                id?: string;
-                                name?: string;
-                                slug?: string;
-                                vertical_key?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/q/{id}": {
         parameters: {
             query?: never;
@@ -170,43 +11,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description QR code redirect endpoint - tracks scan and redirects to destination */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/go/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Alternative QR redirect format */
         get: {
             parameters: {
                 query?: never;
@@ -242,7 +46,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List all available schema contracts */
         get: {
             parameters: {
                 query?: never;
@@ -257,22 +60,45 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            description?: string;
-                            contracts?: {
-                                name?: string;
-                                description?: string;
-                                url?: string;
-                            }[];
-                            generatedAt?: string;
-                        };
-                    };
+                    content?: never;
                 };
             };
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/leads/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -286,7 +112,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List all tenants */
         get: {
             parameters: {
                 query?: never;
@@ -301,22 +126,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            id?: string;
-                            name?: string;
-                            slug?: string;
-                            vertical_key?: string;
-                            branding?: Record<string, never>;
-                            created_at?: string;
-                            updated_at?: string;
-                        }[];
-                    };
+                    content?: never;
                 };
             };
         };
         put?: never;
-        /** @description Create new tenant */
         post: {
             parameters: {
                 query?: never;
@@ -324,16 +138,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        name: string;
-                        slug: string;
-                        vertical_key?: string;
-                        branding?: Record<string, never>;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Default Response */
                 200: {
@@ -357,7 +162,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Get tenant by ID */
         get: {
             parameters: {
                 query?: never;
@@ -378,7 +182,6 @@ export interface paths {
                 };
             };
         };
-        /** @description Update tenant */
         put: {
             parameters: {
                 query?: never;
@@ -400,7 +203,6 @@ export interface paths {
             };
         };
         post?: never;
-        /** @description Delete tenant */
         delete: {
             parameters: {
                 query?: never;
@@ -1136,6 +938,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/internal/tenant-verticals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get tenant vertical configuration */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** @description Create tenant vertical configuration */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Vertical identifier (e.g., "real_estate", "automotive") */
+                        vertical_key: string;
+                        /** @description Language customization config (labels, terminology, etc.) */
+                        language_config: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/tenant-verticals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Update tenant vertical configuration */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Vertical config ID */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        vertical_key?: string;
+                        language_config?: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        /** @description Delete tenant vertical configuration */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/internal/jobs": {
         parameters: {
             query?: never;
@@ -1451,240 +1378,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/internal/campaigns": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description List all campaigns */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        /** @description Create new campaign */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @description Campaign name */
-                        name: string;
-                        /** @description Campaign description */
-                        description?: string;
-                        /**
-                         * @description Campaign status
-                         * @enum {string}
-                         */
-                        status?: "draft" | "active" | "paused" | "completed";
-                        /**
-                         * Format: date
-                         * @description Campaign start date
-                         */
-                        start_date?: string;
-                        /**
-                         * Format: date
-                         * @description Campaign end date
-                         */
-                        end_date?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/campaigns/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get campaign by ID */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        /** @description Update campaign */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        /** @description Delete campaign */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/campaigns/{id}/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get campaign statistics */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/campaigns/{id}/generate-flyer": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Generate PDF flyer for campaign (queues background job) */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * Format: uuid
-                         * @description Asset ID to generate flyer from
-                         */
-                        assetId: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/internal/locations": {
         parameters: {
             query?: never;
@@ -1735,6 +1428,12 @@ export interface paths {
                         zip?: string;
                         /** @description Neighborhood */
                         neighborhood?: string;
+                        /**
+                         * @description Type of location: "business" for tenant physical locations, "advertisement" for flyer/sign distribution points
+                         * @default business
+                         * @enum {string}
+                         */
+                        location_type?: "business" | "advertisement";
                         /** @description Geographic coordinates (lat/lng) */
                         geo?: {
                             lat?: number;
@@ -2268,6 +1967,148 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/internal/assets/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Generate assets with dynamic text elements and QR code positioning */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Type of asset to generate
+                         * @enum {string}
+                         */
+                        asset_type: "flyer" | "door_hanger" | "table_tent" | "business_card" | "menu_board";
+                        /** @description Theme label for this asset (e.g., "Fall Sale 2024") */
+                        message_theme: string;
+                        /** @description Array of text elements with positioning and styling */
+                        text_elements: {
+                            /**
+                             * @description Type of text element
+                             * @enum {string}
+                             */
+                            type: "headline" | "subheadline" | "body" | "quote" | "cta" | "custom";
+                            /** @description Label for this element (e.g., "Headline", "Call to Action") */
+                            label: string;
+                            /** @description Text content to display */
+                            content: string;
+                            position: {
+                                /** @description X position in pixels from left */
+                                x: number;
+                                /** @description Y position in pixels from top */
+                                y: number;
+                                /** @description Width in pixels */
+                                width: number;
+                                /** @description Height in pixels (null = auto) */
+                                height?: number | null;
+                            };
+                            styling: {
+                                /** @description Font size in pixels */
+                                fontSize: number;
+                                /**
+                                 * @description Font weight
+                                 * @enum {string}
+                                 */
+                                fontWeight: "normal" | "bold";
+                                /**
+                                 * @description Text alignment
+                                 * @enum {string}
+                                 */
+                                textAlign: "left" | "center" | "right" | "justify";
+                                /** @description Text color (hex format) */
+                                color: string;
+                                /** @description Italic style */
+                                italic?: boolean;
+                                /** @description Underline style */
+                                underline?: boolean;
+                                /** @description Letter spacing in pixels */
+                                letterSpacing?: number;
+                                /** @description Line spacing in pixels */
+                                lineSpacing?: number;
+                            };
+                            /** @description Render order (0 = first) */
+                            display_order: number;
+                            constraints?: {
+                                /** @description Maximum character length */
+                                maxLength?: number;
+                                /** @description Is this element required */
+                                required?: boolean;
+                            };
+                        }[];
+                        /** @description QR code positioning */
+                        qr_position: {
+                            /** @description X position in pixels from left */
+                            x: number;
+                            /** @description Y position in pixels from top */
+                            y: number;
+                            /** @description QR code size (width and height) in pixels */
+                            size: number;
+                        };
+                        /** @description Array of location IDs to generate assets for */
+                        locations: string[];
+                        /**
+                         * @description Use same background for all locations or custom per location
+                         * @enum {string}
+                         */
+                        background_mode: "same" | "custom";
+                        /**
+                         * Format: uuid
+                         * @description Background ID (required if mode is "same", can be null)
+                         */
+                        background_id?: string | null;
+                        /** @description Map of location_id → background_id (required if mode is "custom") */
+                        location_backgrounds?: Record<string, never>;
+                        /**
+                         * Format: uri
+                         * @description Redirect URL for QR code scan
+                         */
+                        base_url: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success?: boolean;
+                            assets?: {
+                                id?: string;
+                                location_id?: string;
+                                asset_type?: string;
+                                message_theme?: string;
+                                qr_link_id?: string;
+                                status?: string;
+                                text_elements_count?: number;
+                            }[];
+                            message?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/internal/assets": {
         parameters: {
             query?: never;
@@ -2441,6 +2282,111 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/asset-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List all available asset types with their specifications */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            asset_type?: string;
+                            display_name?: string;
+                            width?: number;
+                            height?: number;
+                            aspect_ratio?: string;
+                            min_font_size?: number;
+                            max_font_size?: number;
+                            min_qr_size?: number;
+                            max_qr_size?: number;
+                        }[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/asset-types/{type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get specifications for a specific asset type */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    type: "flyer" | "door_hanger" | "table_tent" | "business_card" | "menu_board";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            asset_type?: string;
+                            display_name?: string;
+                            width?: number;
+                            height?: number;
+                            aspect_ratio?: string;
+                            min_font_size?: number;
+                            max_font_size?: number;
+                            min_qr_size?: number;
+                            max_qr_size?: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3201,7 +3147,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/internal/campaigns/{campaignId}/generate-pdf": {
+    "/gmail/quick-response/{contactId}/compose-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Generate Gmail compose URL with pre-filled template */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Optional template ID */
+                    templateId?: string;
+                };
+                header?: never;
+                path: {
+                    /** @description Contact ID */
+                    contactId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description Gmail compose URL */
+                            composeUrl?: string;
+                            template?: null | {
+                                id?: string;
+                                name?: string;
+                                subject?: string;
+                            };
+                            preview?: {
+                                to?: string;
+                                subject?: string;
+                                body?: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gmail/quick-response/{contactId}/track-opened": {
         parameters: {
             query?: never;
             header?: never;
@@ -3210,39 +3211,34 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Generate PDF flyers for campaign */
+        /** @description Track when Gmail compose window opened */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    campaignId: string;
+                    contactId: string;
                 };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @description Specific locations (optional, defaults to all) */
-                        location_ids?: string[];
-                        /**
-                         * @description Flyer layout template
-                         * @enum {string}
-                         */
-                        layout?: "classic" | "modern" | "minimal";
+                        /** Format: uuid */
+                        templateId?: string;
                     };
                 };
             };
             responses: {
                 /** @description Default Response */
-                202: {
+                200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            assets?: unknown[];
-                            jobsEnqueued?: number;
+                            tracked?: boolean;
+                            interaction?: Record<string, never>;
                         };
                     };
                 };
@@ -3254,89 +3250,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/internal/assets/{assetId}/status": {
+    "/map-data": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Check PDF generation status */
+        /** @description Get pre-aggregated map data for dashboard */
         get: {
             parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    assetId: string;
+                query?: {
+                    /** @description Max scans to analyze */
+                    limit?: number;
+                    /** @description Filter by campaign */
+                    campaignId?: string;
                 };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/internal/campaigns/{campaignId}/assets": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get all assets for campaign */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    campaignId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/plans": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get all active pricing plans with features and limits */
-        get: {
-            parameters: {
-                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3350,229 +3279,31 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            plans?: {
-                                /** @description Plan key (e.g., "free", "pro") */
-                                key?: string;
-                                /** @description Plan name */
-                                name?: string;
-                                /** @description Display name for UI */
-                                displayName?: string;
-                                /** @description Plan description */
-                                description?: string;
-                                pricing?: {
-                                    /** @description Monthly price in dollars */
-                                    monthly?: number;
-                                    /** @description Yearly price in dollars */
-                                    yearly?: number | null;
-                                    /** @description Currency code */
-                                    currency?: string;
-                                };
-                                /** @description Usage limits for this plan (null = unlimited) */
-                                limits?: Record<string, never>;
-                                features?: {
-                                    feature_key?: string;
-                                    feature_name?: string;
-                                    description?: string;
-                                    category?: string;
-                                }[];
-                                /** @description Key features for marketing */
-                                featuresSummary?: string[];
-                                /** @description Plan tier (0=free, 1=starter, etc.) */
-                                tierLevel?: number;
-                            }[];
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/features/{featureKey}/check": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Check if current user has access to a specific feature */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Feature key to check (e.g., "gmail_integration") */
-                    featureKey: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @description Whether user has access */
-                            hasAccess?: boolean;
-                            /** @description User's current plan */
-                            userPlan?: string;
-                            /** @description Plan required for this feature */
-                            requiredPlan?: string;
-                            feature?: {
-                                key?: string;
-                                name?: string;
-                                description?: string;
-                                category?: string;
-                            };
-                            /** @description URL to upgrade (null if has access) */
-                            upgradeUrl?: string | null;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/plans/limits/{limitKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get a specific plan limit for the current user */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description Limit key to fetch (e.g., "contacts_per_month") */
-                    limitKey: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            limitKey?: string;
-                            /** @description Limit value (null = unlimited) */
-                            limitValue?: number | null;
-                            /** @description Whether the limit is unlimited */
-                            isUnlimited?: boolean;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/plans/limits": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get all plan limits for the current user */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @description User's current plan */
-                            planKey?: string;
-                            /** @description Map of limit keys to limit values */
-                            limits?: {
-                                [key: string]: {
-                                    value?: number | null;
-                                    isUnlimited?: boolean;
-                                };
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/features": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get all features grouped by category */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @description Features grouped by category */
-                            features?: {
-                                [key: string]: {
-                                    key?: string;
+                            /** @description Aggregated location pins */
+                            pins?: {
+                                location?: {
+                                    id?: string;
                                     name?: string;
-                                    description?: string;
-                                    requiredPlan?: string;
-                                    requiredPlanName?: string;
-                                    tierLevel?: number;
-                                }[];
-                            };
+                                    coordinates?: {
+                                        lat?: number;
+                                        lng?: number;
+                                    };
+                                };
+                                scanCount?: number;
+                                campaigns?: string[];
+                            }[];
+                            /** @description Recent scan activity */
+                            recentScans?: {
+                                id?: string;
+                                scannedAt?: string;
+                                location?: {
+                                    id?: string;
+                                    name?: string;
+                                };
+                                campaign?: string;
+                            }[];
+                            aggregated?: boolean;
+                            generatedAt?: string;
                         };
                     };
                 };
@@ -3586,7 +3317,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/plans/{planKey}": {
+    "/api/internal/tenants/{tenantId}/branding/capture": {
         parameters: {
             query?: never;
             header?: never;
@@ -3595,34 +3326,135 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** @description Update plan pricing (admin only) */
-        patch: {
+        post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    /** @description Plan key to update */
-                    planKey: string;
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/branding/capture-onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/tenants/{tenantId}/branding/analyze-premium": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/tenants/{tenantId}/backgrounds/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Generate new campaign background with optional theme-based styling */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
                 };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @description Monthly price in cents */
-                        price_monthly_cents?: number;
-                        /** @description Yearly price in cents */
-                        price_yearly_cents?: number;
-                        /** @description Display name */
-                        display_name?: string;
-                        /** @description Plan description */
-                        description?: string;
-                        /** @description Whether plan is active */
-                        is_active?: boolean;
+                        /** @description Custom prompt override */
+                        prompt_override?: string;
+                        /** @description Manual style keywords (highest priority) */
+                        style_keywords?: string[];
+                        /** @description Message theme name (e.g., "Summer Menu", "Happy Hour") */
+                        message_theme?: string;
+                        /** @description Mood family classification for visual style (e.g., "Cool and Modern", "Warm and Local", "Bright and Inviting") */
+                        mood_family?: string;
+                        /**
+                         * @description Number of backgrounds to generate
+                         * @default 1
+                         */
+                        generate_count?: number;
                     };
                 };
             };
@@ -3634,16 +3466,234 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @description Updated plan */
-                            plan?: Record<string, never>;
+                            success?: boolean;
+                            job_ids?: string[];
+                            estimated_time_seconds?: number;
+                            keywords_used?: string[];
+                            theme_source?: string;
+                            theme_info?: {
+                                theme_name?: string;
+                                matched_from?: string;
+                                keywords?: string[];
+                                mood?: string;
+                            };
                         };
                     };
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
-    "/api/admin/plans/{planKey}/limits/{limitKey}": {
+    "/api/internal/tenants/{tenantId}/backgrounds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/branding/backgrounds/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a single background by ID */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Background ID */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Background object */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            tenant_id?: string;
+                            image_url?: string;
+                            thumbnail_url?: string;
+                            composition_map?: Record<string, never>;
+                            flux_prompt?: string;
+                            style_keywords?: unknown[];
+                            source_type?: string;
+                            created_at?: string;
+                            mood_family?: string;
+                            is_favorite?: boolean;
+                            times_used?: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            message?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/tenants/{tenantId}/backgrounds/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get background generation usage for current tenant */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/backgrounds/{backgroundId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    backgroundId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/backgrounds/{backgroundId}/favorite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    backgroundId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/backgrounds/{backgroundId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3653,27 +3703,103 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** @description Update a plan limit (admin only) */
-        patch: {
+        delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    /** @description Plan key */
-                    planKey: string;
-                    /** @description Limit key */
-                    limitKey: string;
+                    backgroundId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/tenants/{tenantId}/theme-vocabulary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get all message theme definitions for tenant */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            themes?: {
+                                id?: string;
+                                theme_name?: string;
+                                keywords?: string[];
+                                mood?: string;
+                                created_at?: string;
+                                updated_at?: string;
+                            }[];
+                            count?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/tenants/{tenantId}/theme-vocabulary/{themeName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Save or update theme definition */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                    themeName: string;
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @description Limit value (null for unlimited) */
-                        limitValue: number | null;
+                        keywords: string[];
+                        mood?: string;
                     };
                 };
             };
@@ -3685,13 +3811,250 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            /** @description Updated limit */
-                            limit?: Record<string, never>;
+                            theme?: Record<string, never>;
                         };
                     };
                 };
             };
         };
+        post?: never;
+        /** @description Delete theme definition */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                    themeName: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/tenants/{tenantId}/theme-vocabulary/seed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Seed tenant with default theme vocabulary */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        industry?: "restaurant" | "retail" | "service" | "healthcare";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            themes?: unknown[];
+                            count?: number;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get tenant preferences */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            tenant_id?: string;
+                            onboarding_goal?: null | string;
+                            onboarding_vertical?: null | string;
+                            onboarding_completed_at?: null | string;
+                            first_campaign_created?: boolean;
+                            first_campaign_id?: null | string;
+                            checklist_completed?: boolean;
+                            goal_metadata?: Record<string, never>;
+                            created_at?: string;
+                            updated_at?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/preferences/onboarding-goal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Save onboarding goal */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        goal: string;
+                        vertical: string;
+                        metadata?: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/preferences/first-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Mark first campaign as created */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        campaignId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/preferences/checklist-complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Mark onboarding checklist as complete */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/tenants": {
@@ -3716,14 +4079,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            id?: string;
-                            name?: string;
-                            slug?: string;
-                            vertical_key?: string;
-                        }[];
-                    };
+                    content?: never;
                 };
             };
         };

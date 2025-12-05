@@ -26,7 +26,7 @@ export type User = {
 };
 
 export type Tenant = Database['public']['Tables']['tenants']['Row'];
-export type TeamMember = Database['public']['Tables']['team_members']['Row'];
+
 export type UserTenant = {
   id: string;
   user_id: string;

@@ -17,7 +17,7 @@ export function RecentActivityFeed() {
           scanned_at,
           location:locations(name),
           qr_link:qr_links(
-            campaign:campaigns(name)
+            asset:assets(message_theme)
           )
         `)
         .order('scanned_at', { ascending: false })
@@ -35,7 +35,7 @@ export function RecentActivityFeed() {
         ...(scans?.map((s: any) => ({
           type: 'scan' as const,
           title: 'QR Code Scanned',
-          description: `${s.qr_link?.campaign?.name || 'Campaign'} at ${s.location?.name || 'Unknown'}`,
+          description: `${s.qr_link?.asset?.message_theme || 'Flyer'} at ${s.location?.name || 'Unknown'}`,
           timestamp: s.scanned_at,
         })) || []),
         ...(contacts?.map((c: any) => ({

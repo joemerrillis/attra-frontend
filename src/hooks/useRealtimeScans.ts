@@ -11,7 +11,6 @@ interface RealtimeScan {
     coordinates: { lat: number; lng: number };
   };
   scanned_at: string;
-  campaign?: { name: string };
 }
 
 export function useRealtimeScans() {

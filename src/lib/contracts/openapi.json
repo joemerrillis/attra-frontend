@@ -25,248 +25,8 @@
     "schemas": {}
   },
   "paths": {
-    "/api/auth/register": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "description": "Register a new user with email and password",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email",
-                  "password"
-                ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 6
-                  },
-                  "full_name": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string"
-                        },
-                        "full_name": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/auth/login": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "description": "Login with email and password to get JWT token",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email",
-                  "password"
-                ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "access_token": {
-                      "type": "string"
-                    },
-                    "refresh_token": {
-                      "type": "string"
-                    },
-                    "expires_at": {
-                      "type": "number"
-                    },
-                    "expires_in": {
-                      "type": "number"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string"
-                        },
-                        "full_name": {
-                          "type": "string"
-                        },
-                        "tenant_id": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/auth/create-tenant": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "description": "Create a new tenant and associate with current user",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "slug"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "slug": {
-                    "type": "string"
-                  },
-                  "vertical_key": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "tenant": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "slug": {
-                          "type": "string"
-                        },
-                        "vertical_key": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/q/{id}": {
       "get": {
-        "tags": [
-          "Public"
-        ],
-        "description": "QR code redirect endpoint - tracks scan and redirects to destination",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/go/{id}": {
-      "get": {
-        "tags": [
-          "Public"
-        ],
-        "description": "Alternative QR redirect format",
         "parameters": [
           {
             "schema": {
@@ -286,137 +46,31 @@
     },
     "/schema": {
       "get": {
-        "tags": [
-          "Health"
-        ],
-        "description": "List all available schema contracts",
         "responses": {
           "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "description": {
-                      "type": "string"
-                    },
-                    "contracts": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "url": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    },
-                    "generatedAt": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/public/leads/submit": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
           }
         }
       }
     },
     "/api/internal/tenants": {
       "get": {
-        "tags": [
-          "Tenants"
-        ],
-        "description": "List all tenants",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "responses": {
           "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "slug": {
-                        "type": "string"
-                      },
-                      "vertical_key": {
-                        "type": "string"
-                      },
-                      "branding": {
-                        "type": "object"
-                      },
-                      "created_at": {
-                        "type": "string"
-                      },
-                      "updated_at": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Default Response"
           }
         }
       },
       "post": {
-        "tags": [
-          "Tenants"
-        ],
-        "description": "Create new tenant",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "slug"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "slug": {
-                    "type": "string"
-                  },
-                  "vertical_key": {
-                    "type": "string"
-                  },
-                  "branding": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "Default Response"
@@ -426,24 +80,14 @@
     },
     "/api/internal/tenants/{id}": {
       "get": {
-        "tags": [
-          "Tenants"
-        ],
-        "description": "Get tenant by ID",
         "parameters": [
           {
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "in": "path",
             "name": "id",
             "required": true
-          }
-        ],
-        "security": [
-          {
-            "bearerAuth": []
           }
         ],
         "responses": {
@@ -453,24 +97,14 @@
         }
       },
       "put": {
-        "tags": [
-          "Tenants"
-        ],
-        "description": "Update tenant",
         "parameters": [
           {
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "in": "path",
             "name": "id",
             "required": true
-          }
-        ],
-        "security": [
-          {
-            "bearerAuth": []
           }
         ],
         "responses": {
@@ -480,24 +114,14 @@
         }
       },
       "delete": {
-        "tags": [
-          "Tenants"
-        ],
-        "description": "Delete tenant",
         "parameters": [
           {
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "in": "path",
             "name": "id",
             "required": true
-          }
-        ],
-        "security": [
-          {
-            "bearerAuth": []
           }
         ],
         "responses": {
@@ -1206,6 +830,138 @@
         }
       }
     },
+    "/api/internal/tenant-verticals": {
+      "get": {
+        "tags": [
+          "Tenant Verticals"
+        ],
+        "description": "Get tenant vertical configuration",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tenant Verticals"
+        ],
+        "description": "Create tenant vertical configuration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "vertical_key",
+                  "language_config"
+                ],
+                "properties": {
+                  "vertical_key": {
+                    "type": "string",
+                    "description": "Vertical identifier (e.g., \"real_estate\", \"automotive\")"
+                  },
+                  "language_config": {
+                    "type": "object",
+                    "description": "Language customization config (labels, terminology, etc.)"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/tenant-verticals/{id}": {
+      "put": {
+        "tags": [
+          "Tenant Verticals"
+        ],
+        "description": "Update tenant vertical configuration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vertical_key": {
+                    "type": "string"
+                  },
+                  "language_config": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Vertical config ID"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tenant Verticals"
+        ],
+        "description": "Delete tenant vertical configuration",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/internal/jobs": {
       "get": {
         "tags": [
@@ -1416,239 +1172,6 @@
         }
       }
     },
-    "/api/internal/campaigns": {
-      "get": {
-        "tags": [
-          "Campaigns"
-        ],
-        "description": "List all campaigns",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Campaigns"
-        ],
-        "description": "Create new campaign",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Campaign name"
-                  },
-                  "description": {
-                    "type": "string",
-                    "description": "Campaign description"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "draft",
-                      "active",
-                      "paused",
-                      "completed"
-                    ],
-                    "description": "Campaign status"
-                  },
-                  "start_date": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "Campaign start date"
-                  },
-                  "end_date": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "Campaign end date"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/api/internal/campaigns/{id}": {
-      "get": {
-        "tags": [
-          "Campaigns"
-        ],
-        "description": "Get campaign by ID",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Campaigns"
-        ],
-        "description": "Update campaign",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Campaigns"
-        ],
-        "description": "Delete campaign",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/api/internal/campaigns/{id}/stats": {
-      "get": {
-        "tags": [
-          "Campaigns"
-        ],
-        "description": "Get campaign statistics",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/api/internal/campaigns/{id}/generate-flyer": {
-      "post": {
-        "tags": [
-          "Campaigns"
-        ],
-        "description": "Generate PDF flyer for campaign (queues background job)",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "assetId"
-                ],
-                "properties": {
-                  "assetId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Asset ID to generate flyer from"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
     "/api/internal/locations": {
       "get": {
         "tags": [
@@ -1703,6 +1226,15 @@
                   "neighborhood": {
                     "type": "string",
                     "description": "Neighborhood"
+                  },
+                  "location_type": {
+                    "type": "string",
+                    "enum": [
+                      "business",
+                      "advertisement"
+                    ],
+                    "description": "Type of location: \"business\" for tenant physical locations, \"advertisement\" for flyer/sign distribution points",
+                    "default": "business"
                   },
                   "geo": {
                     "type": "object",
@@ -2271,6 +1803,300 @@
         }
       }
     },
+    "/api/internal/assets/generate": {
+      "post": {
+        "tags": [
+          "Assets"
+        ],
+        "description": "Generate assets with dynamic text elements and QR code positioning",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "asset_type",
+                  "message_theme",
+                  "text_elements",
+                  "qr_position",
+                  "locations",
+                  "background_mode",
+                  "base_url"
+                ],
+                "properties": {
+                  "asset_type": {
+                    "type": "string",
+                    "enum": [
+                      "flyer",
+                      "door_hanger",
+                      "table_tent",
+                      "business_card",
+                      "menu_board"
+                    ],
+                    "description": "Type of asset to generate"
+                  },
+                  "message_theme": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "description": "Theme label for this asset (e.g., \"Fall Sale 2024\")"
+                  },
+                  "text_elements": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "Array of text elements with positioning and styling",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "label",
+                        "content",
+                        "position",
+                        "styling",
+                        "display_order"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "headline",
+                            "subheadline",
+                            "body",
+                            "quote",
+                            "cta",
+                            "custom"
+                          ],
+                          "description": "Type of text element"
+                        },
+                        "label": {
+                          "type": "string",
+                          "description": "Label for this element (e.g., \"Headline\", \"Call to Action\")"
+                        },
+                        "content": {
+                          "type": "string",
+                          "description": "Text content to display"
+                        },
+                        "position": {
+                          "type": "object",
+                          "required": [
+                            "x",
+                            "y",
+                            "width"
+                          ],
+                          "properties": {
+                            "x": {
+                              "type": "number",
+                              "description": "X position in pixels from left"
+                            },
+                            "y": {
+                              "type": "number",
+                              "description": "Y position in pixels from top"
+                            },
+                            "width": {
+                              "type": "number",
+                              "description": "Width in pixels"
+                            },
+                            "height": {
+                              "type": [
+                                "number",
+                                "null"
+                              ],
+                              "description": "Height in pixels (null = auto)"
+                            }
+                          }
+                        },
+                        "styling": {
+                          "type": "object",
+                          "required": [
+                            "fontSize",
+                            "fontWeight",
+                            "textAlign",
+                            "color"
+                          ],
+                          "properties": {
+                            "fontSize": {
+                              "type": "number",
+                              "description": "Font size in pixels"
+                            },
+                            "fontWeight": {
+                              "type": "string",
+                              "enum": [
+                                "normal",
+                                "bold"
+                              ],
+                              "description": "Font weight"
+                            },
+                            "textAlign": {
+                              "type": "string",
+                              "enum": [
+                                "left",
+                                "center",
+                                "right",
+                                "justify"
+                              ],
+                              "description": "Text alignment"
+                            },
+                            "color": {
+                              "type": "string",
+                              "pattern": "^#[0-9A-Fa-f]{6}$",
+                              "description": "Text color (hex format)"
+                            },
+                            "italic": {
+                              "type": "boolean",
+                              "description": "Italic style"
+                            },
+                            "underline": {
+                              "type": "boolean",
+                              "description": "Underline style"
+                            },
+                            "letterSpacing": {
+                              "type": "number",
+                              "description": "Letter spacing in pixels"
+                            },
+                            "lineSpacing": {
+                              "type": "number",
+                              "description": "Line spacing in pixels"
+                            }
+                          }
+                        },
+                        "display_order": {
+                          "type": "number",
+                          "description": "Render order (0 = first)"
+                        },
+                        "constraints": {
+                          "type": "object",
+                          "properties": {
+                            "maxLength": {
+                              "type": "number",
+                              "description": "Maximum character length"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "description": "Is this element required"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "qr_position": {
+                    "type": "object",
+                    "required": [
+                      "x",
+                      "y",
+                      "size"
+                    ],
+                    "description": "QR code positioning",
+                    "properties": {
+                      "x": {
+                        "type": "number",
+                        "description": "X position in pixels from left"
+                      },
+                      "y": {
+                        "type": "number",
+                        "description": "Y position in pixels from top"
+                      },
+                      "size": {
+                        "type": "number",
+                        "description": "QR code size (width and height) in pixels"
+                      }
+                    }
+                  },
+                  "locations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "minItems": 1,
+                    "description": "Array of location IDs to generate assets for"
+                  },
+                  "background_mode": {
+                    "type": "string",
+                    "enum": [
+                      "same",
+                      "custom"
+                    ],
+                    "description": "Use same background for all locations or custom per location"
+                  },
+                  "background_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "description": "Background ID (required if mode is \"same\", can be null)"
+                  },
+                  "location_backgrounds": {
+                    "type": "object",
+                    "description": "Map of location_id → background_id (required if mode is \"custom\")"
+                  },
+                  "base_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Redirect URL for QR code scan"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "location_id": {
+                            "type": "string"
+                          },
+                          "asset_type": {
+                            "type": "string"
+                          },
+                          "message_theme": {
+                            "type": "string"
+                          },
+                          "qr_link_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "text_elements_count": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/internal/assets": {
       "get": {
         "tags": [
@@ -2468,6 +2294,149 @@
         "responses": {
           "200": {
             "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/asset-types": {
+      "get": {
+        "tags": [
+          "Asset Types"
+        ],
+        "description": "List all available asset types with their specifications",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "asset_type": {
+                        "type": "string"
+                      },
+                      "display_name": {
+                        "type": "string"
+                      },
+                      "width": {
+                        "type": "integer"
+                      },
+                      "height": {
+                        "type": "integer"
+                      },
+                      "aspect_ratio": {
+                        "type": "string"
+                      },
+                      "min_font_size": {
+                        "type": "integer"
+                      },
+                      "max_font_size": {
+                        "type": "integer"
+                      },
+                      "min_qr_size": {
+                        "type": "integer"
+                      },
+                      "max_qr_size": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asset-types/{type}": {
+      "get": {
+        "tags": [
+          "Asset Types"
+        ],
+        "description": "Get specifications for a specific asset type",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "flyer",
+                "door_hanger",
+                "table_tent",
+                "business_card",
+                "menu_board"
+              ]
+            },
+            "in": "path",
+            "name": "type",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "asset_type": {
+                      "type": "string"
+                    },
+                    "display_name": {
+                      "type": "string"
+                    },
+                    "width": {
+                      "type": "integer"
+                    },
+                    "height": {
+                      "type": "integer"
+                    },
+                    "aspect_ratio": {
+                      "type": "string"
+                    },
+                    "min_font_size": {
+                      "type": "integer"
+                    },
+                    "max_font_size": {
+                      "type": "integer"
+                    },
+                    "min_qr_size": {
+                      "type": "integer"
+                    },
+                    "max_qr_size": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3108,234 +3077,32 @@
         }
       }
     },
-    "/api/internal/campaigns/{campaignId}/generate-pdf": {
-      "post": {
+    "/gmail/quick-response/{contactId}/compose-url": {
+      "get": {
         "tags": [
-          "PDF"
+          "Gmail"
         ],
-        "description": "Generate PDF flyers for campaign",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "location_ids": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "description": "Specific locations (optional, defaults to all)"
-                  },
-                  "layout": {
-                    "type": "string",
-                    "enum": [
-                      "classic",
-                      "modern",
-                      "minimal"
-                    ],
-                    "description": "Flyer layout template"
-                  }
-                }
-              }
-            }
-          }
-        },
+        "description": "Generate Gmail compose URL with pre-filled template",
         "parameters": [
           {
             "schema": {
               "type": "string",
               "format": "uuid"
             },
-            "in": "path",
-            "name": "campaignId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "assets": {
-                      "type": "array"
-                    },
-                    "jobsEnqueued": {
-                      "type": "number"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/internal/assets/{assetId}/status": {
-      "get": {
-        "tags": [
-          "PDF"
-        ],
-        "description": "Check PDF generation status",
-        "parameters": [
+            "in": "query",
+            "name": "templateId",
+            "required": false,
+            "description": "Optional template ID"
+          },
           {
             "schema": {
               "type": "string",
               "format": "uuid"
             },
             "in": "path",
-            "name": "assetId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/api/internal/campaigns/{campaignId}/assets": {
-      "get": {
-        "tags": [
-          "PDF"
-        ],
-        "description": "Get all assets for campaign",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "campaignId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/api/plans": {
-      "get": {
-        "tags": [
-          "Plans"
-        ],
-        "description": "Get all active pricing plans with features and limits",
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "plans": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "description": "Plan key (e.g., \"free\", \"pro\")"
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Plan name"
-                          },
-                          "displayName": {
-                            "type": "string",
-                            "description": "Display name for UI"
-                          },
-                          "description": {
-                            "type": "string",
-                            "description": "Plan description"
-                          },
-                          "pricing": {
-                            "type": "object",
-                            "properties": {
-                              "monthly": {
-                                "type": "number",
-                                "description": "Monthly price in dollars"
-                              },
-                              "yearly": {
-                                "type": "number",
-                                "nullable": true,
-                                "description": "Yearly price in dollars"
-                              },
-                              "currency": {
-                                "type": "string",
-                                "description": "Currency code"
-                              }
-                            }
-                          },
-                          "limits": {
-                            "type": "object",
-                            "description": "Usage limits for this plan (null = unlimited)"
-                          },
-                          "features": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "feature_key": {
-                                  "type": "string"
-                                },
-                                "feature_name": {
-                                  "type": "string"
-                                },
-                                "description": {
-                                  "type": "string"
-                                },
-                                "category": {
-                                  "type": "string"
-                                }
-                              }
-                            }
-                          },
-                          "featuresSummary": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "Key features for marketing"
-                          },
-                          "tierLevel": {
-                            "type": "integer",
-                            "description": "Plan tier (0=free, 1=starter, etc.)"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/features/{featureKey}/check": {
-      "get": {
-        "tags": [
-          "Plans"
-        ],
-        "description": "Check if current user has access to a specific feature",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "featureKey",
+            "name": "contactId",
             "required": true,
-            "description": "Feature key to check (e.g., \"gmail_integration\")"
+            "description": "Contact ID"
           }
         ],
         "security": [
@@ -3351,39 +3118,40 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hasAccess": {
-                      "type": "boolean",
-                      "description": "Whether user has access"
-                    },
-                    "userPlan": {
+                    "composeUrl": {
                       "type": "string",
-                      "description": "User's current plan"
+                      "description": "Gmail compose URL"
                     },
-                    "requiredPlan": {
-                      "type": "string",
-                      "description": "Plan required for this feature"
-                    },
-                    "feature": {
-                      "type": "object",
+                    "template": {
+                      "type": [
+                        "null",
+                        "object"
+                      ],
                       "properties": {
-                        "key": {
+                        "id": {
                           "type": "string"
                         },
                         "name": {
                           "type": "string"
                         },
-                        "description": {
+                        "subject": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "preview": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
                           "type": "string"
                         },
-                        "category": {
+                        "subject": {
+                          "type": "string"
+                        },
+                        "body": {
                           "type": "string"
                         }
                       }
-                    },
-                    "upgradeUrl": {
-                      "type": "string",
-                      "nullable": true,
-                      "description": "URL to upgrade (null if has access)"
                     }
                   }
                 }
@@ -3393,191 +3161,21 @@
         }
       }
     },
-    "/api/plans/limits/{limitKey}": {
-      "get": {
+    "/gmail/quick-response/{contactId}/track-opened": {
+      "post": {
         "tags": [
-          "Plans"
+          "Gmail"
         ],
-        "description": "Get a specific plan limit for the current user",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "limitKey",
-            "required": true,
-            "description": "Limit key to fetch (e.g., \"contacts_per_month\")"
-          }
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "limitKey": {
-                      "type": "string"
-                    },
-                    "limitValue": {
-                      "type": "integer",
-                      "nullable": true,
-                      "description": "Limit value (null = unlimited)"
-                    },
-                    "isUnlimited": {
-                      "type": "boolean",
-                      "description": "Whether the limit is unlimited"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/plans/limits": {
-      "get": {
-        "tags": [
-          "Plans"
-        ],
-        "description": "Get all plan limits for the current user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "planKey": {
-                      "type": "string",
-                      "description": "User's current plan"
-                    },
-                    "limits": {
-                      "type": "object",
-                      "description": "Map of limit keys to limit values",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "value": {
-                            "type": "integer",
-                            "nullable": true
-                          },
-                          "isUnlimited": {
-                            "type": "boolean"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/features": {
-      "get": {
-        "tags": [
-          "Plans"
-        ],
-        "description": "Get all features grouped by category",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "features": {
-                      "type": "object",
-                      "description": "Features grouped by category",
-                      "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "key": {
-                              "type": "string"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "description": {
-                              "type": "string"
-                            },
-                            "requiredPlan": {
-                              "type": "string"
-                            },
-                            "requiredPlanName": {
-                              "type": "string"
-                            },
-                            "tierLevel": {
-                              "type": "integer"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/plans/{planKey}": {
-      "patch": {
-        "tags": [
-          "Plans Admin"
-        ],
-        "description": "Update plan pricing (admin only)",
+        "description": "Track when Gmail compose window opened",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "price_monthly_cents": {
-                    "type": "integer",
-                    "description": "Monthly price in cents"
-                  },
-                  "price_yearly_cents": {
-                    "type": "integer",
-                    "description": "Yearly price in cents"
-                  },
-                  "display_name": {
+                  "templateId": {
                     "type": "string",
-                    "description": "Display name"
-                  },
-                  "description": {
-                    "type": "string",
-                    "description": "Plan description"
-                  },
-                  "is_active": {
-                    "type": "boolean",
-                    "description": "Whether plan is active"
+                    "format": "uuid"
                   }
                 }
               }
@@ -3587,12 +3185,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "in": "path",
-            "name": "planKey",
-            "required": true,
-            "description": "Plan key to update"
+            "name": "contactId",
+            "required": true
           }
         ],
         "security": [
@@ -3608,9 +3206,11 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "plan": {
-                      "type": "object",
-                      "description": "Updated plan"
+                    "tracked": {
+                      "type": "boolean"
+                    },
+                    "interaction": {
+                      "type": "object"
                     }
                   }
                 }
@@ -3620,27 +3220,588 @@
         }
       }
     },
-    "/api/admin/plans/{planKey}/limits/{limitKey}": {
-      "patch": {
+    "/map-data": {
+      "get": {
         "tags": [
-          "Plans Admin"
+          "Analytics"
         ],
-        "description": "Update a plan limit (admin only)",
+        "description": "Get pre-aggregated map data for dashboard",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Max scans to analyze"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "campaignId",
+            "required": false,
+            "description": "Filter by campaign"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pins": {
+                      "type": "array",
+                      "description": "Aggregated location pins",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "location": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "coordinates": {
+                                "type": "object",
+                                "properties": {
+                                  "lat": {
+                                    "type": "number"
+                                  },
+                                  "lng": {
+                                    "type": "number"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "scanCount": {
+                            "type": "number"
+                          },
+                          "campaigns": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "recentScans": {
+                      "type": "array",
+                      "description": "Recent scan activity",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "scannedAt": {
+                            "type": "string"
+                          },
+                          "location": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "campaign": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "aggregated": {
+                      "type": "boolean"
+                    },
+                    "generatedAt": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/branding/capture": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/branding/capture-onboarding": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/branding/analyze-premium": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/backgrounds/generate": {
+      "post": {
+        "tags": [
+          "Backgrounds"
+        ],
+        "description": "Generate new campaign background with optional theme-based styling",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "limitValue": {
+                  "prompt_override": {
+                    "type": "string",
+                    "description": "Custom prompt override"
+                  },
+                  "style_keywords": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Manual style keywords (highest priority)"
+                  },
+                  "message_theme": {
+                    "type": "string",
+                    "description": "Message theme name (e.g., \"Summer Menu\", \"Happy Hour\")"
+                  },
+                  "mood_family": {
+                    "type": "string",
+                    "description": "Mood family classification for visual style (e.g., \"Cool and Modern\", \"Warm and Local\", \"Bright and Inviting\")"
+                  },
+                  "generate_count": {
                     "type": "integer",
-                    "nullable": true,
-                    "description": "Limit value (null for unlimited)"
+                    "minimum": 1,
+                    "maximum": 5,
+                    "default": 1,
+                    "description": "Number of backgrounds to generate"
                   }
-                },
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "job_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "estimated_time_seconds": {
+                      "type": "integer"
+                    },
+                    "keywords_used": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "theme_source": {
+                      "type": "string"
+                    },
+                    "theme_info": {
+                      "type": "object",
+                      "properties": {
+                        "theme_name": {
+                          "type": "string"
+                        },
+                        "matched_from": {
+                          "type": "string"
+                        },
+                        "keywords": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "mood": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/backgrounds": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/branding/backgrounds/{id}": {
+      "get": {
+        "tags": [
+          "Backgrounds"
+        ],
+        "description": "Get a single background by ID",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Background ID"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Background object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Background object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "tenant_id": {
+                      "type": "string"
+                    },
+                    "image_url": {
+                      "type": "string"
+                    },
+                    "thumbnail_url": {
+                      "type": "string"
+                    },
+                    "composition_map": {
+                      "type": "object"
+                    },
+                    "flux_prompt": {
+                      "type": "string"
+                    },
+                    "style_keywords": {
+                      "type": "array"
+                    },
+                    "source_type": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "mood_family": {
+                      "type": "string"
+                    },
+                    "is_favorite": {
+                      "type": "boolean"
+                    },
+                    "times_used": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/backgrounds/usage": {
+      "get": {
+        "tags": [
+          "Backgrounds"
+        ],
+        "description": "Get background generation usage for current tenant",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/backgrounds/{backgroundId}/status": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "backgroundId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/backgrounds/{backgroundId}/favorite": {
+      "put": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "backgroundId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/backgrounds/{backgroundId}": {
+      "delete": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "backgroundId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/theme-vocabulary": {
+      "get": {
+        "tags": [
+          "Theme Vocabulary"
+        ],
+        "description": "Get all message theme definitions for tenant",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "themes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "theme_name": {
+                            "type": "string"
+                          },
+                          "keywords": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "mood": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "updated_at": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/theme-vocabulary/{themeName}": {
+      "put": {
+        "tags": [
+          "Theme Vocabulary"
+        ],
+        "description": "Save or update theme definition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
                 "required": [
-                  "limitValue"
-                ]
+                  "keywords"
+                ],
+                "properties": {
+                  "keywords": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 5
+                  },
+                  "mood": {
+                    "type": "string"
+                  }
+                }
               }
             }
           },
@@ -3649,21 +3810,20 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "in": "path",
-            "name": "planKey",
-            "required": true,
-            "description": "Plan key"
+            "name": "tenantId",
+            "required": true
           },
           {
             "schema": {
               "type": "string"
             },
             "in": "path",
-            "name": "limitKey",
-            "required": true,
-            "description": "Limit key"
+            "name": "themeName",
+            "required": true
           }
         ],
         "security": [
@@ -3679,14 +3839,281 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "limit": {
-                      "type": "object",
-                      "description": "Updated limit"
+                    "theme": {
+                      "type": "object"
                     }
                   }
                 }
               }
             }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Theme Vocabulary"
+        ],
+        "description": "Delete theme definition",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "themeName",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/tenants/{tenantId}/theme-vocabulary/seed": {
+      "post": {
+        "tags": [
+          "Theme Vocabulary"
+        ],
+        "description": "Seed tenant with default theme vocabulary",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "industry": {
+                    "type": "string",
+                    "enum": [
+                      "restaurant",
+                      "retail",
+                      "service",
+                      "healthcare"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "tenantId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "themes": {
+                      "type": "array"
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/preferences": {
+      "get": {
+        "tags": [
+          "Preferences"
+        ],
+        "description": "Get tenant preferences",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "tenant_id": {
+                      "type": "string"
+                    },
+                    "onboarding_goal": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "onboarding_vertical": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "onboarding_completed_at": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "first_campaign_created": {
+                      "type": "boolean"
+                    },
+                    "first_campaign_id": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    },
+                    "checklist_completed": {
+                      "type": "boolean"
+                    },
+                    "goal_metadata": {
+                      "type": "object"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/preferences/onboarding-goal": {
+      "post": {
+        "tags": [
+          "Preferences"
+        ],
+        "description": "Save onboarding goal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "goal",
+                  "vertical"
+                ],
+                "properties": {
+                  "goal": {
+                    "type": "string"
+                  },
+                  "vertical": {
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/preferences/first-campaign": {
+      "post": {
+        "tags": [
+          "Preferences"
+        ],
+        "description": "Mark first campaign as created",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "campaignId"
+                ],
+                "properties": {
+                  "campaignId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/internal/preferences/checklist-complete": {
+      "post": {
+        "tags": [
+          "Preferences"
+        ],
+        "description": "Mark onboarding checklist as complete",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
           }
         }
       }
@@ -3704,31 +4131,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "slug": {
-                        "type": "string"
-                      },
-                      "vertical_key": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Default Response"
           }
         }
       }

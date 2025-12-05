@@ -4,7 +4,7 @@ import { VerticalSelector } from '@/components/onboarding/VerticalSelector';
 import { BrandingForm } from '@/components/onboarding/BrandingForm';
 import { BrandMomentForm } from '@/components/onboarding/BrandMomentForm';
 import { LocationForm } from '@/components/onboarding/LocationForm';
-import { CampaignGoalSelector } from '@/components/onboarding/CampaignGoalSelector';
+import { MarketingGoalSelector } from '@/components/onboarding/MarketingGoalSelector';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -28,7 +28,7 @@ export default function Onboarding() {
     latitude: null as number | null,
     longitude: null as number | null,
   });
-  const [campaignGoal, setCampaignGoal] = useState('');
+  const [marketingGoal, setMarketingGoal] = useState('');
 
   const canProceed = () => {
     switch (step) {
@@ -41,7 +41,7 @@ export default function Onboarding() {
       case 4:
         return location.name.trim() !== '' && location.address.trim() !== '';
       case 5:
-        return campaignGoal !== '';
+        return marketingGoal !== '';
       default:
         return false;
     }
@@ -71,7 +71,7 @@ export default function Onboarding() {
       logoFile,
       primaryColor,
       location,
-      campaignGoal,
+      campaignGoal: marketingGoal,
     });
   };
 
@@ -111,10 +111,10 @@ export default function Onboarding() {
       )}
 
       {step === 5 && (
-        <CampaignGoalSelector
+        <MarketingGoalSelector
           vertical={vertical}
-          value={campaignGoal}
-          onChange={setCampaignGoal}
+          value={marketingGoal}
+          onChange={setMarketingGoal}
         />
       )}
 

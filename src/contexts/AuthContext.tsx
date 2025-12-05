@@ -1,7 +1,6 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, User, Tenant } from '@/lib/supabase';
-import { teamApi } from '@/lib/team-api';
 
 interface AuthContextType {
   session: Session | null;
@@ -26,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
-        loadUserAndTenant(session.user.id);
+        loadUserAndTenant();
       } else {
         setLoading(false);
       }
@@ -36,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        loadUserAndTenant(session.user.id);
+        loadUserAndTenant();
       } else {
         setUser(null);
         setTenant(null);
@@ -47,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadUserAndTenant = async (userId: string) => {
+  const loadUserAndTenant = async () => {
     try {
       // Get authenticated user from Supabase Auth
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
@@ -75,28 +74,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // User has tenant_id - try to fetch full tenant data via backend API
+      // User has tenant_id - fetch full tenant data
       try {
-        const { team_members } = await teamApi.list();
-        const teamMember = team_members.find(tm => tm.user_id === userId && tm.is_active);
+        const { data: tenantData, error: tenantError } = await supabase
+          .from('tenants')
+          .select('*')
+          .eq('id', tenantId)
+          .single();
 
-        if (teamMember?.tenants) {
-          // Full tenant data available
-          setUser({
-            id: authUser.id,
-            email: authUser.email!,
-            full_name: teamMember.display_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
-            avatar_url: authUser.user_metadata?.avatar_url || null,
-            created_at: authUser.created_at,
-            updated_at: teamMember.updated_at,
-          });
-          setTenant(teamMember.tenants);
-        } else {
-          throw new Error('Team data not available');
+        if (tenantError || !tenantData) {
+          throw tenantError || new Error('Tenant not found');
         }
-      } catch (teamError) {
-        // Team API failed, but user has tenant_id in JWT - create minimal tenant
-        console.warn('Could not load full tenant data, using minimal tenant object:', teamError);
+
+        // Fetch user profile (if we had a users table, but here we just use what we have or generic profile)
+        // Since we don't have team_members anymore, we just set the user from auth data
+        // and add fields if needed.
+        setUser({
+          id: authUser.id,
+          email: authUser.email!,
+          // Fallback to metadata
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
+          avatar_url: authUser.user_metadata?.avatar_url || null,
+          created_at: authUser.created_at,
+          updated_at: new Date().toISOString(),
+        });
+        setTenant(tenantData);
+
+      } catch (fetchError) {
+        // Fetch failed, but user has tenant_id in JWT - create minimal tenant
+        console.warn('Could not load full tenant data, using minimal tenant object:', fetchError);
         setUser({
           id: authUser.id,
           email: authUser.email!,
@@ -106,15 +112,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updated_at: new Date().toISOString(),
         });
         // Create minimal tenant object - user can still access the app
+        // Ensure strictly matching Tenant type (slug is string, vertical_key is string|null)
         setTenant({
           id: tenantId,
           name: 'Loading...',
-          slug: null,
+          slug: '', // changed from null to empty string
           branding: null,
-          plan_key: 'free',
+          // plan_key is not in Tenant type definition in backend.d.ts?
+          // Let's check backend.d.ts tenants Row.
+          // It has: branding, created_at, id, name, slug, updated_at, vertical_key.
+          // It DOES NOT have plan_key.
+          // So I should remove plan_key from this minimal object.
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        });
+          vertical_key: null,
+        } as Tenant); // Cast to Tenant to satisfy potentially missing optional fields if any, or strict check
       }
 
     } catch (error) {
@@ -149,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     if (session) {
-      await loadUserAndTenant(session.user.id);
+      await loadUserAndTenant();
     }
   };
 

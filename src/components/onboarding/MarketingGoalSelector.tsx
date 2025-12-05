@@ -3,7 +3,7 @@ import { Target, Users, Gift, Home as HomeIcon } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-interface CampaignGoalSelectorProps {
+interface MarketingGoalSelectorProps {
   vertical: string;
   value: string;
   onChange: (value: string) => void;
@@ -37,7 +37,7 @@ const goalsByVertical: Record<string, Array<{ key: string; label: string; icon: 
   ],
 };
 
-export const CampaignGoalSelector: React.FC<CampaignGoalSelectorProps> = ({
+export const MarketingGoalSelector: React.FC<MarketingGoalSelectorProps> = ({
   vertical,
   value,
   onChange,
@@ -48,7 +48,7 @@ export const CampaignGoalSelector: React.FC<CampaignGoalSelectorProps> = ({
     <div>
       <h2 className="text-2xl font-bold mb-2">What's Your Goal?</h2>
       <p className="text-gray-600 mb-6">
-        We'll customize your first campaign based on what you're trying to achieve
+        We'll customize your first flyer based on what you're trying to achieve
       </p>
 
       <RadioGroup value={value} onValueChange={onChange}>
@@ -59,9 +59,8 @@ export const CampaignGoalSelector: React.FC<CampaignGoalSelectorProps> = ({
               <Label
                 key={goal.key}
                 htmlFor={goal.key}
-                className={`flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-primary transition-colors ${
-                  value === goal.key ? 'border-primary bg-blue-50' : 'border-gray-200'
-                }`}
+                className={`flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-primary transition-colors ${value === goal.key ? 'border-primary bg-blue-50' : 'border-gray-200'
+                  }`}
               >
                 <RadioGroupItem
                   value={goal.key}
