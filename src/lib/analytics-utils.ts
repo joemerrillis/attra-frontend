@@ -5,7 +5,7 @@ export interface DashboardMetrics {
   totalContacts: number;
   conversionRate: number;
   avgResponseTime: string;
-  activeCampaigns: number;
+  activeAssets: number;
 }
 
 export interface TimeSeriesData {

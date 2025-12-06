@@ -69,22 +69,4 @@ export async function saveOnboardingGoal(data: OnboardingGoalData): Promise<Tena
 /**
  * Mark first campaign as created
  */
-export async function markFirstCampaignCreated(campaignId: string): Promise<TenantPreferences> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Not authenticated');
 
-  const response = await fetch(`${API_BASE_URL}/api/internal/preferences/first-campaign`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${session.access_token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ campaignId }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to mark first campaign: ${response.statusText}`);
-  }
-
-  return response.json();
-}

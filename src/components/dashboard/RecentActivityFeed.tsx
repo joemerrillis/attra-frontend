@@ -3,53 +3,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Activity } from 'lucide-react';
 import { ActivityItem } from './ActivityItem';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { dashboardApi } from '@/lib/dashboard-api';
 
 export function RecentActivityFeed() {
   const { data: activities, isLoading } = useQuery({
     queryKey: ['recent-activity'],
-    queryFn: async () => {
-      // Get recent scans
-      const { data: scans } = await supabase
-        .from('qr_scans')
-        .select(`
-          id,
-          scanned_at,
-          location:locations(name),
-          qr_link:qr_links(
-            asset:assets(message_theme)
-          )
-        `)
-        .order('scanned_at', { ascending: false })
-        .limit(10);
-
-      // Get recent contacts
-      const { data: contacts } = await supabase
-        .from('contacts')
-        .select('id, name, created_at, location:locations(name)')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      // Combine and sort
-      const combined = [
-        ...(scans?.map((s: any) => ({
-          type: 'scan' as const,
-          title: 'QR Code Scanned',
-          description: `${s.qr_link?.asset?.message_theme || 'Flyer'} at ${s.location?.name || 'Unknown'}`,
-          timestamp: s.scanned_at,
-        })) || []),
-        ...(contacts?.map((c: any) => ({
-          type: 'contact' as const,
-          title: 'New Contact',
-          description: `${c.name} from ${c.location?.name || 'Unknown'}`,
-          timestamp: c.created_at,
-        })) || []),
-      ].sort((a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      ).slice(0, 15);
-
-      return combined;
-    },
+    queryFn: dashboardApi.getActivity,
     refetchInterval: 30000,
   });
 

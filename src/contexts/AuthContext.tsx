@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, User, Tenant } from '@/lib/supabase';
+import { tenantApi } from '@/lib/tenant-api';
 
 interface AuthContextType {
   session: Session | null;
@@ -76,14 +77,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // User has tenant_id - fetch full tenant data
       try {
-        const { data: tenantData, error: tenantError } = await supabase
-          .from('tenants')
-          .select('*')
-          .eq('id', tenantId)
-          .single();
+        const tenantData = await tenantApi.getById(tenantId);
 
-        if (tenantError || !tenantData) {
-          throw tenantError || new Error('Tenant not found');
+        if (!tenantData) {
+          throw new Error('Tenant not found');
         }
 
         // Fetch user profile (if we had a users table, but here we just use what we have or generic profile)
