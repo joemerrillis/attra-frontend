@@ -34,6 +34,5 @@ export type UserTenant = {
   role: 'owner' | 'admin' | 'member' | 'viewer';
   created_at: string;
 };
-export type Campaign = Database['public']['Tables']['campaigns']['Row'];
 export type Contact = Database['public']['Tables']['contacts']['Row'];
 export type Location = Database['public']['Tables']['locations']['Row'];
